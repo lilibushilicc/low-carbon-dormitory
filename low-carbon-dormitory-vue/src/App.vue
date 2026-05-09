@@ -18,7 +18,9 @@ import { useRoute } from 'vue-router'
 import StudentGlobalNav from '@/components/student-global-nav.vue'
 
 const route = useRoute()
-const isStudentRoute = computed(() => route.path !== '/' && !route.path.startsWith('/manager'))
+const isStudentRoute = computed(() => {
+  return route.path !== '/' && route.path !== '/login' && !route.path.startsWith('/manager')
+})
 </script>
 
 <style scoped>

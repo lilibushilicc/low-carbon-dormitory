@@ -3,8 +3,7 @@ import { ElMessage } from 'element-plus'
 import { useAdminTokenStore } from '@/stores/admin-token'
 import { useStudentTokenStore } from '@/stores/student-token'
 import type { StudentProfile } from '@/types/student'
-import { resolvePostLoginPath } from '@/utils/app-navigation'
-import { buildUnifiedLoginUrl } from '@/utils/unified-login'
+import { getDefaultHomePath } from '@/utils/app-navigation'
 import { parseJsonSafely } from '@/utils/json'
 
 const lazyView = <T>(loader: () => Promise<T>) => loader
@@ -18,23 +17,25 @@ const studentRoute = (path: string, name: string, component: RouteComponent) =>
     meta: { requiresStudentAuth: true },
   }) as RouteRecordRaw
 
-const adminRoute = (
-  path: string,
-  name: string,
-  component: RouteComponent,
-  extra: Partial<RouteRecordRaw> = {},
-): RouteRecordRaw =>
+const adminRoute = (path: string, name: string, component: RouteComponent) =>
   ({
     path,
     name,
     component,
     meta: { requiresAdminAuth: true },
-    ...extra,
   }) as RouteRecordRaw
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    redirect: (to) => ({
+      path: '/login',
+      query: to.query,
+      hash: to.hash,
+    }),
+  },
+  {
+    path: '/login',
     name: 'login',
     component: lazyView(() => import('@/login.vue')),
     meta: { guestOnly: true },
@@ -59,38 +60,32 @@ const routes: RouteRecordRaw[] = [
         path: 'low-carbon-overview',
         name: 'manager-low-carbon-overview',
         component: lazyView(() => import('@/router/student-router/dashboard/low-carbon-dashboard-overview.vue')),
-        meta: { requiresAdminAuth: true },
         props: { adminMode: true },
       },
       {
         path: 'low-carbon-overview/dorm/:dormId',
         name: 'manager-low-carbon-dorm-detail',
         component: lazyView(() => import('@/router/manager-router/dashboard/manager-low-carbon-dorm-detail.vue')),
-        meta: { requiresAdminAuth: true },
       },
       {
         path: 'low-carbon-rule-config',
         name: 'manager-low-carbon-rule-config',
         component: lazyView(() => import('@/router/manager-router/config/low-carbon-rule-config.vue')),
-        meta: { requiresAdminAuth: true },
       },
       {
         path: 'student-create',
         name: 'manager-student-create',
         component: lazyView(() => import('@/router/manager-router/student/student-create.vue')),
-        meta: { requiresAdminAuth: true },
       },
       {
         path: 'reward-manage',
         name: 'manager-reward-manage',
         component: lazyView(() => import('@/router/manager-router/reward/reward-manage.vue')),
-        meta: { requiresAdminAuth: true },
       },
       {
         path: 'dorm-fee-deduct',
         name: 'manager-dorm-fee-deduct',
         component: lazyView(() => import('@/router/manager-router/fee/dorm-fee-deduct.vue')),
-        meta: { requiresAdminAuth: true },
       },
     ],
   },
@@ -101,46 +96,44 @@ const router = createRouter({
   routes,
 })
 
-function resolveRedirectQuery(redirect: unknown, role: 'admin' | 'student') {
-  return resolvePostLoginPath(typeof redirect === 'string' ? redirect : '', role)
-}
-
 function resolveGuestRedirect(
   requestedRole: string,
-  redirect: unknown,
   adminLoggedIn: boolean,
   studentLoggedIn: boolean,
 ) {
-  if (requestedRole === 'admin') {
-    return adminLoggedIn ? resolveRedirectQuery(redirect, 'admin') : true
-  }
-
-  if (requestedRole === 'student') {
-    return studentLoggedIn ? resolveRedirectQuery(redirect, 'student') : true
+  if (requestedRole) {
+    return true
   }
 
   if (adminLoggedIn) {
-    return resolveRedirectQuery(redirect, 'admin')
+    return { path: getDefaultHomePath('admin') }
   }
 
   if (studentLoggedIn) {
-    return resolveRedirectQuery(redirect, 'student')
+    return { path: getDefaultHomePath('student') }
   }
 
   return true
 }
 
-function redirectToLogin(fullPath: string, role: 'admin' | 'student', message: string) {
+function redirectToLogin(message: string) {
   ElMessage.warning(message)
-  window.location.replace(buildUnifiedLoginUrl({ redirectPath: resolvePostLoginPath(fullPath, role), role }))
-  return false
+  return {
+    path: '/login',
+    replace: true,
+  }
 }
 
 router.beforeEach((to) => {
   const studentTokenState = useStudentTokenStore()
   const adminTokenState = useAdminTokenStore()
   const nextQuery = { ...to.query }
-  const requestedRole = to.query.role === 'admin' ? 'admin' : to.query.role === 'student' ? 'student' : ''
+  const requestedRole =
+    to.query.role === 'admin'
+      ? 'admin'
+      : to.query.role === 'student'
+        ? 'student'
+        : ''
   const ssoMode = typeof to.query.ssoMode === 'string' ? to.query.ssoMode : ''
   const ssoStudentInfo = parseJsonSafely<StudentProfile>(to.query.ssoStudentInfo)
   const ssoAdminProfile = parseJsonSafely<{
@@ -156,7 +149,11 @@ router.beforeEach((to) => {
 
   if (ssoMode === 'student' && ssoStudentInfo && ssoStudentToken) {
     adminTokenState.clearAdminToken()
-    studentTokenState.setStudentToken(ssoStudentInfo, ssoStudentStuNum || ssoStudentInfo.stuNum, ssoStudentToken)
+    studentTokenState.setStudentToken(
+      ssoStudentInfo,
+      ssoStudentStuNum || ssoStudentInfo.stuNum,
+      ssoStudentToken,
+    )
   }
 
   if (ssoMode === 'admin' && ssoAdminProfile && (ssoAdminToken || ssoAdminProfile.token)) {
@@ -197,18 +194,17 @@ router.beforeEach((to) => {
   if (to.meta.guestOnly) {
     return resolveGuestRedirect(
       requestedRole,
-      to.query.redirect,
       adminTokenState.isAdminLoggedIn,
       studentTokenState.isLoggedIn,
     )
   }
 
-  if (to.meta.requiresAdminAuth && !adminTokenState.isAdminLoggedIn) {
-    return redirectToLogin(to.fullPath, 'admin', '请先登录管理员账号')
+  if (to.meta.requiresStudentAuth && !studentTokenState.isLoggedIn) {
+    return redirectToLogin('请先登录学生账号')
   }
 
-  if (to.meta.requiresStudentAuth && !studentTokenState.isLoggedIn) {
-    return redirectToLogin(to.fullPath, 'student', '请先登录学生账号')
+  if (to.meta.requiresAdminAuth && !adminTokenState.isAdminLoggedIn) {
+    return redirectToLogin('请先登录管理员账号')
   }
 
   return true

@@ -31,4 +31,3 @@ public class WebCorsConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/admin/login");
     }
 }
-

@@ -31,15 +31,6 @@ export function normalizeAppRoutePath(path?: string | null) {
   return normalizedPath
 }
 
-export function resolvePostLoginPath(path: string | null | undefined, role: AppRole) {
-  const normalizedPath = normalizeAppRoutePath(path)
-  if (!normalizedPath) {
-    return getDefaultHomePath(role)
-  }
-
-  if (role === 'student' && normalizedPath.startsWith('/manager')) {
-    return getDefaultHomePath(role)
-  }
-
-  return normalizedPath
+export function resolvePostLoginPath(_path: string | null | undefined, role: AppRole) {
+  return getDefaultHomePath(role)
 }

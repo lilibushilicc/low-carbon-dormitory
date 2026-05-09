@@ -8,10 +8,10 @@ export interface DormStatusResult {
 }
 
 export const DORM_STATUS_TEXT: Record<DormStatusKey, string> = {
-  excellent: '浼樼',
-  good: '鑹ソ',
-  warning: '棰勮',
-  abnormal: '寮傚父',
+  excellent: '优秀',
+  good: '良好',
+  warning: '预警',
+  abnormal: '异常',
 }
 
 export function getDormStatus(dorm: Pick<DormItem, 'carbonScore' | 'totalFee' | 'totalCarbon'>): DormStatusResult {

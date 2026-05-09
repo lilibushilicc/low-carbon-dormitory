@@ -22,16 +22,16 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String uri = request.getRequestURI();
-        String[] allowedRoles = allowedRoles(uri);
+        String[] allowedRoles = allowedRoles(request.getRequestURI());
         if (allowedRoles.length == 0) {
             return true;
         }
 
         TokenService.TokenPayload payload = tokenService.verify(resolveBearerToken(request));
         if (!isAllowedRole(payload.role(), allowedRoles)) {
-            throw new AuthException("登录身份无权访问该接口");
+            throw new AuthException("当前登录身份无权访问该接口");
         }
+
         request.setAttribute("authRole", payload.role());
         request.setAttribute("authSubject", payload.subject());
         request.setAttribute("authClaims", payload.claims());
@@ -42,9 +42,11 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/student/") && !"/student/login".equals(uri)) {
             return new String[] {"STUDENT", "ADMIN"};
         }
+
         if (uri.startsWith("/admin/") && !"/admin/login".equals(uri)) {
             return new String[] {"ADMIN"};
         }
+
         return new String[0];
     }
 
@@ -62,10 +64,12 @@ public class AuthTokenInterceptor implements HandlerInterceptor {
         if (authorization == null || authorization.isBlank()) {
             throw new AuthException("请先登录");
         }
+
         String prefix = "Bearer ";
         if (!authorization.regionMatches(true, 0, prefix, 0, prefix.length())) {
             throw new AuthException("登录 token 类型无效");
         }
+
         return authorization.substring(prefix.length()).trim();
     }
 }

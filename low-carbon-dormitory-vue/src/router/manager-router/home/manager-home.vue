@@ -83,7 +83,9 @@ const route = useRoute()
 const router = useRouter()
 const adminStore = useAdminTokenStore()
 
-const adminName = computed(() => adminStore.profile?.displayName || adminStore.profile?.username || '系统管理员')
+const adminName = computed(
+  () => adminStore.profile?.displayName || adminStore.profile?.username || '系统管理员',
+)
 const welcomeText = computed(
   () => `${adminName.value}，这里保留了宿舍项目的核心入口，你可以从这里进入总览、规则配置、学生维护、奖励管理和宿舍扣费。`,
 )
@@ -181,14 +183,13 @@ function goTo(path: string) {
 }
 
 .hero__chip--accent {
-  background: #f9efd3;
-  color: #8a5e08;
+  background: #dff3e6;
 }
 
 .hero__actions {
   display: flex;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
   margin-top: 22px;
 }
 
@@ -196,22 +197,22 @@ function goTo(path: string) {
   min-height: 46px;
   padding: 0 18px;
   border-radius: 14px;
-  font: inherit;
+  border: 1px solid transparent;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
 }
 
 .hero__action--primary {
-  border: none;
-  color: #fff;
   background: linear-gradient(135deg, #2f8f68 0%, #2a7b59 100%);
-  box-shadow: 0 10px 22px rgba(43, 120, 84, 0.18);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(42, 123, 89, 0.25);
 }
 
 .hero__action--ghost {
-  border: 1px solid #d1e0d8;
+  background: rgba(255, 255, 255, 0.9);
   color: #244536;
-  background: rgba(255, 255, 255, 0.84);
+  border-color: rgba(47, 143, 104, 0.22);
 }
 
 .hero__aside {
@@ -219,8 +220,10 @@ function goTo(path: string) {
   gap: 14px;
   padding: 18px;
   border-radius: 24px;
-  border: 1px solid #d5e3db;
-  background: linear-gradient(160deg, rgba(235, 245, 239, 0.98), rgba(247, 251, 249, 0.98));
+  background:
+    radial-gradient(circle at top right, rgba(80, 154, 118, 0.2), transparent 46%),
+    linear-gradient(180deg, #f4faf6 0%, #eef7f2 100%);
+  border: 1px solid rgba(47, 143, 104, 0.12);
 }
 
 .hero__aside-head {
@@ -229,122 +232,105 @@ function goTo(path: string) {
 }
 
 .hero__aside-head span {
-  color: #648073;
+  color: #5f776b;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .hero__aside-head strong {
   color: #244536;
-  font-size: 24px;
-  line-height: 1.2;
+  font-size: 20px;
 }
 
 .hero__summary-grid {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .hero__summary-card {
-  padding: 15px 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(42, 94, 67, 0.08);
   display: grid;
   gap: 8px;
-}
-
-.hero__summary-card--accent {
-  background: linear-gradient(180deg, rgba(253, 249, 240, 0.9), rgba(255, 255, 255, 0.88));
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(39, 82, 61, 0.08);
 }
 
 .hero__summary-card small {
-  color: #648073;
-  font-size: 12px;
+  color: #5f776b;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .hero__summary-card strong {
   color: #244536;
-  font-size: 19px;
-  line-height: 1.3;
+  font-size: 18px;
 }
 
 .hero__summary-card p {
-  margin: 0;
-  color: #5f776b;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.module-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
-}
-
-.module-card {
-  display: grid;
-  gap: 16px;
-  padding: 24px;
-  border: 1px solid rgba(42, 94, 67, 0.1);
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 249, 0.94));
-  box-shadow:
-    0 18px 38px rgba(36, 69, 54, 0.08),
-    0 6px 14px rgba(36, 69, 54, 0.04);
-}
-
-.module-card__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-}
-
-.module-card__tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  width: fit-content;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: #ebf5ef;
-  color: #2f7d5d;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.module-card__state {
-  color: #648073;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.module-card--active .module-card__tag {
-  background: #f9efd3;
-  color: #8a5e08;
-}
-
-.module-card h2 {
-  margin: 0;
-  color: #1f3e31;
-  font-size: 24px;
-}
-
-.module-card p {
   margin: 0;
   color: #5b7568;
   line-height: 1.7;
 }
 
-.module-card__list {
+.hero__summary-card--accent {
+  background: linear-gradient(180deg, #ffffff 0%, #f2fbf5 100%);
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.module-card {
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(39, 82, 61, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 40px rgba(36, 69, 54, 0.08);
+}
+
+.module-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.module-card__tag,
+.module-card__state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.module-card__tag {
+  background: #eef7f2;
+  color: #2b7b57;
+}
+
+.module-card__state {
+  background: rgba(47, 143, 104, 0.12);
+  color: #2f8f68;
+}
+
+.module-card h2 {
+  margin: 16px 0 10px;
+  color: #1e3e31;
+  font-size: 30px;
+}
+
+.module-card p {
   margin: 0;
+  color: #5b7568;
+  line-height: 1.8;
+}
+
+.module-card__list {
+  margin: 18px 0 0;
   padding-left: 18px;
   color: #315245;
   display: grid;
@@ -352,31 +338,25 @@ function goTo(path: string) {
 }
 
 .module-card__action {
+  margin-top: 22px;
   min-height: 46px;
+  padding: 0 18px;
   border: none;
   border-radius: 14px;
-  color: #ffffff;
   background: linear-gradient(135deg, #2f8f68 0%, #2a7b59 100%);
-  font: inherit;
+  color: #fff;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(43, 120, 84, 0.18);
+  box-shadow: 0 14px 30px rgba(42, 123, 89, 0.25);
 }
 
-@media (max-width: 1500px) {
-  .hero {
+@media (max-width: 1100px) {
+  .shell {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 1200px) {
-  .content {
-    width: 100%;
-  }
-}
-
-@media (max-width: 760px) {
-  .shell {
+  .hero {
     grid-template-columns: 1fr;
   }
 }

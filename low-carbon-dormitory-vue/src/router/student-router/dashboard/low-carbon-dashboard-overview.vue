@@ -54,9 +54,19 @@
         </section>
 
         <section class="toolbar card">
-          <el-input v-model="searchKeyword" class="toolbar__search" placeholder="搜索宿舍或学生姓名" clearable />
+          <el-input
+            v-model="searchKeyword"
+            class="toolbar__search"
+            placeholder="搜索宿舍或学生姓名"
+            clearable
+          />
           <el-select v-model="buildingFilter" class="toolbar__select">
-            <el-option v-for="item in buildingOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option
+              v-for="item in buildingOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
           <el-select v-model="periodStatusFilter" class="toolbar__select">
             <el-option label="全部状态" value="all" />
@@ -90,7 +100,7 @@
               <span>人数 {{ dorm.residentCount }}</span>
             </div>
 
-            <div class="resident-list" v-if="dorm.residents?.length">
+            <div v-if="dorm.residents?.length" class="resident-list">
               <span v-for="resident in dorm.residents" :key="resident">{{ resident }}</span>
             </div>
 
@@ -215,7 +225,10 @@ const filteredDorms = computed(() => {
     .filter((item) => {
       const residentText = item.residents?.join(' ').toLowerCase() || ''
       const matchesKeyword =
-        !keyword || item.label.toLowerCase().includes(keyword) || item.building.toLowerCase().includes(keyword) || residentText.includes(keyword)
+        !keyword ||
+        item.label.toLowerCase().includes(keyword) ||
+        item.building.toLowerCase().includes(keyword) ||
+        residentText.includes(keyword)
       const matchesBuilding = buildingFilter.value === 'all' || item.building === buildingFilter.value
       const matchesPeriod =
         periodStatusFilter.value === 'all' ||

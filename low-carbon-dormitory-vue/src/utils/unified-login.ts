@@ -1,7 +1,4 @@
-import { normalizeAppRoutePath } from '@/utils/app-navigation'
-
 interface UnifiedLoginOptions {
-  redirectPath?: string
   role?: 'student' | 'admin'
 }
 
@@ -27,17 +24,12 @@ function resolveLoginBaseUrl() {
     return `${loginOrigin.replace(/\/+$/, '')}${loginBasePath}/`
   }
 
-  const appBaseUrl = new URL(import.meta.env.BASE_URL || '/', window.location.origin)
-  return appBaseUrl.toString()
+  return new URL('/login', window.location.origin).toString()
 }
 
 export function buildUnifiedLoginUrl(options: UnifiedLoginOptions = {}) {
   const url = new URL(resolveLoginBaseUrl())
-  const redirectPath = normalizeAppRoutePath(options.redirectPath)
 
-  if (redirectPath) {
-    url.searchParams.set('redirect', redirectPath)
-  }
   if (options.role) {
     url.searchParams.set('role', options.role)
   }
@@ -51,5 +43,6 @@ export function redirectToUnifiedLogin(replace = false, options: UnifiedLoginOpt
     window.location.replace(target)
     return
   }
+
   window.location.assign(target)
 }

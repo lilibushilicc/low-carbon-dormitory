@@ -308,11 +308,8 @@ public class LowCarbonDashboardService {
                         .thenComparing(LowCarbonDashboardResponse.BuildingItem::getName, Comparator.nullsLast(String::compareTo)))
                 .collect(Collectors.toList());
 
-        int rank = 1;
-        for (LowCarbonDashboardResponse.BuildingItem item : ranking) {
-            if (item.getRankedDormCount() > 0) {
-                item.setRank(rank++);
-            }
+        for (int index = 0; index < ranking.size(); index++) {
+            ranking.get(index).setRank(index + 1);
         }
         return ranking;
     }
@@ -321,6 +318,7 @@ public class LowCarbonDashboardService {
         List<LowCarbonDashboardResponse.DormItem> rankedDormItems = dormItems.stream()
                 .filter(item -> Boolean.TRUE.equals(item.getCurrentPeriodParticipating()))
                 .toList();
+        List<LowCarbonDashboardResponse.DormItem> bestDormCandidates = rankedDormItems.isEmpty() ? dormItems : rankedDormItems;
         LowCarbonDashboardResponse.Overview overview = new LowCarbonDashboardResponse.Overview();
         overview.setDormCount(dormItems.size());
         overview.setRankedDormCount(rankedDormItems.size());
@@ -328,7 +326,7 @@ public class LowCarbonDashboardService {
         overview.setTotalWaterUsage(dashboardSupport.scale(sumDormValue(dormItems, LowCarbonDashboardResponse.DormItem::getWaterUsage), 2));
         overview.setTotalCarbon(dashboardSupport.scale(sumDormValue(dormItems, LowCarbonDashboardResponse.DormItem::getTotalCarbon), 2));
         overview.setAverageScore(dashboardSupport.scale(averageDormValue(rankedDormItems, LowCarbonDashboardResponse.DormItem::getCarbonScore), 2));
-        overview.setBestDormLabel(rankedDormItems.stream()
+        overview.setBestDormLabel(bestDormCandidates.stream()
                 .filter(item -> item.getLabel() != null)
                 .max(Comparator.comparing(LowCarbonDashboardResponse.DormItem::getCarbonScore)
                         .thenComparing(LowCarbonDashboardResponse.DormItem::getTotalCarbon, Comparator.reverseOrder())

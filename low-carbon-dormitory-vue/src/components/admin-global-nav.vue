@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStudentTokenStore } from '@/stores/student-token'
 import { useAdminTokenStore } from '@/stores/admin-token'
-import { redirectToUnifiedLogin } from '@/utils/unified-login'
 
 const router = useRouter()
 const route = useRoute()
@@ -11,10 +10,10 @@ const studentTokenStore = useStudentTokenStore()
 const adminStore = useAdminTokenStore()
 
 const isHomeRoute = computed(() => route.path === '/manager/home')
-const currentSection = computed(() => (isHomeRoute.value ? '管理首页' : '宿舍管理'))
+const currentSection = computed(() => (isHomeRoute.value ? '管理员首页' : '宿舍管理'))
 
 const homeItems = [
-  { title: '返回管理首页', desc: '回到宿舍项目管理入口', path: '/manager/home' },
+  { title: '返回管理员首页', desc: '回到宿舍项目管理入口', path: '/manager/home' },
   { title: '宿舍总览', desc: '查看宿舍整体低碳表现', path: '/manager/low-carbon-overview' },
 ] as const
 
@@ -38,11 +37,11 @@ function isActive(path: string) {
   return route.path === path || route.path.startsWith(`${path}/`)
 }
 
-function logout() {
+async function logout() {
   studentTokenStore.clearStudentToken()
   adminStore.clearAdminToken()
   localStorage.removeItem('loginUser')
-  redirectToUnifiedLogin(true, { role: 'admin' })
+  await router.replace('/login')
 }
 </script>
 

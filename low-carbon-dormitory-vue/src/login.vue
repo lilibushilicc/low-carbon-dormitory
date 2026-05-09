@@ -16,11 +16,21 @@
         @keyup.enter="handleLogin"
       >
         <el-form-item :label="role === 'student' ? '学号' : '账号'" prop="username">
-          <el-input v-model="loginForm.username" :placeholder="role === 'student' ? '请输入学号' : '请输入管理员账号'" clearable />
+          <el-input
+            v-model="loginForm.username"
+            :placeholder="role === 'student' ? '请输入学号' : '请输入管理员账号'"
+            clearable
+          />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
-          <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" show-password clearable />
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="请输入密码"
+            show-password
+            clearable
+          />
         </el-form-item>
 
         <el-form-item>
@@ -42,7 +52,7 @@ import { useStudentTokenStore } from '@/stores/student-token'
 import { loginStudent } from '@/api/modules/student'
 import { adminLogin } from '@/api/modules/admin'
 import { useAdminTokenStore } from '@/stores/admin-token'
-import { resolvePostLoginPath } from '@/utils/app-navigation'
+import { getDefaultHomePath } from '@/utils/app-navigation'
 
 interface LoginForm {
   username: string
@@ -95,8 +105,8 @@ async function handleLogin() {
       adminTokenStore.clearAdminToken()
       localStorage.removeItem('loginUser')
       studentTokenStore.setStudentToken(data.data.studentInfo, data.data.stuNum, data.data.token)
-      ElMessage.success(data.msg || '登录成功')
-      await router.replace(resolvePostLoginPath(typeof route.query.redirect === 'string' ? route.query.redirect : '', 'student'))
+      ElMessage.success(data.msg || '学生登录成功')
+      await router.replace(getDefaultHomePath('student'))
       return
     }
 
@@ -123,7 +133,7 @@ async function handleLogin() {
       }),
     )
     ElMessage.success(data.msg || '管理员登录成功')
-    await router.replace(resolvePostLoginPath(typeof route.query.redirect === 'string' ? route.query.redirect : '', 'admin'))
+    await router.replace(getDefaultHomePath('admin'))
   } catch (error) {
     console.error('登录请求失败:', error)
     ElMessage.error('服务器异常或网络错误')

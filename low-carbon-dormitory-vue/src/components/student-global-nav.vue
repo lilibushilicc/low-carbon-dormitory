@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAdminTokenStore } from '@/stores/admin-token'
 import { useStudentTokenStore } from '@/stores/student-token'
-import { redirectToUnifiedLogin } from '@/utils/unified-login'
 
 const router = useRouter()
 const route = useRoute()
@@ -24,7 +23,9 @@ const topNavItems = [
   { title: '个人信息', desc: '查看学生档案和宿舍信息', path: '/personal-info' },
 ] as const
 
-const billingItems = [{ title: '宿舍水电费', desc: '查看余额、用量和账单', path: '/water-electricity' }] as const
+const billingItems = [
+  { title: '宿舍水电费', desc: '查看余额、用量和账单', path: '/water-electricity' },
+] as const
 
 const lowCarbonItems = [
   { title: '个人低碳看板', desc: '查看个人和宿舍低碳表现', path: '/low-carbon-dashboard' },
@@ -33,7 +34,9 @@ const lowCarbonItems = [
 ] as const
 
 const studentName = computed(() => studentInfo.value?.name || '同学')
-const dormLabelText = computed(() => (dormLabel.value && dormLabel.value !== '-' ? dormLabel.value : '暂未识别宿舍'))
+const dormLabelText = computed(() =>
+  dormLabel.value && dormLabel.value !== '-' ? dormLabel.value : '暂未识别宿舍',
+)
 
 function goTo(path: string) {
   if (
@@ -59,11 +62,11 @@ function toggleGroup(group: 'lowCarbon') {
   expandedGroups.value[group] = !expandedGroups.value[group]
 }
 
-function logout() {
+async function logout() {
   adminTokenStore.clearAdminToken()
   studentTokenStore.clearStudentToken()
   localStorage.removeItem('loginUser')
-  redirectToUnifiedLogin(true, { role: 'student' })
+  await router.replace('/login')
 }
 </script>
 
