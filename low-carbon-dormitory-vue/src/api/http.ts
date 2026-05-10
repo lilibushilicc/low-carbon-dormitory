@@ -1,10 +1,19 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 
 const STUDENT_TOKEN_KEY = 'studentToken'
 const ADMIN_TOKEN_KEY = 'adminToken'
 
+function resolveApiBaseUrl() {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+  if (configuredBaseUrl) {
+    return configuredBaseUrl === '/' ? '' : configuredBaseUrl.replace(/\/+$/, '')
+  }
+
+  return import.meta.env.DEV ? '/api/dorm' : ''
+}
+
 export const http = axios.create({
-  baseURL: '/api/dorm',
+  baseURL: resolveApiBaseUrl(),
   timeout: 10000,
   headers: {
     'X-Requested-With': 'XMLHttpRequest',

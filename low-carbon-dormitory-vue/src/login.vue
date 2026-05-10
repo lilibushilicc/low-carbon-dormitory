@@ -4,78 +4,112 @@
     <div class="login-haze login-haze--right"></div>
 
     <section class="login-panel">
-      <div class="login-copy">
-        <p class="login-copy__eyebrow">校园低碳管理平台</p>
-        <h1>统一登录</h1>
+      <div class="login-story">
+        <div class="login-story__intro">
+          <p class="login-story__eyebrow">低碳宿舍管理平台</p>
+          <h1>聚焦低碳宿舍管理的统一入口</h1>
+          <p class="login-story__desc">
+            围绕宿舍账务、低碳积分与日常运营建立统一登录界面，让学生端与管理端在同一套绿色视觉体系下快速进入各自工作场景。
+          </p>
+        </div>
+
+        <div class="login-story__grid">
+          <article class="login-story__card">
+            <span>学生端</span>
+            <strong>面向入住学生的自助服务入口</strong>
+            <ul class="login-story__list">
+              <li>查看个人信息与宿舍状态</li>
+              <li>处理水电账单与充值缴费</li>
+              <li>参与低碳积分与奖励兑换</li>
+            </ul>
+          </article>
+          <article class="login-story__card">
+            <span>管理端</span>
+            <strong>面向宿舍管理的运营工作台</strong>
+            <ul class="login-story__list">
+              <li>总览宿舍运行与低碳数据</li>
+              <li>维护规则、奖品与活动配置</li>
+              <li>处理学生账户与扣费管理</li>
+            </ul>
+          </article>
+        </div>
       </div>
 
-      <div class="login-switch" role="tablist" aria-label="登录角色切换">
-        <button
-          type="button"
-          class="login-switch__item"
-          :class="{ 'is-active': role === 'student' }"
-          @click="selectRole('student')"
+      <div class="login-form-panel">
+        <div class="login-copy">
+          <p class="login-copy__eyebrow">Unified Access</p>
+          <h2>登录系统</h2>
+          <p class="login-copy__desc">选择角色后输入账号信息，即可进入对应工作台。</p>
+        </div>
+
+        <div class="login-switch" role="tablist" aria-label="登录角色切换">
+          <button
+            type="button"
+            class="login-switch__item"
+            :class="{ 'is-active': role === 'student' }"
+            @click="selectRole('student')"
+          >
+            学生登录
+          </button>
+          <button
+            type="button"
+            class="login-switch__item"
+            :class="{ 'is-active': role === 'admin' }"
+            @click="selectRole('admin')"
+          >
+            管理员登录
+          </button>
+        </div>
+
+        <el-form
+          ref="loginFormRef"
+          :model="loginForm"
+          :rules="loginRules"
+          class="login-form"
+          label-position="top"
+          @keyup.enter="handleLogin"
         >
-          学生登录
-        </button>
-        <button
-          type="button"
-          class="login-switch__item"
-          :class="{ 'is-active': role === 'admin' }"
-          @click="selectRole('admin')"
-        >
-          管理员登录
-        </button>
-      </div>
+          <el-form-item prop="username">
+            <template #label>
+              <span class="field-label">{{ usernameLabel }}</span>
+            </template>
+            <el-input
+              v-model="loginForm.username"
+              :placeholder="usernamePlaceholder"
+              size="large"
+              clearable
+            />
+          </el-form-item>
 
-      <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        class="login-form"
-        label-position="top"
-        @keyup.enter="handleLogin"
-      >
-        <el-form-item prop="username">
-          <template #label>
-            <span class="field-label">{{ usernameLabel }}</span>
-          </template>
-          <el-input
-            v-model="loginForm.username"
-            :placeholder="usernamePlaceholder"
-            size="large"
-            clearable
-          />
-        </el-form-item>
+          <el-form-item prop="password">
+            <template #label>
+              <span class="field-label">密码</span>
+            </template>
+            <el-input
+              v-model="loginForm.password"
+              type="password"
+              placeholder="请输入密码"
+              size="large"
+              show-password
+              clearable
+            />
+          </el-form-item>
 
-        <el-form-item prop="password">
-          <template #label>
-            <span class="field-label">密码</span>
-          </template>
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="请输入密码"
-            size="large"
-            show-password
-            clearable
-          />
-        </el-form-item>
+          <el-form-item class="login-form__action">
+            <el-button type="primary" class="login-submit" :loading="loading" @click="handleLogin">
+              {{ submitLabel }}
+            </el-button>
+          </el-form-item>
+        </el-form>
 
-        <el-form-item class="login-form__action">
-          <el-button type="primary" class="login-submit" :loading="loading" @click="handleLogin">
-            {{ submitLabel }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-
-      <div class="login-shortcuts">
-        <button type="button" class="login-shortcuts__link" @click="goToStudentHome">
-          进入学生端
-        </button>
-        <button type="button" class="login-shortcuts__link" @click="goToAdminHome">
-          进入管理端
-        </button>
+        <div class="login-shortcuts">
+          <button type="button" class="login-shortcuts__link" @click="goToStudentHome">
+            直接进入学生端
+          </button>
+          <button type="button" class="login-shortcuts__link" @click="goToAdminHome">
+            直接进入管理端
+          </button>
+        </div>
       </div>
     </section>
   </div>
@@ -218,7 +252,7 @@ async function handleLogin() {
   padding: 28px 18px;
   background:
     radial-gradient(circle at 16% 22%, rgba(148, 209, 182, 0.22), transparent 26%),
-    radial-gradient(circle at 80% 78%, rgba(231, 217, 165, 0.2), transparent 30%),
+    radial-gradient(circle at 80% 78%, rgba(231, 217, 165, 0.22), transparent 30%),
     linear-gradient(135deg, #edf7f1 0%, #eef6f1 42%, #f6faee 100%);
 }
 
@@ -231,8 +265,9 @@ async function handleLogin() {
   aspect-ratio: 1;
   border-radius: 999px;
   filter: blur(68px);
-  opacity: 0.38;
+  opacity: 0.4;
   pointer-events: none;
+  animation: float 9s ease-in-out infinite;
 }
 
 .login-haze--left {
@@ -245,60 +280,186 @@ async function handleLogin() {
   right: -10vw;
   bottom: 12vh;
   background: rgba(233, 219, 164, 0.68);
+  animation-delay: -4.5s;
 }
 
 .login-panel {
   position: relative;
   z-index: 1;
-  width: min(540px, 100%);
-  padding: clamp(20px, 3vw, 32px);
-  border-radius: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
+  width: min(1120px, 100%);
+  border-radius: 32px;
   border: 1px solid rgba(255, 255, 255, 0.68);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.84);
   box-shadow: var(--login-card-shadow);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.login-story,
+.login-form-panel {
+  position: relative;
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.login-story {
+  display: grid;
+  align-content: space-between;
+  gap: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(166, 218, 191, 0.28), transparent 28%),
+    linear-gradient(155deg, rgba(244, 250, 246, 0.92), rgba(233, 244, 237, 0.9));
+}
+
+.login-story::after {
+  content: '';
+  position: absolute;
+  right: -36px;
+  bottom: -54px;
+  width: 220px;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: rgba(230, 216, 164, 0.18);
+  filter: blur(8px);
+}
+
+.login-story__intro {
+  display: grid;
+  gap: 0;
+}
+
+.login-story__eyebrow,
+.login-copy__eyebrow {
+  margin: 0;
+  color: #557865;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.login-story h1 {
+  margin: 16px 0 0;
+  max-width: 560px;
+  color: var(--login-green-deep);
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+  font-weight: 900;
+  font-family: 'STZhongsong', 'Noto Serif SC', 'Source Han Serif SC', serif;
+}
+
+.login-story__desc {
+  margin: 18px 0 0;
+  max-width: 520px;
+  color: #557164;
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.login-story__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.login-story__card {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 20px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(116, 160, 134, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.56);
+}
+
+.login-story__card span {
+  color: #5e7d6d;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.login-story__card strong {
+  color: #234939;
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.login-story__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  color: #5f786b;
+  line-height: 1.75;
+}
+
+.login-story__list li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.login-story__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4c956d 0%, #76b18d 100%);
+  box-shadow: 0 0 0 4px rgba(76, 149, 109, 0.12);
+}
+
+.login-copy__desc {
+  margin: 0;
+  color: #5f786b;
+  line-height: 1.75;
+}
+
+.login-form-panel {
+  display: grid;
+  align-content: center;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.88);
 }
 
 .login-copy {
   display: grid;
-  gap: 4px;
-  margin-bottom: 18px;
+  gap: 10px;
 }
 
-.login-copy__eyebrow {
-  margin: 0;
-  color: #557865;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
-.login-copy h1 {
+.login-copy h2 {
   margin: 0;
   color: var(--login-green-deep);
-  font-size: clamp(36px, 6vw, 56px);
-  line-height: 1.02;
-  letter-spacing: -0.05em;
-  font-weight: 900;
-  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.1;
 }
 
 .login-switch {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(237, 245, 240, 0.9);
+  border: 1px solid rgba(216, 229, 222, 0.92);
 }
 
 .login-switch__item {
-  min-height: 46px;
+  min-height: 48px;
   border-radius: 12px;
-  border: 1px solid #d8e5de;
-  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid transparent;
+  background: transparent;
   color: #335845;
   font: inherit;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
   transition:
     transform 0.18s ease,
@@ -337,9 +498,9 @@ async function handleLogin() {
 }
 
 :deep(.el-input__wrapper) {
-  min-height: 46px;
+  min-height: 48px;
   padding: 0 12px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
   box-shadow: 0 0 0 1px var(--login-line) inset !important;
   transition: box-shadow 0.18s ease, transform 0.18s ease;
@@ -363,15 +524,15 @@ async function handleLogin() {
 }
 
 .login-form__action {
-  margin-top: 2px;
-  margin-bottom: 12px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .login-submit {
   width: 100%;
-  min-height: 48px;
+  min-height: 50px;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.01em;
@@ -387,8 +548,8 @@ async function handleLogin() {
 
 .login-shortcuts {
   display: flex;
-  justify-content: center;
-  gap: 18px;
+  justify-content: space-between;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -408,43 +569,43 @@ async function handleLogin() {
   transform: translateY(-1px);
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@media (max-width: 960px) {
+  .login-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .login-story__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 720px) {
   .login-shell {
     padding: 16px;
   }
 
   .login-panel {
-    width: min(500px, 100%);
-    padding: 18px 16px;
-    border-radius: 16px;
+    border-radius: 24px;
   }
 
-  .login-copy {
-    gap: 4px;
-    margin-bottom: 16px;
-  }
-
-  .login-switch {
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  .login-switch__item {
-    min-height: 44px;
-    font-size: 13px;
-  }
-
-  :deep(.el-input__wrapper) {
-    min-height: 44px;
-  }
-
-  .login-submit {
-    min-height: 46px;
-    font-size: 14px;
+  .login-story,
+  .login-form-panel {
+    padding: 20px 18px;
   }
 
   .login-shortcuts {
-    gap: 14px;
+    justify-content: center;
   }
 }
 </style>

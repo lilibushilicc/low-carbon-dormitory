@@ -79,14 +79,13 @@
 
 ### 2.3 接入与部署痕迹
 
-- 前端构建基路径为 `/dorm/`，见 `low-carbon-dormitory-vue/vite.config.ts`。
+- 前端构建基路径为 `/`，见 `low-carbon-dormitory-vue/vite.config.ts`。
 - 前端同时支持统一登录跳转参数，见 `low-carbon-dormitory-vue/src/utils/unified-login.ts`。
 - 前端开发时通过 Vite 代理把 `/api/dorm` 和 `/api` 转发到 `http://localhost:3000`。
 - 后端默认运行在 `3000` 端口。
 
 推断：
 
-- 系统大概率会以 `/dorm/` 作为子路径部署。
 - 系统大概率需要挂在统一登录系统之后，支持携带 `redirect`、`role`、SSO 相关查询参数进入应用。
 
 ---
@@ -258,7 +257,7 @@ Axios 实例定义在 `src/api/http.ts`。
 
 关键行为：
 
-- `baseURL` 为 `/api/dorm`。
+- `baseURL` 在开发环境默认是 `/api/dorm`，生产环境默认是空字符串，也可以通过 `VITE_API_BASE_URL` 覆盖。
 - 请求超时为 10 秒。
 - 非登录请求会自动附加 `Authorization: Bearer <token>`。
 - 如果访问的是 `/admin/*`，优先使用管理员 token。
