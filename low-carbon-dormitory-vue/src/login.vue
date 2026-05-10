@@ -1,50 +1,88 @@
 <template>
-  <div class="login">
-    <div class="login-box">
-      <div class="login-title">低碳宿舍管理系统</div>
+  <div class="login-shell">
+    <div class="login-haze login-haze--left"></div>
+    <div class="login-haze login-haze--right"></div>
 
-      <el-radio-group v-model="role" class="role-switch">
-        <el-radio-button value="student">学生登录</el-radio-button>
-        <el-radio-button value="admin">管理员登录</el-radio-button>
-      </el-radio-group>
+    <section class="login-panel">
+      <div class="login-copy">
+        <p class="login-copy__eyebrow">校园低碳管理平台</p>
+        <h1>统一登录</h1>
+      </div>
+
+      <div class="login-switch" role="tablist" aria-label="登录角色切换">
+        <button
+          type="button"
+          class="login-switch__item"
+          :class="{ 'is-active': role === 'student' }"
+          @click="selectRole('student')"
+        >
+          学生登录
+        </button>
+        <button
+          type="button"
+          class="login-switch__item"
+          :class="{ 'is-active': role === 'admin' }"
+          @click="selectRole('admin')"
+        >
+          管理员登录
+        </button>
+      </div>
 
       <el-form
         ref="loginFormRef"
         :model="loginForm"
         :rules="loginRules"
-        label-width="80px"
+        class="login-form"
+        label-position="top"
         @keyup.enter="handleLogin"
       >
-        <el-form-item :label="role === 'student' ? '学号' : '账号'" prop="username">
+        <el-form-item prop="username">
+          <template #label>
+            <span class="field-label">{{ usernameLabel }}</span>
+          </template>
           <el-input
             v-model="loginForm.username"
-            :placeholder="role === 'student' ? '请输入学号' : '请输入管理员账号'"
+            :placeholder="usernamePlaceholder"
+            size="large"
             clearable
           />
         </el-form-item>
 
-        <el-form-item label="密码" prop="password">
+        <el-form-item prop="password">
+          <template #label>
+            <span class="field-label">密码</span>
+          </template>
           <el-input
             v-model="loginForm.password"
             type="password"
             placeholder="请输入密码"
+            size="large"
             show-password
             clearable
           />
         </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" class="login-btn" :loading="loading" @click="handleLogin">
-            {{ role === 'student' ? '学生登录' : '管理员登录' }}
+        <el-form-item class="login-form__action">
+          <el-button type="primary" class="login-submit" :loading="loading" @click="handleLogin">
+            {{ submitLabel }}
           </el-button>
         </el-form-item>
       </el-form>
-    </div>
+
+      <div class="login-shortcuts">
+        <button type="button" class="login-shortcuts__link" @click="goToStudentHome">
+          进入学生端
+        </button>
+        <button type="button" class="login-shortcuts__link" @click="goToAdminHome">
+          进入管理端
+        </button>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -72,9 +110,32 @@ const loginForm = reactive<LoginForm>({
   password: '',
 })
 
+const usernameLabel = computed(() => (role.value === 'student' ? '学号' : '账号'))
+const usernamePlaceholder = computed(() =>
+  role.value === 'student' ? '请输入学号' : '请输入管理员账号',
+)
+const submitLabel = computed(() =>
+  role.value === 'student' ? '登录并进入学生端' : '登录并进入管理端',
+)
+
 const loginRules: FormRules<LoginForm> = {
-  username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入账号信息', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+}
+
+function selectRole(nextRole: 'student' | 'admin') {
+  if (loading.value || role.value === nextRole) {
+    return
+  }
+  role.value = nextRole
+}
+
+function goToStudentHome() {
+  router.push(getDefaultHomePath('student'))
+}
+
+function goToAdminHome() {
+  router.push(getDefaultHomePath('admin'))
 }
 
 async function handleLogin() {
@@ -144,122 +205,246 @@ async function handleLogin() {
 </script>
 
 <style scoped>
-.login {
-  width: 100vw;
+.login-shell {
+  --login-green: #3f8a63;
+  --login-green-deep: #234939;
+  --login-line: rgba(79, 120, 96, 0.18);
+  --login-card-shadow: 0 32px 90px rgba(47, 88, 65, 0.12);
+  position: relative;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(128, 186, 152, 0.25), transparent 38%),
-    radial-gradient(circle at 88% 86%, rgba(86, 138, 112, 0.2), transparent 42%),
-    linear-gradient(140deg, #e9f4ee 0%, #dcecdf 48%, #edf7f1 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: clamp(16px, 3vw, 32px);
-}
-
-.login-box {
-  width: min(520px, 100%);
-  padding: clamp(22px, 3.2vw, 36px);
-  background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid rgba(53, 101, 76, 0.12);
-  box-shadow:
-    0 24px 54px rgba(39, 80, 60, 0.15),
-    0 8px 18px rgba(39, 80, 60, 0.08);
-  backdrop-filter: blur(2px);
-}
-
-.login-title {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: clamp(24px, 3.6vw, 32px);
-  font-weight: 700;
-  color: #244536;
-  line-height: 1.25;
-  letter-spacing: 0.01em;
-  font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
-}
-
-.role-switch {
-  width: 100%;
-  margin-bottom: 18px;
+  overflow: hidden;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: #f2f8f4;
+  place-items: center;
+  padding: 28px 18px;
+  background:
+    radial-gradient(circle at 16% 22%, rgba(148, 209, 182, 0.22), transparent 26%),
+    radial-gradient(circle at 80% 78%, rgba(231, 217, 165, 0.2), transparent 30%),
+    linear-gradient(135deg, #edf7f1 0%, #eef6f1 42%, #f6faee 100%);
+}
+
+.login-haze {
+  position: absolute;
+  inset: auto;
+  width: 32vw;
+  min-width: 260px;
+  max-width: 520px;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  filter: blur(68px);
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.login-haze--left {
+  left: -8vw;
+  top: 16vh;
+  background: rgba(160, 221, 191, 0.78);
+}
+
+.login-haze--right {
+  right: -10vw;
+  bottom: 12vh;
+  background: rgba(233, 219, 164, 0.68);
+}
+
+.login-panel {
+  position: relative;
+  z-index: 1;
+  width: min(540px, 100%);
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--login-card-shadow);
+  backdrop-filter: blur(12px);
+}
+
+.login-copy {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+
+.login-copy__eyebrow {
+  margin: 0;
+  color: #557865;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.login-copy h1 {
+  margin: 0;
+  color: var(--login-green-deep);
+  font-size: clamp(36px, 6vw, 56px);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+  font-weight: 900;
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+}
+
+.login-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.login-switch__item {
+  min-height: 46px;
   border-radius: 12px;
-  padding: 3px;
+  border: 1px solid #d8e5de;
+  background: rgba(255, 255, 255, 0.82);
+  color: #335845;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
-.role-switch :deep(.el-radio-button__inner) {
-  width: 100%;
-  border-radius: 10px !important;
-  border: none !important;
-  background: transparent;
-  color: #2f5141;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  box-shadow: none !important;
+.login-switch__item:hover {
+  transform: translateY(-1px);
 }
 
-.role-switch :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background: linear-gradient(135deg, #2f8f68 0%, #2a7b59 100%);
+.login-switch__item.is-active {
+  border-color: transparent;
   color: #fff;
+  background: linear-gradient(135deg, #438d66 0%, #347b57 100%);
+  box-shadow: 0 16px 34px rgba(55, 123, 87, 0.24);
+}
+
+.login-form {
+  display: grid;
+}
+
+.field-label {
+  color: #2d4d3d;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 :deep(.el-form-item) {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 :deep(.el-form-item__label) {
-  color: #2b4c3d;
-  font-weight: 600;
+  padding-bottom: 6px;
 }
 
 :deep(.el-input__wrapper) {
+  min-height: 46px;
+  padding: 0 12px;
   border-radius: 12px;
-  background: #f8fbf9;
-  box-shadow: 0 0 0 1px #d7e4dd inset !important;
-  transition: box-shadow 0.16s ease;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--login-line) inset !important;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #8ab8a0 inset !important;
+  box-shadow: 0 0 0 1px rgba(74, 142, 104, 0.34) inset !important;
 }
 
 :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1.5px #2f8f68 inset !important;
+  box-shadow: 0 0 0 1.5px rgba(63, 138, 99, 0.76) inset !important;
 }
 
-.login-btn {
+:deep(.el-input__inner) {
+  color: #294737;
+  font-size: 13px;
+}
+
+:deep(.el-input__inner::placeholder) {
+  color: #9bad9f;
+}
+
+.login-form__action {
+  margin-top: 2px;
+  margin-bottom: 12px;
+}
+
+.login-submit {
   width: 100%;
-  height: 46px;
-  border-radius: 12px;
+  min-height: 48px;
   border: none;
+  border-radius: 12px;
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  background: linear-gradient(135deg, #2f8f68 0%, #2a7b59 100%);
-  box-shadow: 0 10px 22px rgba(43, 120, 84, 0.24);
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  background: linear-gradient(135deg, #438d66 0%, #357c58 100%);
+  box-shadow: 0 18px 36px rgba(56, 125, 88, 0.24);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.login-btn:hover {
+.login-submit:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 26px rgba(43, 120, 84, 0.3);
+  box-shadow: 0 20px 38px rgba(56, 125, 88, 0.28);
 }
 
-@media (max-width: 640px) {
-  .login-box {
-    border-radius: 16px;
-    padding: 18px;
+.login-shortcuts {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.login-shortcuts__link {
+  border: none;
+  background: transparent;
+  color: #3b654f;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.login-shortcuts__link:hover {
+  color: #25533f;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 720px) {
+  .login-shell {
+    padding: 16px;
   }
 
-  .login-title {
+  .login-panel {
+    width: min(500px, 100%);
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+
+  .login-copy {
+    gap: 4px;
     margin-bottom: 16px;
   }
 
-  :deep(.el-form-item__label) {
-    padding-bottom: 6px;
+  .login-switch {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .login-switch__item {
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  :deep(.el-input__wrapper) {
+    min-height: 44px;
+  }
+
+  .login-submit {
+    min-height: 46px;
+    font-size: 14px;
+  }
+
+  .login-shortcuts {
+    gap: 14px;
   }
 }
 </style>

@@ -1,1 +1,0 @@
-var e={student:`/index-student`,admin:`/manager/home`};function t(t){return e[t]}export{t};
