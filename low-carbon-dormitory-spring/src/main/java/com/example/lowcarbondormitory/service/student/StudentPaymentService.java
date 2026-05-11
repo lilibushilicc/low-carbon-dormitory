@@ -37,10 +37,8 @@ public class StudentPaymentService {
     private static final String FEE_TYPE_WATER = "WATER";
     private static final String FEE_TYPE_ELECTRIC = "ELECTRIC";
     private static final String OPERATION_RECHARGE = "RECHARGE";
-    private static final String OPERATION_DEDUCT = "DEDUCT";
     private static final String OPERATION_REFRESH = "REFRESH";
     private static final String PAY_TYPE_SYSTEM = "SYSTEM";
-    private static final BigDecimal SECONDS_PER_DAY = BigDecimal.valueOf(86_400L);
     private static final int MAX_HISTORY_RECORDS_PER_DORM = 30;
 
     @Autowired
@@ -79,7 +77,6 @@ public class StudentPaymentService {
         DormFee dormFee = dormFeeAccountService.getOrCreateForUpdate(resolvedDormId);
 
         LocalDateTime operateTime = LocalDateTime.now();
-        settlePeriodicCharges(student, resolvedDormId, dormFee, operateTime);
         DormFeeHistory latestElectricAnchor = findLatestAnchorRecord(resolvedDormId, FEE_TYPE_ELECTRIC, operateTime);
         DormFeeHistory latestWaterAnchor = findLatestAnchorRecord(resolvedDormId, FEE_TYPE_WATER, operateTime);
         BigDecimal electricBalanceBeforeRefresh = dormFee.getElectricityBalance();
@@ -268,12 +265,11 @@ public class StudentPaymentService {
         DormFee dormFee = dormFeeAccountService.getOrCreateForUpdate(dormId);
 
         LocalDateTime paymentTime = LocalDateTime.now();
-        settlePeriodicCharges(student, dormId, dormFee, paymentTime);
         DormFeeHistory latestAnchor = findLatestAnchorRecord(dormId, feeType, paymentTime);
 
         BigDecimal balanceBefore = dormFeeAccountService.getBalance(dormFee, feeType);
         BigDecimal balanceAfter = dormFeeAccountService.addBalance(dormFee, feeType, request.getAmount());
-        updateDormFeeSnapshot(dormFee, paymentTime);
+        persistDormFee(dormFee);
 
         String payerAccount = request.getPayerAccount() == null || request.getPayerAccount().isBlank()
                 ? student.getStuNum()
@@ -299,80 +295,10 @@ public class StudentPaymentService {
         return response;
     }
 
-    private void settlePeriodicCharges(StudentBase student, Long dormId, DormFee dormFee, LocalDateTime operateTime) {
-        if (student == null || dormId == null || dormFee == null || operateTime == null) {
+    private void persistDormFee(DormFee dormFee) {
+        if (dormFee == null) {
             return;
         }
-
-        settleFeeIfNeeded(student, dormId, dormFee, FEE_TYPE_ELECTRIC, operateTime);
-        settleFeeIfNeeded(student, dormId, dormFee, FEE_TYPE_WATER, operateTime);
-        updateDormFeeSnapshot(dormFee, operateTime);
-    }
-
-    private void settleFeeIfNeeded(
-            StudentBase student,
-            Long dormId,
-            DormFee dormFee,
-            String feeType,
-            LocalDateTime operateTime
-    ) {
-        BigDecimal periodicCharge = calculatePeriodicCharge(dormId, dormFee, feeType, operateTime);
-        if (periodicCharge.compareTo(BigDecimal.ZERO) <= 0) {
-            return;
-        }
-
-        BigDecimal balanceAfter = dormFeeAccountService.deductBalance(dormFee, feeType, periodicCharge);
-        insertHistory(student, dormId, feeType, OPERATION_DEDUCT, PAY_TYPE_SYSTEM,
-                periodicCharge, balanceAfter, operateTime, student.getStuNum());
-    }
-
-    private BigDecimal calculatePeriodicCharge(Long dormId, DormFee dormFee, String feeType, LocalDateTime operateTime) {
-        DormFeeHistory latestAnchor = findLatestAnchorRecord(dormId, feeType, operateTime);
-        if (latestAnchor == null || latestAnchor.getCreateTime() == null) {
-            return BigDecimal.ZERO;
-        }
-
-        DormFeeHistory previousAnchor = findPreviousAnchorRecord(dormId, feeType, latestAnchor);
-        if (previousAnchor == null || previousAnchor.getCreateTime() == null) {
-            return BigDecimal.ZERO;
-        }
-
-        BigDecimal latestBalance = dormFeeAccountService.nullSafe(latestAnchor.getBalanceAfter());
-        BigDecimal latestAmount = dormFeeAccountService.nullSafe(latestAnchor.getAmount());
-        BigDecimal previousBalance = dormFeeAccountService.nullSafe(previousAnchor.getBalanceAfter());
-        BigDecimal consumedAmount = previousBalance.subtract(latestBalance.subtract(latestAmount));
-        if (consumedAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            return BigDecimal.ZERO;
-        }
-
-        long baselineSeconds = Math.max(Duration.between(previousAnchor.getCreateTime(), latestAnchor.getCreateTime()).getSeconds(), 1L);
-        BigDecimal baselineDays = BigDecimal.valueOf(baselineSeconds).divide(SECONDS_PER_DAY, 8, RoundingMode.HALF_UP);
-        BigDecimal dailyFee = consumedAmount.divide(baselineDays, 4, RoundingMode.HALF_UP);
-
-        LocalDateTime lastDeductTime = dormFee.getLastDeductTime();
-        if (lastDeductTime == null || lastDeductTime.isAfter(operateTime)) {
-            lastDeductTime = latestAnchor.getCreateTime();
-        }
-        if (lastDeductTime == null || !lastDeductTime.isBefore(operateTime)) {
-            return BigDecimal.ZERO;
-        }
-
-        long settleSeconds = Math.max(Duration.between(lastDeductTime, operateTime).getSeconds(), 0L);
-        if (settleSeconds <= 0L) {
-            return BigDecimal.ZERO;
-        }
-
-        BigDecimal settleDays = BigDecimal.valueOf(settleSeconds).divide(SECONDS_PER_DAY, 8, RoundingMode.HALF_UP);
-        BigDecimal periodicCharge = dailyFee.multiply(settleDays).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal currentBalance = dormFeeAccountService.getBalance(dormFee, feeType).setScale(2, RoundingMode.HALF_UP);
-        if (periodicCharge.compareTo(currentBalance) > 0) {
-            periodicCharge = currentBalance;
-        }
-        return periodicCharge.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : periodicCharge;
-    }
-
-    private void updateDormFeeSnapshot(DormFee dormFee, LocalDateTime operateTime) {
-        dormFee.setLastDeductTime(operateTime);
         dormFeeMapper.updateById(dormFee);
     }
 

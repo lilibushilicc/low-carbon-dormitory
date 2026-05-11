@@ -1,5 +1,5 @@
 <template>
-  <div class="board-page">
+  <div class="board-page" :class="{ 'board-page--admin': props.adminMode }">
     <section class="board-content" v-loading="loading">
       <el-alert
         v-if="errorMessage"
@@ -77,7 +77,7 @@
 
         <section class="card-grid">
           <article
-            v-for="dorm in topDorms"
+            v-for="dorm in pagedDorms"
             :key="dorm.dormId"
             class="dorm-card card"
             :class="{ 'dorm-card--stale': !dorm.currentPeriodParticipating }"
@@ -109,6 +109,18 @@
           </article>
         </section>
 
+        <div class="card-grid__footer card">
+          <span class="card-grid__result">{{ pageMetaText }} · 当前显示 {{ pageRangeText }}</span>
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            background
+            layout="prev, pager, next"
+            :total="filteredDorms.length"
+            :hide-on-single-page="filteredDorms.length <= pageSize"
+          />
+        </div>
+
         <section class="panel card">
           <div class="panel__head">
             <div>
@@ -117,40 +129,62 @@
             </div>
           </div>
 
-          <el-table :data="filteredDorms" stripe>
-            <el-table-column prop="label" label="宿舍" min-width="120" />
-            <el-table-column prop="building" label="楼栋" min-width="90" />
-            <el-table-column label="入住人数" min-width="100">
+          <el-table :data="pagedDorms" stripe class="dorm-detail-table">
+            <el-table-column prop="label" label="宿舍" min-width="132" />
+            <el-table-column prop="building" label="楼栋" min-width="96" />
+            <el-table-column label="入住人数" min-width="88">
               <template #default="{ row }">{{ row.residentCount }}</template>
             </el-table-column>
-            <el-table-column label="入住学生" min-width="240">
-              <template #default="{ row }">{{ row.residents?.length ? row.residents.join('、') : '-' }}</template>
-            </el-table-column>
-            <el-table-column label="当前积分" min-width="120">
-              <template #default="{ row }">{{ formatScore(row.carbonScore) }}</template>
-            </el-table-column>
-            <el-table-column label="周期扣费" min-width="120">
-              <template #default="{ row }">{{ formatCurrency(row.totalFee) }}</template>
-            </el-table-column>
-            <el-table-column label="总碳排放" min-width="120">
-              <template #default="{ row }">{{ formatCarbon(row.totalCarbon) }}</template>
-            </el-table-column>
-            <el-table-column label="状态" min-width="140">
+            <el-table-column label="入住学生" min-width="280">
               <template #default="{ row }">
-                <span class="period-badge" :class="{ 'period-badge--stale': !row.currentPeriodParticipating }">
-                  {{ row.currentPeriodParticipating ? '本周期参与排名' : '仅展示历史结果' }}
-                </span>
+                <div class="table-residents">{{ row.residents?.length ? row.residents.join('、') : '-' }}</div>
               </template>
             </el-table-column>
-            <el-table-column label="最近更新" min-width="180">
-              <template #default="{ row }">{{ formatDateTime(row.dataUpdatedAt) }}</template>
+            <el-table-column label="关键指标" min-width="250">
+              <template #default="{ row }">
+                <div class="table-metrics">
+                  <span><b>积分</b>{{ formatScore(row.carbonScore) }}</span>
+                  <span><b>扣费</b>{{ formatCurrency(row.totalFee) }}</span>
+                  <span><b>总碳</b>{{ formatCarbon(row.totalCarbon) }}</span>
+                </div>
+              </template>
             </el-table-column>
-            <el-table-column label="操作" min-width="110" fixed="right">
+            <el-table-column label="状态与更新" min-width="220">
+              <template #default="{ row }">
+                <div class="table-state">
+                  <span class="period-badge" :class="{ 'period-badge--stale': !row.currentPeriodParticipating }">
+                    {{ row.currentPeriodParticipating ? '本周期参与排名' : '仅展示历史结果' }}
+                  </span>
+                  <small>最近更新 {{ formatDateTime(row.dataUpdatedAt) }}</small>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态标签" min-width="108">
+              <template #default="{ row }">
+                <span class="status-badge" :class="'status-badge--' + row.statusKey">{{ row.statusText }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="96" fixed="right">
               <template #default="{ row }">
                 <button type="button" class="detail-link" @click="openDormDetail(row)">查看</button>
               </template>
             </el-table-column>
           </el-table>
+
+          <div class="panel__footer">
+            <span class="panel__result">
+              {{ props.adminMode ? '当前页宿舍' : '当前筛选结果' }} {{ pageMetaText }} · 当前显示 {{ pageRangeText }}
+            </span>
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              background
+              layout="prev, pager, next, sizes"
+              :page-sizes="pageSizeOptions"
+              :total="filteredDorms.length"
+              :hide-on-single-page="filteredDorms.length <= pageSize"
+            />
+          </div>
         </section>
       </template>
     </section>
@@ -158,7 +192,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -186,14 +220,28 @@ const dashboard = ref<GlobalDashboardData | null>(null)
 const searchKeyword = ref('')
 const buildingFilter = ref('all')
 const periodStatusFilter = ref<'all' | 'current' | 'stale'>('all')
+const currentPage = ref(1)
+const pageSize = ref(6)
+const pageSizeOptions = [6, 12, 18, 24]
 
 const studentTokenStore = useStudentTokenStore()
 const router = useRouter()
 const { stuNum, dormId } = storeToRefs(studentTokenStore)
 
+const comparableDormCount = computed(() =>
+  (dashboard.value?.dorms ?? []).filter((dorm) =>
+    Boolean(dorm.dataUpdatedAt) ||
+    Number(dorm.carbonScore) > 0 ||
+    Number(dorm.totalFee) > 0 ||
+    Number(dorm.totalCarbon) > 0,
+  ).length,
+)
+
 const decoratedDorms = computed<DecoratedDorm[]>(() =>
   (dashboard.value?.dorms ?? []).map((dorm) => {
-    const status = getDormStatus(dorm)
+    const status = getDormStatus(dorm, {
+      comparableDormCount: comparableDormCount.value,
+    })
     return {
       ...dorm,
       statusKey: status.key,
@@ -239,7 +287,39 @@ const filteredDorms = computed(() => {
     .sort(compareDormRanking)
 })
 
-const topDorms = computed(() => filteredDorms.value.slice(0, 6))
+const pagedDorms = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredDorms.value.slice(start, start + pageSize.value)
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredDorms.value.length / pageSize.value)))
+
+const pageRangeText = computed(() => {
+  if (!filteredDorms.value.length) {
+    return '0 / 0'
+  }
+
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, filteredDorms.value.length)
+  return `${start}-${end} / ${filteredDorms.value.length}`
+})
+
+const pageMetaText = computed(() => `第 ${currentPage.value} 页 / 共 ${totalPages.value} 页 / 总数 ${filteredDorms.value.length}`)
+
+watch([searchKeyword, buildingFilter, periodStatusFilter], () => {
+  currentPage.value = 1
+})
+
+watch(filteredDorms, (value) => {
+  const maxPage = Math.max(1, Math.ceil(value.length / pageSize.value))
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage
+  }
+})
+
+watch(pageSize, () => {
+  currentPage.value = 1
+})
 
 function openDormDetail(dorm: Pick<DecoratedDorm, 'dormId' | 'label'>) {
   if (props.adminMode && dorm.dormId) {
@@ -283,10 +363,20 @@ onMounted(loadDashboard)
   min-height: auto;
 }
 
+.board-page--admin {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .board-content {
   min-width: 0;
   display: grid;
   gap: 18px;
+}
+
+.board-page--admin .board-content {
+  width: min(1100px, 100%);
 }
 
 .feedback-card--empty {
@@ -371,6 +461,21 @@ onMounted(loadDashboard)
   gap: 14px;
 }
 
+.card-grid__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+}
+
+.card-grid__result {
+  color: #4e6f60;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .dorm-card {
   padding: 16px;
   display: grid;
@@ -420,10 +525,76 @@ onMounted(loadDashboard)
 
 .panel {
   padding: 18px;
+  overflow: hidden;
 }
 
 .panel__head {
   margin-bottom: 14px;
+}
+
+.panel :deep(.el-table) {
+  width: 100%;
+}
+
+.panel :deep(.el-table th.el-table__cell) {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.panel :deep(.el-table td.el-table__cell) {
+  padding-top: 18px;
+  padding-bottom: 18px;
+  vertical-align: top;
+}
+
+.table-residents {
+  color: #355847;
+  line-height: 1.8;
+}
+
+.table-metrics {
+  display: grid;
+  gap: 8px;
+}
+
+.table-metrics span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #466558;
+  line-height: 1.5;
+}
+
+.table-metrics b {
+  min-width: 34px;
+  color: #234334;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.table-state {
+  display: grid;
+  gap: 10px;
+}
+
+.table-state small {
+  color: #5f776b;
+  line-height: 1.6;
+}
+
+.panel__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.panel__result {
+  color: #5f776b;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .status-badge,
@@ -484,6 +655,10 @@ onMounted(loadDashboard)
   .toolbar {
     grid-template-columns: 1fr 1fr;
   }
+
+  .board-page--admin .board-content {
+    width: 100%;
+  }
 }
 
 @media (max-width: 760px) {
@@ -497,6 +672,14 @@ onMounted(loadDashboard)
 
   .hero__meta {
     justify-content: flex-start;
+  }
+
+  .panel__footer {
+    align-items: stretch;
+  }
+
+  .card-grid__footer {
+    align-items: stretch;
   }
 }
 </style>

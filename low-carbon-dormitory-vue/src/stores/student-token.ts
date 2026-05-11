@@ -64,6 +64,23 @@ export const useStudentTokenStore = defineStore('studentToken', () => {
     setStudentToken(profile, stuNum.value || profile.stuNum)
   }
 
+  function updateCarbonScore(carbonScore: number | null | undefined) {
+    if (!studentInfo.value) {
+      return
+    }
+
+    const normalizedScore = carbonScore ?? null
+    if (studentInfo.value.carbonScore === normalizedScore) {
+      return
+    }
+
+    studentInfo.value = {
+      ...studentInfo.value,
+      carbonScore: normalizedScore,
+    }
+    persistState()
+  }
+
   function clearStudentToken() {
     token.value = ''
     stuNum.value = ''
@@ -81,6 +98,7 @@ export const useStudentTokenStore = defineStore('studentToken', () => {
     dormLabel,
     setStudentToken,
     updateStudentProfile,
+    updateCarbonScore,
     clearStudentToken,
   }
 })

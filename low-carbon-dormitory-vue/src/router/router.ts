@@ -1,10 +1,15 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalized, type RouteRecordRaw } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAdminTokenStore } from '@/stores/admin-token'
 import { useStudentTokenStore } from '@/stores/student-token'
 import type { StudentProfile } from '@/types/student'
 import { getDefaultHomePath } from '@/utils/app-navigation'
 import { parseJsonSafely } from '@/utils/json'
+import {
+  beginRouteTransition,
+  cancelRouteTransition,
+  finishRouteTransition,
+} from './route-transition-state'
 
 const lazyView = <T>(loader: () => Promise<T>) => loader
 type RouteComponent = NonNullable<RouteRecordRaw['component']>
@@ -29,7 +34,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     redirect: (to) => ({
-      path: '/login',
+      path: '/login/',
       query: to.query,
       hash: to.hash,
     }),
@@ -38,7 +43,16 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     name: 'login',
     component: lazyView(() => import('@/login.vue')),
-    meta: { guestOnly: true },
+    alias: ['/login/'],
+    meta: { guestOnly: true, allowAuthenticated: true },
+  },
+  {
+    path: '/l',
+    redirect: (to) => ({
+      path: '/login/',
+      query: to.query,
+      hash: to.hash,
+    }),
   },
   studentRoute('/index-student', 'index-student', lazyView(() => import('@/router/student-router/home/index-student.vue'))),
   studentRoute('/personal-info', 'personal-info', lazyView(() => import('@/router/student-router/profile/personal-info.vue'))),
@@ -94,13 +108,29 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+
+    return {
+      left: 0,
+      top: 0,
+      behavior: to.fullPath === from.fullPath ? 'auto' : 'smooth',
+    }
+  },
 })
 
 function resolveGuestRedirect(
   requestedRole: string,
   adminLoggedIn: boolean,
   studentLoggedIn: boolean,
+  allowAuthenticated: boolean,
 ) {
+  if (allowAuthenticated) {
+    return true
+  }
+
   if (requestedRole) {
     return true
   }
@@ -124,7 +154,16 @@ function redirectToLogin(message: string) {
   }
 }
 
-router.beforeEach((to) => {
+function canAccessRewardExchangeByStuNum(to: RouteLocationNormalized) {
+  const routeStuNum = typeof to.query.stuNum === 'string' ? to.query.stuNum.trim() : ''
+  return to.name === 'reward-exchange-antd' && Boolean(routeStuNum)
+}
+
+router.beforeEach((to, from) => {
+  if (typeof window !== 'undefined' && to.fullPath !== from.fullPath) {
+    beginRouteTransition(to.path)
+  }
+
   const studentTokenState = useStudentTokenStore()
   const adminTokenState = useAdminTokenStore()
   const nextQuery = { ...to.query }
@@ -196,10 +235,14 @@ router.beforeEach((to) => {
       requestedRole,
       adminTokenState.isAdminLoggedIn,
       studentTokenState.isLoggedIn,
+      Boolean(to.meta.allowAuthenticated),
     )
   }
 
   if (to.meta.requiresStudentAuth && !studentTokenState.isLoggedIn) {
+    if (canAccessRewardExchangeByStuNum(to)) {
+      return true
+    }
     return redirectToLogin('请先登录学生账号')
   }
 
@@ -208,6 +251,18 @@ router.beforeEach((to) => {
   }
 
   return true
+})
+
+router.afterEach(() => {
+  if (typeof window !== 'undefined') {
+    finishRouteTransition()
+  }
+})
+
+router.onError(() => {
+  if (typeof window !== 'undefined') {
+    cancelRouteTransition()
+  }
 })
 
 export default router

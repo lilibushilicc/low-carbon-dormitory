@@ -3,11 +3,13 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStudentTokenStore } from '@/stores/student-token'
 import { useAdminTokenStore } from '@/stores/admin-token'
+import { useRouteTransitionState } from '@/router/route-transition-state'
 
 const router = useRouter()
 const route = useRoute()
 const studentTokenStore = useStudentTokenStore()
 const adminStore = useAdminTokenStore()
+const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
 
 const isHomeRoute = computed(() => route.path === '/manager/home')
 const currentSection = computed(() => (isHomeRoute.value ? '管理员首页' : '宿舍管理'))
@@ -35,6 +37,10 @@ function goTo(path: string) {
 
 function isActive(path: string) {
   return route.path === path || route.path.startsWith(`${path}/`)
+}
+
+function isPending(path: string) {
+  return isRouteNavigating.value && pendingRoutePath.value === path
 }
 
 async function logout() {
@@ -71,7 +77,7 @@ async function logout() {
             :key="item.path"
             type="button"
             class="nav-card"
-            :class="{ 'nav-card--active': isActive(item.path) }"
+            :class="{ 'nav-card--active': isActive(item.path), 'nav-card--pending': isPending(item.path) }"
             @click="goTo(item.path)"
           >
             <span class="nav-card__title">{{ item.title }}</span>
@@ -86,7 +92,7 @@ async function logout() {
             :key="item.path"
             type="button"
             class="nav-card nav-card--sub"
-            :class="{ 'nav-card--active': isActive(item.path) }"
+            :class="{ 'nav-card--active': isActive(item.path), 'nav-card--pending': isPending(item.path) }"
             @click="goTo(item.path)"
           >
             <span class="nav-card__title">{{ item.title }}</span>
@@ -101,7 +107,7 @@ async function logout() {
             :key="item.path"
             type="button"
             class="nav-card nav-card--sub"
-            :class="{ 'nav-card--active': isActive(item.path) }"
+            :class="{ 'nav-card--active': isActive(item.path), 'nav-card--pending': isPending(item.path) }"
             @click="goTo(item.path)"
           >
             <span class="nav-card__title">{{ item.title }}</span>
@@ -126,32 +132,75 @@ async function logout() {
   height: 100vh;
   height: 100dvh;
   padding: 16px 0 16px 16px;
-  background: #eef2f7;
   z-index: 20;
 }
 
 .sidebar__inner {
+  --sidebar-text: #204232;
+  --sidebar-muted: #698275;
+  --sidebar-line: rgba(93, 131, 109, 0.12);
+  --sidebar-line-strong: rgba(93, 131, 109, 0.22);
+  position: relative;
   height: calc(100vh - 32px);
   height: calc(100dvh - 32px);
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 16px;
   padding: 22px 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(39, 82, 61, 0.08);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 250, 246, 0.96)),
+    repeating-linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.16) 0,
+      rgba(255, 255, 255, 0.16) 14px,
+      rgba(242, 248, 244, 0.14) 14px,
+      rgba(242, 248, 244, 0.14) 28px
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    0 20px 46px rgba(31, 63, 47, 0.08);
+  backdrop-filter: blur(16px);
   overflow: hidden;
 }
 
+.sidebar__inner::before,
+.sidebar__inner::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(46px);
+  opacity: 0.34;
+}
+
+.sidebar__inner::before {
+  top: -24px;
+  right: -40px;
+  width: 170px;
+  aspect-ratio: 1;
+  background: rgba(132, 199, 164, 0.38);
+}
+
+.sidebar__inner::after {
+  left: -52px;
+  bottom: 100px;
+  width: 140px;
+  aspect-ratio: 1;
+  background: rgba(231, 217, 165, 0.28);
+}
+
 .brand {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 0;
   border: none;
   background: transparent;
-  color: #0f172a;
+  color: var(--sidebar-text);
   text-align: left;
   cursor: pointer;
 }
@@ -159,38 +208,49 @@ async function logout() {
 .brand__icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.24), transparent 30%),
+    linear-gradient(135deg, #1d744d 0%, #133d2b 100%);
   color: #fff;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 900;
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 14px 28px rgba(29, 90, 60, 0.22);
 }
 
 .brand__text {
   display: grid;
-  gap: 3px;
+  gap: 4px;
 }
 
 .brand__text strong {
-  font-size: 16px;
-  line-height: 1.2;
+  color: var(--sidebar-text);
+  font-size: 25px;
+  line-height: 1.06;
 }
 
 .brand__text small {
-  color: #64748b;
-  font-size: 12px;
+  color: var(--sidebar-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .switch-panel {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 10px;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: #f8fafc;
+  padding: 16px;
+  border: 1px solid var(--sidebar-line);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(171, 220, 193, 0.24), transparent 36%),
+    linear-gradient(150deg, rgba(239, 247, 242, 0.98), rgba(252, 253, 252, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
 }
 
 .section-chip {
@@ -201,123 +261,204 @@ async function logout() {
 }
 
 .section-chip span {
-  color: #64748b;
+  color: var(--sidebar-muted);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .section-chip strong {
-  color: #0f172a;
-  font-size: 13px;
+  color: #2f5f47;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .menu {
+  position: relative;
+  z-index: 1;
   min-height: 0;
   display: grid;
-  gap: 14px;
-  padding-right: 4px;
-  padding-bottom: 8px;
+  align-content: start;
+  gap: 18px;
+  padding-right: 6px;
+  padding-bottom: 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 
 .menu::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .menu::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
   border-radius: 999px;
+  background: rgba(47, 143, 104, 0.22);
 }
 
 .menu-group {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .menu-group__label {
   margin: 0;
-  color: #64748b;
+  color: #5f786b;
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 900;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .nav-card {
+  position: relative;
   width: 100%;
   display: grid;
-  gap: 4px;
-  min-height: 56px;
-  padding: 12px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
-  color: #0f172a;
+  gap: 5px;
+  min-height: 68px;
+  padding: 14px 16px;
+  border: 1px solid rgba(214, 229, 220, 0.96);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--sidebar-text);
   text-align: left;
   cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.nav-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.18s ease;
 }
 
 .nav-card--sub {
-  min-height: 50px;
-  padding: 10px 14px;
+  min-height: 62px;
+  padding: 12px 16px;
 }
 
 .nav-card:hover {
-  border-color: #bfdbfe;
-  background: #f8fbff;
+  transform: translateY(-1px);
+  border-color: rgba(127, 171, 145, 0.42);
+  background:
+    radial-gradient(circle at right top, rgba(178, 222, 197, 0.2), transparent 34%),
+    rgba(255, 255, 255, 0.88);
 }
 
 .nav-card--active {
-  border-color: #93c5fd;
-  background: #eff6ff;
-  box-shadow: inset 3px 0 0 #2563eb;
+  border-color: rgba(127, 171, 145, 0.42);
+  background:
+    radial-gradient(circle at right top, rgba(178, 222, 197, 0.28), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 249, 0.96));
+  box-shadow:
+    inset 0 0 0 1px rgba(235, 244, 239, 0.9),
+    0 12px 26px rgba(13, 36, 25, 0.1);
+}
+
+.nav-card--active::after {
+  background: linear-gradient(180deg, #2f8f68, #7cc39f);
+}
+
+.nav-card--pending {
+  border-color: rgba(83, 153, 114, 0.42);
+  box-shadow:
+    inset 0 0 0 1px rgba(235, 244, 239, 0.92),
+    0 14px 28px rgba(29, 75, 52, 0.1);
+}
+
+.nav-card--pending::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(110deg, transparent 18%, rgba(255, 255, 255, 0.72) 50%, transparent 82%);
+  background-size: 220% 100%;
+  animation: navPendingSweep 0.9s ease infinite;
+  pointer-events: none;
 }
 
 .nav-card__title {
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--sidebar-text);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.2;
 }
 
 .nav-card__desc {
-  color: #64748b;
+  color: var(--sidebar-muted);
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .footer-card {
+  position: relative;
+  z-index: 1;
   display: grid;
-  gap: 6px;
-  padding: 12px;
+  gap: 12px;
+  padding: 14px 16px 16px;
   margin-top: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: #f8fafc;
-  box-shadow: 0 -1px 0 rgba(226, 232, 240, 0.95);
+  border: 1px solid rgba(214, 229, 220, 0.96);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at right top, rgba(167, 220, 192, 0.18), transparent 36%),
+    rgba(255, 255, 255, 0.84);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .footer-card strong {
-  font-size: 13px;
-  color: #0f172a;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--sidebar-text);
 }
 
 .footer-card span {
-  color: #64748b;
-  font-size: 11px;
+  color: var(--sidebar-muted);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .footer-card__btn {
-  min-height: 38px;
-  margin-top: 4px;
-  border: 1px solid #dbe3ee;
-  border-radius: 10px;
-  background: #fff;
-  color: #0f172a;
-  font-size: 12px;
-  font-weight: 700;
+  min-height: 42px;
+  margin-top: 2px;
+  border: 1px solid rgba(214, 229, 220, 0.96);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fbfdfb, #f2f7f4);
+  color: var(--sidebar-text);
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.footer-card__btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(29, 75, 52, 0.08);
+}
+
+@keyframes navPendingSweep {
+  0% {
+    background-position: 140% 0;
+  }
+
+  100% {
+    background-position: -40% 0;
+  }
 }
 
 @media (max-width: 640px) {

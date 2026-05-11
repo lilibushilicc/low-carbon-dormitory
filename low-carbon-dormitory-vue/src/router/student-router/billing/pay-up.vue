@@ -232,6 +232,7 @@ async function loadRateInfo() {
     })
     if (data.code === 200 && data.data) {
       rateInfo.value = data.data
+      studentTokenStore.updateCarbonScore(data.data.personalCarbonScore)
     }
   } catch (error) {
     console.error('获取单价信息失败:', error)

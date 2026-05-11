@@ -4,7 +4,13 @@
       <AdminGlobalNav />
       <section class="content">
         <CurrentSystemBanner manager-mode />
-        <router-view />
+        <RouterView v-slot="{ Component, route }">
+          <Transition name="manager-page-swap" mode="out-in" appear>
+            <div :key="route.fullPath" class="content-scene">
+              <component :is="Component" />
+            </div>
+          </Transition>
+        </RouterView>
       </section>
     </div>
   </div>
@@ -18,7 +24,10 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #eef2f7;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(123, 196, 155, 0.18), transparent 28%),
+    radial-gradient(circle at 100% 100%, rgba(230, 216, 164, 0.14), transparent 26%),
+    linear-gradient(180deg, #edf6f0 0%, #f8fbf9 48%, #f5faf7 100%);
   padding: clamp(14px, 2vw, 24px);
 }
 
@@ -35,6 +44,40 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
   min-width: 0;
   display: grid;
   gap: 16px;
+}
+
+.content-scene {
+  min-width: 0;
+}
+
+.manager-page-swap-enter-active,
+.manager-page-swap-leave-active {
+  transition:
+    opacity 0.24s ease,
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.manager-page-swap-enter-from {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+}
+
+.manager-page-swap-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -10px, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manager-page-swap-enter-active,
+  .manager-page-swap-leave-active {
+    transition: opacity 0.01s linear;
+  }
+
+  .manager-page-swap-enter-from,
+  .manager-page-swap-leave-to {
+    transform: none;
+  }
 }
 
 .dorm-shell :deep(.board-page) {
@@ -64,22 +107,32 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
 .dorm-shell :deep(.dorm-card),
 .dorm-shell :deep(.card) {
   border-radius: 24px;
-  border: 1px solid #d9e2ec;
-  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(53, 96, 73, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 251, 249, 0.9)),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.18) 0,
+      rgba(255, 255, 255, 0.18) 10px,
+      rgba(244, 250, 246, 0.16) 10px,
+      rgba(244, 250, 246, 0.16) 20px
+    );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.52),
-    0 10px 30px rgba(15, 23, 42, 0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 0.56),
+    0 20px 46px rgba(37, 72, 54, 0.06);
 }
 
 .dorm-shell :deep(.hero-card),
 .dorm-shell :deep(.hero) {
   padding: 28px 28px;
-  background: #fff;
+  background:
+    radial-gradient(circle at top right, rgba(178, 222, 197, 0.18), transparent 34%),
+    rgba(255, 255, 255, 0.94);
 }
 
 .dorm-shell :deep(.hero-card h1),
 .dorm-shell :deep(.hero h1) {
-  color: #0f172a;
+  color: #204232;
 }
 
 .dorm-shell :deep(.hero-card p),
@@ -87,7 +140,7 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
 .dorm-shell :deep(.subtitle),
 .dorm-shell :deep(.hero__text),
 .dorm-shell :deep(.hero__meta) {
-  color: #64748b;
+  color: #698275;
 }
 
 .dorm-shell :deep(.hero-card__eyebrow),
@@ -100,9 +153,9 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
   width: fit-content;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid #dbe3ee;
-  background: #f8fafc;
-  color: #475569;
+  border: 1px solid rgba(93, 131, 109, 0.12);
+  background: rgba(247, 251, 249, 0.92);
+  color: #4f6a5b;
   font-size: 12px;
   font-weight: 800;
 }
@@ -121,39 +174,39 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
 }
 
 .dorm-shell :deep(.el-form-item__label) {
-  color: #475569;
+  color: #4f6a5b;
   font-weight: 700;
 }
 
 .dorm-shell :deep(.el-input__wrapper),
 .dorm-shell :deep(.el-select__wrapper),
 .dorm-shell :deep(.el-textarea__inner) {
-  background: #fff;
-  box-shadow: inset 0 0 0 1px #dbe3ee !important;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(93, 131, 109, 0.12) !important;
 }
 
 .dorm-shell :deep(.el-button--primary),
 .dorm-shell :deep(.el-button--success),
 .dorm-shell :deep(.module-card__action) {
   border: none;
-  background: #2563eb;
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.16);
+  background: linear-gradient(135deg, #1d744d 0%, #133d2b 100%);
+  box-shadow: 0 12px 24px rgba(29, 90, 60, 0.18);
 }
 
 .dorm-shell :deep(.el-button:not(.el-button--primary):not(.el-button--success)) {
-  border-color: #dbe3ee;
-  background: #fff;
-  color: #0f172a;
+  border-color: rgba(93, 131, 109, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  color: #204232;
 }
 
 .dorm-shell :deep(.el-table) {
   --el-table-bg-color: #ffffff;
   --el-table-tr-bg-color: #ffffff;
-  --el-table-row-hover-bg-color: #f8fafc;
-  --el-table-header-bg-color: #f8fafc;
-  --el-table-border-color: #e2e8f0;
-  --el-table-text-color: #0f172a;
-  --el-table-header-text-color: #475569;
+  --el-table-row-hover-bg-color: #f5faf7;
+  --el-table-header-bg-color: #f5faf7;
+  --el-table-border-color: rgba(93, 131, 109, 0.12);
+  --el-table-text-color: #204232;
+  --el-table-header-text-color: #4f6a5b;
 }
 
 .dorm-shell :deep(.el-table th.el-table__cell),
@@ -164,7 +217,7 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
 .dorm-shell :deep(.el-pagination) {
   margin-top: 22px;
   justify-content: flex-end;
-  color: #64748b;
+  color: #698275;
 }
 
 @media (max-width: 1180px) {

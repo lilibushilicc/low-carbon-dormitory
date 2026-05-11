@@ -1,0 +1,1 @@
+function e(e,t){if(e.code!==200||e.data===null||e.data===void 0)throw Error(e.msg||t);return e.data}function t(e,t){let n=e?.response?.data?.msg;return typeof n==`string`&&n.trim()?n:e instanceof Error&&e.message.trim()?e.message:t}export{t as n,e as t};

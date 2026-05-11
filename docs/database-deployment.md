@@ -1,19 +1,28 @@
 # 数据库部署与导入说明
 
-## 当前后端默认连接
+## 默认本地数据库连接
 
-后端默认连接的 PostgreSQL 信息如下：
+后端当前默认连接本机 PostgreSQL，配置位于：
+
+- `low-carbon-dormitory-spring/src/main/resources/application.properties`
+
+默认参数如下：
 
 - 主机：`127.0.0.1`
 - 端口：`5432`
 - 数据库：`lowcarbon`
 - 用户名：`lowcarbon`
+- 密码：`000000`
 
-对应配置文件：
+对应配置项：
 
-- `low-carbon-dormitory-spring/src/main/resources/application.properties`
+```properties
+spring.datasource.url=jdbc:postgresql://127.0.0.1:5432/lowcarbon
+spring.datasource.username=lowcarbon
+spring.datasource.password=000000
+```
 
-如果服务器端口或账号密码变更，可通过环境变量覆盖：
+如需在本地或服务器临时覆盖，可使用环境变量：
 
 ```bash
 SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/lowcarbon
@@ -21,67 +30,44 @@ SPRING_DATASOURCE_USERNAME=lowcarbon
 SPRING_DATASOURCE_PASSWORD=000000
 ```
 
-## SQL 导入包
+## 本地联调建议顺序
 
-当前发布包 `release/package/` 已包含本次可直接上传的 SQL 导入文件：
+1. 先确认 PostgreSQL 已启动，且存在 `lowcarbon` 数据库与对应账号。
+2. 在 `low-carbon-dormitory-spring/` 中启动后端服务。
+3. 访问后端登录接口或启动日志，确认后端已成功连接数据库。
+4. 在 `low-carbon-dormitory-vue/` 中启动前端，通过 Vite 代理完成联调。
+
+## SQL 发布包
+
+当前 SQL 发布包统一整理在 `release/package/`：
 
 - `release/package/low-carbon-dormitory-local-postgres-public.sql`
 - `release/package/low-carbon-dormitory-sql-package.zip`
 - `release/package/sql-import-readme.txt`
 
-其中：
+说明：
 
-- `.sql` 为完整导入脚本
-- `.zip` 为上传用压缩包，适合服务器面板或文件传输时直接上传
-- `sql-import-readme.txt` 为导入命令说明
+- `.sql` 文件为完整导入脚本
+- `.zip` 文件适合上传到服务器后再解压导入
+- `sql-import-readme.txt` 为文本版导入说明
 
-该 SQL 文件来源于本机 PostgreSQL：
+## 导入方式
 
-- 主机：`127.0.0.1`
-- 端口：`5432`
-- 数据库：`postgres`
-- schema：`public`
-
-本次导出的 SQL 已额外移除 PostgreSQL 18 导出中的 `\restrict`、`\unrestrict` 和 `SET transaction_timeout = 0;`，可兼容 PostgreSQL 12 导入。
-
-兼容性验证结果：
-
-- 已使用本机 PostgreSQL 12（`127.0.0.1:5433`）创建临时数据库完成实际导入验证
-- 验证结果为 `public` 下 16 张业务表全部成功恢复
-
-如需重新导出，可在数据库所在环境参考执行：
+命令行导入示例：
 
 ```bash
-pg_dump --clean --if-exists --inserts --column-inserts --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U postgres -d postgres > low-carbon-dormitory-local-postgres-public.sql
+psql -h 127.0.0.1 -p 5432 -U lowcarbon -d lowcarbon -f release/package/low-carbon-dormitory-local-postgres-public.sql
 ```
 
-建议导出内容至少包含：
+如果通过可视化面板导入：
 
-- `public` schema 下当前项目使用表的建表语句
-- 主键、唯一约束、外键、索引
-- 所有数据插入语句
-- 序列当前值
-
-## 导入建议
-
-建议先在服务器数据库中备份原数据，再导入新的 SQL 文件。
-
-常见导入方式：
-
-```bash
-psql -h 服务器IP -p 5432 -U 数据库用户 -d lowcarbon -f low-carbon-dormitory-local-postgres-public.sql
-```
-
-如果通过宝塔导入：
-
-1. 先进入对应 PostgreSQL 数据库 `lowcarbon`
-2. 选择 SQL 导入
-3. 先上传并解压 `low-carbon-dormitory-sql-package.zip`，或直接上传 `low-carbon-dormitory-local-postgres-public.sql`
-4. 执行导入
+1. 选择目标数据库 `lowcarbon`
+2. 上传并执行 `low-carbon-dormitory-local-postgres-public.sql`
+3. 或先上传并解压 `low-carbon-dormitory-sql-package.zip` 后再执行其中 SQL
 
 ## 注意事项
 
-- 当前 SQL 包默认面向已有 `lowcarbon` 数据库执行，不包含 `CREATE DATABASE`
-- 导入脚本会先删除并重建当前项目使用的业务表
-- SQL 文件不依赖本地 `postgres` 角色或 owner 信息，可直接导入到服务器现有库
-- 如果服务器端 PostgreSQL 未开放远程访问，需要先在安全组、防火墙和 PostgreSQL 配置中放行
+- 当前 SQL 包默认面向已存在的 `lowcarbon` 数据库，不包含 `CREATE DATABASE`
+- 导入脚本会重建当前项目使用的业务表，导入前应先备份旧数据
+- 只覆盖本次重新生成的 SQL 产物；若本次未重新生成其他发布物，不主动删除旧产物
+- 最终发布 SQL 与相关说明长期保留在 `release/package/`，不放回源码目录

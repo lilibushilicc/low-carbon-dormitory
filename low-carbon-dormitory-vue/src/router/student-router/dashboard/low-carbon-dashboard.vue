@@ -35,7 +35,8 @@
           </div>
 
           <div class="hero__score-card">
-                  <small>根据本周期宿舍能耗与碳排表现计算</small>
+            <small>根据本周期宿舍能耗与碳排表现计算</small>
+            <span class="hero__score-label">当前周期宿舍积分</span>
             <strong>{{ formatScore(dashboard.scoreSummary.currentPeriodScore) }}</strong>
             <span>{{ dashboard.dormAnchor.carbonLevel }}</span>
             <div class="hero__score-note">
@@ -227,14 +228,14 @@
             <div class="panel__head">
               <div>
                 <div class="panel__eyebrow">规则说明</div>
-              <h2>积分计算</h2>
+              <h2>积分规则</h2>
               </div>
               <el-button text @click="goRulePage">查看规则</el-button>
             </div>
 
             <div class="rule-grid">
               <div class="detail-item">
-                <span>电碳系数</span>
+                <span>基础分</span>
                 <strong>{{ formatNumber(dashboard.ruleSummary.baseScore, 0) }}</strong>
               </div>
               <div class="detail-item">
@@ -324,15 +325,14 @@ function formatDeltaScore(value?: number | null) {
   if (num < 0) return `下降 ${formatNumber(Math.abs(num), 1)} 分`
   return '保持不变'
 }
-
 const summaryCards = computed(() => {
   if (!dashboard.value) return []
 
   return [
     {
-      label: '个人低碳积分',
+      label: '个人积分',
       value: formatScore(dashboard.value.scoreSummary.dormPoints),
-      note: `较上周期 ${formatDeltaScore(dashboard.value.scoreSummary.scoreDelta)}`,
+      note: '由周期积分结算后自动累计到个人账户',
     },
     {
       label: '当前学校排名',
@@ -385,7 +385,7 @@ const feeAndCarbonCards = computed(() => {
   return [
     { label: '电量折算', value: formatNumber(overview.electricUsage, 2) },
     { label: '水量折算', value: formatNumber(overview.waterUsage, 2) },
-    { label: '宿舍积分', value: formatScore(overview.carbonScore) },
+    { label: '周期积分变化', value: formatDeltaScore(dashboard.value.scoreSummary.scoreDelta) },
     { label: '人均碳排放', value: formatCarbon(overview.perCapitaCarbon) },
   ]
 })
@@ -521,6 +521,7 @@ async function loadDashboard() {
     }
 
     dashboard.value = data.data
+    studentTokenStore.updateCarbonScore(data.data.scoreSummary.dormPoints)
   } catch (error) {
     console.error(error)
     errorMessage.value = '获取个人低碳看板失败，请稍后重试'
@@ -687,6 +688,11 @@ onMounted(loadDashboard)
 .hero__score-card span,
 .hero__score-note {
   color: #5f776b;
+}
+
+.hero__score-label {
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .hero__score-card strong {

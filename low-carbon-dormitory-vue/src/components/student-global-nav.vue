@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAdminTokenStore } from '@/stores/admin-token'
 import { useStudentTokenStore } from '@/stores/student-token'
+import { useRouteTransitionState } from '@/router/route-transition-state'
 
 type NavItem = {
   title: string
@@ -17,6 +18,7 @@ const route = useRoute()
 const adminTokenStore = useAdminTokenStore()
 const studentTokenStore = useStudentTokenStore()
 const { studentInfo, dormLabel } = storeToRefs(studentTokenStore)
+const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
 
 const expandedGroups = ref({
   lowCarbon:
@@ -91,6 +93,10 @@ function isActive(path: string) {
   return route.path === path || route.path.startsWith(`${path}/`)
 }
 
+function isPending(path: string) {
+  return isRouteNavigating.value && pendingRoutePath.value === path
+}
+
 function isGroupActive(paths: readonly string[]) {
   return paths.some((path) => route.path.startsWith(path))
 }
@@ -142,7 +148,7 @@ async function logout() {
             <strong>{{ studentName }}</strong>
           </article>
           <article class="overview-stat">
-            <span>积分</span>
+            <span>个人积分</span>
             <strong>{{ carbonScoreText }}</strong>
           </article>
         </div>
@@ -165,7 +171,7 @@ async function logout() {
             :key="item.path"
             type="button"
             class="nav-item"
-            :class="{ 'nav-item--active': isActive(item.path) }"
+            :class="{ 'nav-item--active': isActive(item.path), 'nav-item--pending': isPending(item.path) }"
             @click="goTo(item.path)"
           >
             <span class="nav-item__code">{{ item.code }}</span>
@@ -234,7 +240,7 @@ async function logout() {
               :key="item.path"
               type="button"
               class="nav-item nav-item--child"
-              :class="{ 'nav-item--active': isActive(item.path) }"
+              :class="{ 'nav-item--active': isActive(item.path), 'nav-item--pending': isPending(item.path) }"
               @click="goTo(item.path)"
             >
               <span class="nav-item__code">{{ item.code }}</span>
@@ -619,6 +625,25 @@ async function logout() {
   color: #27543d;
 }
 
+.nav-item--pending {
+  border-color: rgba(83, 153, 114, 0.42);
+  box-shadow:
+    inset 0 0 0 1px rgba(235, 244, 239, 0.92),
+    0 14px 28px rgba(29, 75, 52, 0.1);
+}
+
+.nav-item--pending::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(110deg, transparent 18%, rgba(255, 255, 255, 0.72) 50%, transparent 82%);
+  background-size: 220% 100%;
+  animation: navPendingSweep 0.9s ease infinite;
+  pointer-events: none;
+}
+
 .nav-group {
   display: grid;
   gap: 10px;
@@ -685,6 +710,16 @@ async function logout() {
   display: grid;
   gap: 8px;
   padding-left: 12px;
+}
+
+@keyframes navPendingSweep {
+  0% {
+    background-position: 140% 0;
+  }
+
+  100% {
+    background-position: -40% 0;
+  }
 }
 
 .account-card {

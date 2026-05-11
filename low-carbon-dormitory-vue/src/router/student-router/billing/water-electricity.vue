@@ -74,12 +74,12 @@
                 </article>
 
                 <article class="detail-card">
-                  <span class="detail-card__label">个人低碳积分</span>
+                  <span class="detail-card__label">个人积分</span>
                   <strong>{{ formatNumber(waterElectricity.personalCarbonScore, 0) }}</strong>
                 </article>
 
                 <article class="detail-card">
-                  <span class="detail-card__label">宿舍低碳积分</span>
+                  <span class="detail-card__label">宿舍周期积分</span>
                   <strong>{{ formatNumber(waterElectricity.dormCarbonScore, 0) }}</strong>
                 </article>
 
@@ -247,6 +247,7 @@ async function loadWaterElectricity() {
       dormId: dormId.value || undefined,
     })
     waterElectricity.value = requireApiData(data, '获取水电信息失败')
+    studentTokenStore.updateCarbonScore(waterElectricity.value.personalCarbonScore)
     errorMessage.value = ''
   } catch (error) {
     console.error('获取水电信息失败:', error)
@@ -269,6 +270,7 @@ async function handleRefresh() {
       dormId: dormId.value || undefined,
     })
     waterElectricity.value = requireApiData(data, '刷新水电费失败')
+    studentTokenStore.updateCarbonScore(waterElectricity.value.personalCarbonScore)
     errorMessage.value = ''
     ElMessage.success(
       latestSettlementSummary.value

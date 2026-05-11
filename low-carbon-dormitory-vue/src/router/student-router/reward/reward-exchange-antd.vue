@@ -7,36 +7,31 @@
             <div class="mall-hero__glow"></div>
 
             <div class="mall-hero__top">
-              <div class="mall-hero__copy">
-                <h1>碳积分商店</h1>
-                <p>用积分兑换专属奖励</p>
+              <div v-if="publicAccessMode" class="public-entry-chip public-entry-chip--inline">
+                <span class="public-entry-chip__label">访问学号</span>
+                <strong class="public-entry-chip__value">{{ stuNum }}</strong>
               </div>
 
-              <div class="points-badge">
-                <TrophyOutlined />
-                <strong>{{ currentPoints }}</strong>
-                <span>分</span>
+              <div class="mall-hero__copy">
+                <h1>积分兑换商城</h1>
               </div>
+
+              <div class="mall-hero__action-spacer" aria-hidden="true"></div>
             </div>
 
+            <button type="button" class="ghost-action ghost-action--top" @click="goBack">
+              <LeftOutlined />
+              返回
+            </button>
+
             <div class="mall-hero__search">
-              <AInput v-model:value="keyword" size="large" allow-clear placeholder="搜索商品...">
+              <AInput v-model:value="keyword" size="large" allow-clear placeholder="搜索奖励名称">
                 <template #prefix>
                   <SearchOutlined />
                 </template>
               </AInput>
             </div>
 
-            <div class="mall-hero__actions">
-              <button type="button" class="ghost-action" @click="goBack">
-                <LeftOutlined />
-                返回
-              </button>
-              <button type="button" class="ghost-action" @click="loadRewardCenter">
-                <ReloadOutlined />
-                刷新
-              </button>
-            </div>
           </header>
 
           <AAlert
@@ -61,30 +56,10 @@
               </button>
             </section>
 
-            <section class="promo-card" :class="{ 'promo-card--ready': promoReady }">
-              <div class="promo-card__icon">
-                <GiftOutlined />
-              </div>
-
-              <div class="promo-card__body">
-                <div class="promo-card__head">
-                  <span class="promo-card__tag">{{ promoTag }}</span>
-                  <strong>{{ promoTitle }}</strong>
-                </div>
-                <p>{{ promoDescription }}</p>
-              </div>
-
-              <div class="promo-card__side">{{ promoHint }}</div>
-            </section>
-
             <section class="summary-row">
               <article class="summary-pill">
                 <span>当前积分</span>
                 <strong>{{ currentPoints }}</strong>
-              </article>
-              <article class="summary-pill">
-                <span>奖励状态</span>
-                <strong>{{ rewardStatusText }}</strong>
               </article>
               <article class="summary-pill">
                 <span>推荐奖励</span>
@@ -93,38 +68,25 @@
             </section>
 
             <section v-if="activeView === 'rewards'" class="card-list">
-              <article v-for="item in displayRewards" :key="item.rewardId" class="reward-card">
+              <article v-for="item in pagedRewards" :key="item.rewardId" class="reward-card">
                 <div class="reward-card__media">
-                  <span class="reward-card__stock">{{ item.stockText }}</span>
                   <img
                     :src="safeImageUrl(item.imageUrl)"
                     :alt="item.rewardName"
                     class="reward-card__image"
+                    loading="lazy"
                     @error="handleImageError"
                   />
                 </div>
 
                 <div class="reward-card__content">
-                  <div class="reward-card__head">
-                    <div>
-                      <h3>{{ item.rewardName }}</h3>
-                      <div v-if="item.badge" class="reward-card__tags">
-                        <ATag :color="item.badge.color">{{ item.badge.text }}</ATag>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p class="reward-card__desc">{{ item.rewardDesc }}</p>
+                  <h3 class="reward-card__title">{{ item.rewardName }}</h3>
 
                   <div class="reward-card__bottom">
-                    <div class="reward-card__meta">
-                      <span class="reward-card__points">
-                        <GiftOutlined />
-                        {{ item.pointsCost }}积分
-                      </span>
-                      <small>{{ item.helperText }}</small>
-                      <small class="reward-card__submeta">{{ item.stockText }} · {{ item.exchangeUnitText }}</small>
-                    </div>
+                    <span class="reward-card__points">
+                      <GiftOutlined />
+                      {{ item.pointsCost }} 积分
+                    </span>
 
                     <AButton
                       type="primary"
@@ -143,21 +105,42 @@
                 </div>
               </article>
 
-              <AEmpty
-                v-if="!displayRewards.length"
-                class="empty-block"
-                description="没有匹配到可展示的奖励"
-              />
+              <AEmpty v-if="!displayRewards.length" class="empty-block" description="没有匹配到可展示的奖励" />
+
+              <div v-else class="list-pagination">
+                <div class="pagination-text">
+                  <strong>第 {{ rewardPage }} / {{ rewardTotalPages }} 页</strong>
+                  <span>共 {{ displayRewards.length }} 项，当前显示 {{ rewardPageRangeText }}</span>
+                </div>
+
+                <button
+                  type="button"
+                  class="pagination-button"
+                  :disabled="rewardPage <= 1"
+                  @click="changeRewardPage(-1)"
+                >
+                  上一页
+                </button>
+
+                <button
+                  type="button"
+                  class="pagination-button"
+                  :disabled="rewardPage >= rewardTotalPages"
+                  @click="changeRewardPage(1)"
+                >
+                  下一页
+                </button>
+              </div>
             </section>
 
             <section v-else class="record-list">
-              <article v-for="record in displayRecords" :key="record.recordId" class="record-card">
+              <article v-for="record in pagedRecords" :key="record.recordId" class="record-card">
                 <div class="record-card__head">
                   <div>
                     <h3>{{ record.rewardName }}</h3>
                     <p>{{ record.remark || '个人积分兑换成功，等待发放。' }}</p>
                   </div>
-                  <ATag color="green">-{{ record.exchangePoints }}积分</ATag>
+                  <ATag color="green">-{{ record.exchangePoints }} 积分</ATag>
                 </div>
 
                 <div class="record-card__footer">
@@ -169,6 +152,31 @@
               </article>
 
               <AEmpty v-if="!displayRecords.length" class="empty-block" description="暂无兑换记录" />
+
+              <div v-else class="list-pagination">
+                <div class="pagination-text">
+                  <strong>第 {{ recordPage }} / {{ recordTotalPages }} 页</strong>
+                  <span>共 {{ displayRecords.length }} 项，当前显示 {{ recordPageRangeText }}</span>
+                </div>
+
+                <button
+                  type="button"
+                  class="pagination-button"
+                  :disabled="recordPage <= 1"
+                  @click="changeRecordPage(-1)"
+                >
+                  上一页
+                </button>
+
+                <button
+                  type="button"
+                  class="pagination-button"
+                  :disabled="recordPage >= recordTotalPages"
+                  @click="changeRecordPage(1)"
+                >
+                  下一页
+                </button>
+              </div>
             </section>
           </template>
         </ASpin>
@@ -206,8 +214,8 @@
                   <strong>{{ Math.max(selectedReward.stock, 0) }} 件</strong>
                 </div>
                 <div class="exchange-sheet__stat">
-                  <span>单次兑换</span>
-                  <strong>1 件</strong>
+                  <span>兑换说明</span>
+                  <strong>单次兑换 1 件</strong>
                 </div>
               </div>
 
@@ -233,7 +241,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, type ComputedRef } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Alert as AAlert,
@@ -248,10 +256,8 @@ import {
   ClockCircleOutlined,
   GiftOutlined,
   LeftOutlined,
-  ReloadOutlined,
   SearchOutlined,
   ShoppingCartOutlined,
-  TrophyOutlined,
 } from '@ant-design/icons-vue'
 import 'ant-design-vue/dist/reset.css'
 import type { RewardItem } from '@/api/modules/reward'
@@ -261,33 +267,35 @@ import { useRewardCenter } from './use-reward-center'
 
 type RewardView = 'rewards' | 'records'
 
-interface RewardBadge {
-  text: string
-  color: string
-}
-
 interface DisplayReward extends RewardItem {
-  badge: RewardBadge | null
-  helperText: string
   actionText: string
   disabled: boolean
-  stockText: string
-  exchangeUnitText: string
 }
 
 const FALLBACK_IMAGE =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="240" height="240" rx="48" fill="%23eef7f1"/><circle cx="120" cy="92" r="34" fill="%23dcefe2"/><rect x="68" y="136" width="104" height="20" rx="10" fill="%2322c55e" opacity="0.18"/><rect x="84" y="88" width="72" height="72" rx="18" fill="%23ffffff"/><path d="M102 136h36" stroke="%2322c55e" stroke-width="12" stroke-linecap="round"/><path d="M120 100v28" stroke="%2322c55e" stroke-width="12" stroke-linecap="round"/></svg>'
 
 const viewOptions = [
-  { label: '商品列表', value: 'rewards' as const },
+  { label: '奖励列表', value: 'rewards' as const },
   { label: '兑换记录', value: 'records' as const },
 ]
 
 const router = useRouter()
 const keyword = ref('')
 const activeView = ref<RewardView>('rewards')
-const { stuNum, loading, errorMessage, rewardCenter, submittingRewardId, currentPoints, loadRewardCenter, exchangeRewardById } =
-  useRewardCenter()
+const viewportWidth = ref(typeof window === 'undefined' ? 393 : window.innerWidth)
+const viewportHeight = ref(typeof window === 'undefined' ? 852 : window.innerHeight)
+const {
+  stuNum,
+  publicAccessMode,
+  loading,
+  errorMessage,
+  rewardCenter,
+  submittingRewardId,
+  currentPoints,
+  loadRewardCenter,
+  exchangeRewardById,
+} = useRewardCenter()
 const selectedReward = ref<DisplayReward | null>(null)
 const exchangeModalOpen = ref(false)
 const exchangeConfirmLoading = ref(false)
@@ -296,54 +304,35 @@ const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase())
 const rewardItems = computed(() => rewardCenter.value?.rewardItems || [])
 const exchangeRecords = computed(() => rewardCenter.value?.exchangeRecords || [])
 const nearestRewardName = computed(() => rewardCenter.value?.dormScoreSummary.nearestRewardName || '暂无')
-const gapToNearestReward = computed(() => rewardCenter.value?.dormScoreSummary.gapToNearestReward || 0)
-const promoReady = computed(() => gapToNearestReward.value <= 0)
+const isCompactViewport = computed(() => viewportWidth.value <= 640 || viewportHeight.value <= 820)
+const isUltraCompactViewport = computed(() => viewportWidth.value <= 390 || viewportHeight.value <= 740)
+const rewardPageSize = computed(() => (isUltraCompactViewport.value ? 2 : isCompactViewport.value ? 3 : 4))
+const recordPageSize = computed(() => (isUltraCompactViewport.value ? 3 : isCompactViewport.value ? 4 : 5))
 
-const promoTitle = computed(() => {
-  if (nearestRewardName.value === '暂无') {
-    return '积分兑换专区'
-  }
+const displayRewards = computed<DisplayReward[]>(() =>
+  rewardItems.value.filter((item) => matchesKeyword(item.rewardName, item.rewardDesc)).map(toDisplayReward),
+)
 
-  return promoReady.value ? `${nearestRewardName.value} 已可兑换` : `${nearestRewardName.value} 即将解锁`
-})
+const displayRecords = computed(() =>
+  exchangeRecords.value.filter((record) => matchesKeyword(record.rewardName, record.remark || '')),
+)
 
-const promoDescription = computed(() => {
-  if (nearestRewardName.value === '暂无') {
-    return '浏览当前奖励内容，挑选最适合你的积分兑换项。'
-  }
-
-  return promoReady.value
-    ? '积分条件已经满足，现在就可以直接发起兑换。'
-    : '继续积累积分，就能解锁这份推荐奖励。'
-})
-
-const promoTag = computed(() => (promoReady.value ? '立即可兑' : '积分推荐'))
-
-const promoHint = computed(() => {
-  if (nearestRewardName.value === '暂无') {
-    return '去看看'
-  }
-
-  return promoReady.value ? '马上兑换' : `还差${gapToNearestReward.value}分`
-})
-
-const rewardStatusText = computed(() => {
-  if (!rewardItems.value.length) {
-    return '暂无奖励'
-  }
-
-  return rewardItems.value.some((item) => item.canExchange) ? '可立即兑换' : '继续攒分'
-})
-
-const displayRewards = computed<DisplayReward[]>(() => {
-  return rewardItems.value
-    .filter((item) => matchesKeyword(item.rewardName, item.rewardDesc))
-    .map(toDisplayReward)
-})
-
-const displayRecords = computed(() => {
-  return exchangeRecords.value.filter((record) => matchesKeyword(record.rewardName, record.remark || ''))
-})
+const {
+  page: rewardPage,
+  totalPages: rewardTotalPages,
+  pagedItems: pagedRewards,
+  rangeText: rewardPageRangeText,
+  resetPage: resetRewardPage,
+  changePage: changeRewardPage,
+} = createPager(displayRewards, rewardPageSize)
+const {
+  page: recordPage,
+  totalPages: recordTotalPages,
+  pagedItems: pagedRecords,
+  rangeText: recordPageRangeText,
+  resetPage: resetRecordPage,
+  changePage: changeRecordPage,
+} = createPager(displayRecords, recordPageSize)
 
 function matchesKeyword(...texts: string[]) {
   if (!normalizedKeyword.value) {
@@ -356,53 +345,79 @@ function matchesKeyword(...texts: string[]) {
 function toDisplayReward(item: RewardItem): DisplayReward {
   return {
     ...item,
-    badge: resolveBadge(item),
-    helperText: item.canExchange ? '满足条件即可发起兑换' : '积分满足后可兑换',
     actionText: item.canExchange ? '兑换' : item.stock <= 0 ? '已兑完' : '积分不足',
     disabled: !item.canExchange || submittingRewardId.value === item.rewardId,
-    stockText: `剩余 ${Math.max(item.stock, 0)} 件`,
-    exchangeUnitText: '单次兑换 1 件',
   }
+}
+
+function getTotalPages(total: number, pageSize: number) {
+  return Math.max(1, Math.ceil(total / pageSize))
+}
+
+function clampPage(page: number, total: number, pageSize: number) {
+  return Math.min(Math.max(1, page), getTotalPages(total, pageSize))
+}
+
+function slicePageItems<T>(items: T[], page: number, pageSize: number) {
+  const currentPage = clampPage(page, items.length, pageSize)
+  const start = (currentPage - 1) * pageSize
+  return items.slice(start, start + pageSize)
+}
+
+function getPageRangeText(total: number, page: number, pageSize: number) {
+  if (!total) {
+    return '0-0'
+  }
+
+  const currentPage = clampPage(page, total, pageSize)
+  const start = (currentPage - 1) * pageSize + 1
+  const end = Math.min(currentPage * pageSize, total)
+  return `${start}-${end}`
+}
+
+function createPager<T>(items: ComputedRef<T[]>, pageSize: ComputedRef<number>) {
+  const page = ref(1)
+  const totalPages = computed(() => getTotalPages(items.value.length, pageSize.value))
+  const pagedItems = computed(() => slicePageItems(items.value, page.value, pageSize.value))
+  const rangeText = computed(() => getPageRangeText(items.value.length, page.value, pageSize.value))
+
+  function resetPage() {
+    page.value = 1
+  }
+
+  function changePage(direction: number) {
+    page.value = clampPage(page.value + direction, items.value.length, pageSize.value)
+  }
+
+  watch(items, (nextItems) => {
+    page.value = clampPage(page.value, nextItems.length, pageSize.value)
+  })
+
+  watch(pageSize, () => {
+    page.value = clampPage(page.value, items.value.length, pageSize.value)
+  })
+
+  return {
+    page,
+    totalPages,
+    pagedItems,
+    rangeText,
+    resetPage,
+    changePage,
+  }
+}
+
+function updateViewportSize() {
+  viewportWidth.value = window.innerWidth
+  viewportHeight.value = window.innerHeight
 }
 
 function goBack() {
+  if (publicAccessMode.value) {
+    router.back()
+    return
+  }
   router.push('/index-student')
-}
-
-function getRewardCategory(item: RewardItem) {
-  const source = `${item.rewardName} ${item.rewardDesc}`.toLowerCase()
-
-  if (/(公益|捐|植树|树|助力|沙漠|环保捐)/.test(source)) {
-    return '公益捐助'
-  }
-
-  if (/(头像框|徽章|装扮|皮肤|称号|虚拟)/.test(source)) {
-    return '虚拟装扮'
-  }
-
-  if (/(图书馆|时长|延时|服务|权益|特权|课程|资格|体验|使用权)/.test(source)) {
-    return '权益服务'
-  }
-
-  return ''
-}
-
-function resolveBadge(item: RewardItem): RewardBadge | null {
-  const category = getRewardCategory(item)
-
-  if (category === '公益捐助') {
-    return { text: '公益', color: 'blue' }
-  }
-
-  if (category === '虚拟装扮') {
-    return { text: '装饰', color: 'gold' }
-  }
-
-  if (category === '权益服务') {
-    return { text: '权益', color: 'cyan' }
-  }
-
-  return null
 }
 
 function safeImageUrl(imageUrl?: string) {
@@ -419,6 +434,10 @@ function handleImageError(event: Event) {
 function openExchangeModal(reward: DisplayReward) {
   if (!reward.canExchange || submittingRewardId.value) {
     return
+  }
+
+  if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate(10)
   }
 
   selectedReward.value = reward
@@ -453,17 +472,40 @@ watch(exchangeModalOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
 })
 
-onBeforeUnmount(() => {
-  document.body.style.overflow = ''
+watch(keyword, () => {
+  resetRewardPage()
+  resetRecordPage()
 })
 
-onMounted(loadRewardCenter)
+watch(activeView, (view) => {
+  if (view === 'rewards') {
+    resetRewardPage()
+    return
+  }
+
+  resetRecordPage()
+})
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = ''
+  window.removeEventListener('resize', updateViewportSize)
+})
+
+onMounted(() => {
+  updateViewportSize()
+  window.addEventListener('resize', updateViewportSize)
+  loadRewardCenter()
+})
 </script>
 
 <style scoped>
 .reward-mall-page {
-  min-height: 100vh;
-  padding: 24px 12px calc(40px + env(safe-area-inset-bottom, 0px));
+  --mall-content-width: 360px;
+  --mall-hero-height: 156px;
+  height: 100dvh;
+  min-height: 100dvh;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(101, 183, 126, 0.16), transparent 28%),
     linear-gradient(180deg, #edf8f1 0%, #f7fbf8 100%);
@@ -472,27 +514,37 @@ onMounted(loadRewardCenter)
 .reward-mall-shell {
   display: flex;
   justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .reward-mall-phone {
-  width: min(100%, 420px);
+  width: min(100%, 404px);
+  height: 100%;
+  min-height: 0;
+  position: relative;
 }
 
 .mall-hero {
   position: relative;
   overflow: hidden;
-  padding: 28px 24px 20px;
-  border-radius: 32px 32px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: var(--mall-hero-height);
+  padding: 22px 20px 16px;
+  border-radius: 28px 28px 18px 18px;
   background: linear-gradient(160deg, #157338 0%, #1ba34b 100%);
-  box-shadow: 0 22px 48px rgba(21, 115, 56, 0.22);
+  box-shadow: 0 18px 34px rgba(21, 115, 56, 0.2);
+  box-sizing: border-box;
 }
 
 .mall-hero__glow {
   position: absolute;
-  right: -26px;
-  top: -48px;
-  width: 220px;
-  height: 220px;
+  right: -28px;
+  top: -42px;
+  width: 190px;
+  height: 190px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.14), transparent 68%);
   pointer-events: none;
@@ -501,73 +553,46 @@ onMounted(loadRewardCenter)
 .mall-hero__top {
   position: relative;
   z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) 86px;
+  align-items: center;
+  width: min(100%, var(--mall-content-width));
+  margin: 0 auto;
+  gap: 10px;
 }
 
 .mall-hero__copy {
   min-width: 0;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .mall-hero h1 {
   margin: 0;
   color: #ffffff;
-  font-size: 34px;
-  line-height: 1.08;
+  font-size: 24px;
+  line-height: 1.12;
   font-weight: 900;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
-.mall-hero p {
-  margin: 10px 0 0;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 18px;
-  line-height: 1.5;
-}
-
-.points-badge {
-  position: relative;
-  z-index: 1;
-  min-height: 62px;
-  padding: 0 18px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  backdrop-filter: blur(8px);
-  flex-shrink: 0;
-}
-
-.points-badge strong {
-  font-size: 32px;
-  line-height: 1;
-}
-
-.points-badge span {
-  font-size: 16px;
-  opacity: 0.88;
+.mall-hero__action-spacer {
+  width: 86px;
+  min-width: 86px;
 }
 
 .mall-hero__search {
   position: relative;
   z-index: 1;
-  margin-top: 24px;
-}
-
-.mall-hero__actions {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
+  width: min(100%, var(--mall-content-width));
+  margin: 14px auto 0;
 }
 
 .ghost-action {
-  min-height: 38px;
+  min-height: 34px;
   padding: 0 14px;
   border: none;
   border-radius: 999px;
@@ -577,16 +602,84 @@ onMounted(loadRewardCenter)
   background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
   font: inherit;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
 
-.view-strip {
+.ghost-action--top {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+}
+
+.public-entry-chip {
+  position: relative;
+  z-index: 1;
   display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 16px 0 4px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: min(100%, var(--mall-content-width));
+  margin: 8px auto 0;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(10px);
+}
+
+.public-entry-chip--inline {
+  margin: 0;
+  justify-self: start;
+  max-width: 108px;
+}
+
+.public-entry-chip::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.public-entry-chip__label {
+  white-space: nowrap;
+}
+
+.public-entry-chip__value {
+  margin: 0;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.view-strip {
+  width: min(100%, var(--mall-content-width));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px auto 0;
+  padding: 8px;
+  border: 1px solid rgba(70, 123, 92, 0.12);
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(252, 254, 252, 0.94), rgba(241, 247, 243, 0.9));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 8px 18px rgba(31, 74, 52, 0.08);
+  backdrop-filter: blur(18px);
   scrollbar-width: none;
 }
 
@@ -618,104 +711,17 @@ onMounted(loadRewardCenter)
   box-shadow: 0 10px 18px rgba(34, 197, 94, 0.18);
 }
 
-.promo-card {
-  margin-top: 18px;
-  min-height: 92px;
-  padding: 14px 16px;
-  border-radius: 22px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 30%),
-    linear-gradient(135deg, #ffab00 0%, #ffc636 100%);
-  box-shadow: 0 16px 28px rgba(255, 178, 36, 0.18);
-}
-
-.promo-card--ready {
-  background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 30%),
-    linear-gradient(135deg, #ff9800 0%, #ffbe2e 100%);
-}
-
-.promo-card__icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.promo-card__body {
-  min-width: 0;
-  flex: 1;
-}
-
-.promo-card__head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.promo-card__tag {
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.22);
-  color: rgba(255, 255, 255, 0.96);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.promo-card__body strong {
-  display: block;
-  color: #ffffff;
-  font-size: 18px;
-  line-height: 1.25;
-}
-
-.promo-card__body p {
-  margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.promo-card__side {
-  min-width: 72px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
 .summary-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .summary-pill {
   padding: 14px 12px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 24px rgba(36, 69, 54, 0.08);
   text-align: center;
 }
@@ -737,56 +743,35 @@ onMounted(loadRewardCenter)
 
 .card-list,
 .record-list {
-  display: grid;
-  gap: 16px;
-  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  min-height: 0;
 }
 
 .reward-card,
 .record-card {
-  padding: 18px;
-  border-radius: 26px;
+  padding: 16px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 16px 34px rgba(33, 83, 52, 0.1);
+  box-shadow: 0 16px 34px rgba(33, 83, 52, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .reward-card {
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 14px;
   align-items: center;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.reward-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 38px rgba(33, 83, 52, 0.14);
 }
 
 .reward-card__media {
-  position: relative;
-  width: 82px;
-  height: 82px;
-  border-radius: 22px;
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
   overflow: hidden;
   background: #eef7f1;
-}
-
-.reward-card__stock {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 1;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(17, 24, 39, 0.72);
-  color: #ffffff;
-  font-size: 11px;
-  line-height: 1.2;
-  font-weight: 700;
-  backdrop-filter: blur(6px);
 }
 
 .reward-card__image {
@@ -799,47 +784,20 @@ onMounted(loadRewardCenter)
   min-width: 0;
 }
 
-.reward-card__head {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.reward-card__head h3,
-.record-card__head h3 {
+.reward-card__title {
   margin: 0;
   color: #234936;
-  font-size: 18px;
-  line-height: 1.35;
+  font-size: 19px;
+  line-height: 1.3;
   font-weight: 800;
 }
 
-.reward-card__tags {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-
-.reward-card__desc,
-.record-card__head p {
-  margin: 8px 0 0;
-  color: #7f968a;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
 .reward-card__bottom {
-  margin-top: 14px;
+  margin-top: 12px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-end;
   gap: 12px;
-}
-
-.reward-card__meta {
-  display: grid;
-  gap: 8px;
 }
 
 .reward-card__points {
@@ -849,24 +807,15 @@ onMounted(loadRewardCenter)
   color: #14a54f;
   font-size: 18px;
   font-weight: 900;
-}
-
-.reward-card__meta small {
-  color: #90a699;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.reward-card__submeta {
-  color: #688072;
+  white-space: nowrap;
 }
 
 .exchange-button {
-  min-width: 108px;
-  height: 46px;
+  min-width: 112px;
+  height: 42px;
   border: none;
   border-radius: 999px;
-  background: linear-gradient(135deg, #15b54d 0%, #1ec45a 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   box-shadow: none;
   font-weight: 800;
 }
@@ -876,6 +825,21 @@ onMounted(loadRewardCenter)
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
+}
+
+.record-card__head h3 {
+  margin: 0;
+  color: #234936;
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.record-card__head p {
+  margin: 8px 0 0;
+  color: #7f968a;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .record-card__footer {
@@ -888,6 +852,50 @@ onMounted(loadRewardCenter)
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.list-pagination {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pagination-text {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+
+.pagination-text strong {
+  color: #1a7331;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.pagination-text span {
+  color: #7a9186;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pagination-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1aae4b;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .mall-error {
@@ -1058,15 +1066,15 @@ onMounted(loadRewardCenter)
 }
 
 :deep(.ant-input-affix-wrapper) {
-  min-height: 56px;
-  padding: 0 18px;
+  min-height: 46px;
+  padding: 0 14px;
   border: none;
   border-radius: 999px;
   box-shadow: none;
 }
 
 :deep(.ant-input) {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 :deep(.ant-alert) {
@@ -1081,79 +1089,319 @@ onMounted(loadRewardCenter)
 
 :deep(.ant-spin-nested-loading),
 :deep(.ant-spin-container) {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
-@media (max-width: 520px) {
+:deep(.ant-spin-nested-loading) {
+  height: 100%;
+}
+
+:deep(.ant-spin-container) {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px));
+}
+
+:deep(.ant-spin-container::-webkit-scrollbar) {
+  display: none;
+}
+
+:deep(.ant-spin-blur) {
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
   .reward-mall-page {
-    padding-top: 14px;
-    padding-inline: 10px;
+    --mall-content-width: 330px;
+    --mall-hero-height: 148px;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .reward-mall-phone {
+    width: min(100%, 430px);
   }
 
   .mall-hero {
-    padding: 24px 18px 18px;
+    padding: 18px 16px 14px;
+    border-radius: 24px 24px 16px 16px;
+  }
+
+  .mall-hero h1 {
+    font-size: 22px;
   }
 
   .mall-hero__top {
-    flex-direction: column;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) 78px;
   }
 
-  .points-badge {
-    align-self: flex-start;
+  .mall-hero__action-spacer {
+    width: 78px;
+    min-width: 78px;
+  }
+
+  .ghost-action {
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  .public-entry-chip {
+    gap: 7px;
+    min-height: 22px;
+    margin-top: 7px;
+    padding: 0 9px;
+    font-size: 9px;
+  }
+
+  .public-entry-chip__value {
+    font-size: 10px;
+  }
+
+  .view-strip {
+    margin-top: 12px;
+  }
+
+  .view-chip {
+    min-height: 46px;
+    padding: 0 12px;
+    border-radius: 18px;
+    font-size: 13px;
   }
 
   .summary-row {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(112px, 1fr);
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: none;
+    margin-top: 10px;
   }
 
-  .summary-row::-webkit-scrollbar {
-    display: none;
+  .summary-pill {
+    padding: 12px 10px;
   }
 
-  .promo-card {
-    align-items: flex-start;
+  .card-list,
+  .record-list {
+    gap: 10px;
+    margin-top: 10px;
   }
 
-  .promo-card__head {
-    flex-wrap: wrap;
-  }
-
-  .promo-card__side {
-    margin-left: 54px;
+  .reward-card,
+  .record-card {
+    padding: 14px;
+    border-radius: 20px;
   }
 
   .reward-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
   }
 
   .reward-card__media {
-    width: 88px;
-    height: 88px;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
   }
 
-  .reward-card__bottom,
+  .reward-card__title {
+    font-size: 16px;
+  }
+
+  .reward-card__bottom {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .reward-card__points {
+    font-size: 16px;
+  }
+
+  .exchange-button {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    font-size: 13px;
+  }
+
   .record-card__head {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
+  }
+
+  .list-pagination {
+    gap: 8px;
+  }
+
+  .pagination-text strong {
+    font-size: 13px;
+  }
+
+  .pagination-text span {
+    font-size: 11px;
   }
 
   .exchange-sheet {
     width: 100%;
-    border-radius: 26px 26px 18px 18px;
+    border-radius: 24px 24px 16px 16px;
+  }
+
+  .exchange-sheet__header h3 {
+    font-size: 20px;
+  }
+
+  .exchange-sheet__desc,
+  .exchange-sheet__summary {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .exchange-sheet__stat strong {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 520px) {
+  .reward-mall-page {
+    --mall-content-width: 316px;
+    --mall-hero-height: 142px;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .reward-mall-phone {
+    width: 100%;
+  }
+
+  .mall-hero {
+    padding: 16px 14px 12px;
+    border-radius: 22px 22px 15px 15px;
+  }
+
+  .mall-hero__top {
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) 72px;
+    gap: 8px;
+  }
+
+  .public-entry-chip--inline {
+    max-width: 90px;
+  }
+
+  .mall-hero__action-spacer {
+    width: 72px;
+    min-width: 72px;
+  }
+
+  .mall-hero h1 {
+    font-size: 20px;
+  }
+
+  .view-strip {
+    border-radius: 24px;
+  }
+
+  .view-chip {
+    min-height: 44px;
+    font-size: 12px;
+  }
+
+  .summary-pill strong {
+    font-size: 15px;
+  }
+
+  .reward-card {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .reward-card__media {
+    width: 58px;
+    height: 58px;
+  }
+
+  .reward-card__title {
+    font-size: 15px;
+  }
+
+  .reward-card__points {
+    font-size: 15px;
+  }
+
+  .pagination-button {
+    min-height: 38px;
+    font-size: 12px;
+  }
+
+  :deep(.ant-input-affix-wrapper) {
+    min-height: 42px;
+    padding: 0 12px;
+  }
+
+  :deep(.ant-input) {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 390px) {
+  .reward-mall-page {
+    --mall-content-width: 296px;
+    --mall-hero-height: 136px;
+  }
+
+  .mall-hero {
+    padding: 14px 12px 10px;
+  }
+
+  .mall-hero__top {
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) 68px;
+    gap: 6px;
+  }
+
+  .public-entry-chip--inline {
+    max-width: 82px;
+  }
+
+  .mall-hero__action-spacer {
+    width: 68px;
+    min-width: 68px;
+  }
+
+  .ghost-action--top {
+    top: 12px;
+    right: 12px;
+  }
+
+  .mall-hero h1 {
+    font-size: 18px;
+  }
+
+  .view-strip {
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .summary-row {
+    gap: 8px;
+  }
+
+  .reward-card,
+  .record-card {
+    padding: 12px;
+  }
+
+  .reward-card {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .reward-card__media {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
   }
 
   .exchange-sheet__stats,
   .exchange-sheet__actions {
     grid-template-columns: 1fr;
-  }
-
-  .exchange-button {
-    width: 100%;
   }
 }
 </style>

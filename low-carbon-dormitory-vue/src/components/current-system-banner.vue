@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useRouteTransitionState } from '@/router/route-transition-state'
 
 type CurrentSystemBannerProps = {
   managerMode?: boolean
@@ -12,6 +13,7 @@ const props = withDefaults(defineProps<CurrentSystemBannerProps>(), {
 
 const route = useRoute()
 const router = useRouter()
+const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
 
 const isPortalRoute = computed(() => (props.managerMode ? route.path === '/manager/home' : route.path === '/index-student'))
 
@@ -49,6 +51,10 @@ function goTo(path: string) {
   }
   router.push(path)
 }
+
+function isPending(path: string) {
+  return isRouteNavigating.value && pendingRoutePath.value === path
+}
 </script>
 
 <template>
@@ -63,10 +69,20 @@ function goTo(path: string) {
       <span class="system-banner__badge">{{ banner.badge }}</span>
 
       <div class="system-banner__actions">
-        <button type="button" class="system-banner__action system-banner__action--primary" @click="goTo(banner.primaryPath)">
+        <button
+          type="button"
+          class="system-banner__action system-banner__action--primary"
+          :class="{ 'system-banner__action--pending': isPending(banner.primaryPath) }"
+          @click="goTo(banner.primaryPath)"
+        >
           {{ banner.primaryLabel }}
         </button>
-        <button type="button" class="system-banner__action system-banner__action--ghost" @click="goTo(banner.secondaryPath)">
+        <button
+          type="button"
+          class="system-banner__action system-banner__action--ghost"
+          :class="{ 'system-banner__action--pending': isPending(banner.secondaryPath) }"
+          @click="goTo(banner.secondaryPath)"
+        >
           {{ banner.secondaryLabel }}
         </button>
       </div>
@@ -165,6 +181,21 @@ function goTo(path: string) {
   transform: translateY(-1px);
 }
 
+.system-banner__action--pending {
+  position: relative;
+  overflow: hidden;
+}
+
+.system-banner__action--pending::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(110deg, transparent 18%, rgba(255, 255, 255, 0.3) 50%, transparent 82%);
+  background-size: 220% 100%;
+  animation: bannerPendingSweep 0.9s ease infinite;
+}
+
 .system-banner__action--primary {
   border: none;
   color: #fffdf8;
@@ -176,6 +207,16 @@ function goTo(path: string) {
   border: 1px solid rgba(131, 153, 140, 0.22);
   color: #244536;
   background: rgba(255, 255, 255, 0.84);
+}
+
+@keyframes bannerPendingSweep {
+  0% {
+    background-position: 140% 0;
+  }
+
+  100% {
+    background-position: -40% 0;
+  }
 }
 
 @media (max-width: 980px) {
