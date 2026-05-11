@@ -21,6 +21,7 @@ const homeItems = [
 
 const configItems = [
   { title: '规则配置', desc: '维护积分、荣誉和系数规则', path: '/manager/low-carbon-rule-config' },
+  { title: '学生管理', desc: '查看学生列表并执行删除操作', path: '/manager/student-manage' },
   { title: '新增学生', desc: '录入学生及宿舍基础信息', path: '/manager/student-create' },
 ] as const
 

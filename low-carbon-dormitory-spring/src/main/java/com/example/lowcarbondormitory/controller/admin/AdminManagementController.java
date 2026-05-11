@@ -7,6 +7,8 @@ import com.example.lowcarbondormitory.dto.request.AdminDeductDormFeeRequest;
 import com.example.lowcarbondormitory.dto.request.AdminUpdateRewardStockRequest;
 import com.example.lowcarbondormitory.dto.request.AdminUpdateUtilityRateRequest;
 import com.example.lowcarbondormitory.dto.response.AdminCreateStudentResponse;
+import com.example.lowcarbondormitory.dto.response.AdminStudentDeleteCheckResponse;
+import com.example.lowcarbondormitory.dto.response.AdminStudentListItemResponse;
 import com.example.lowcarbondormitory.entity.RewardItem;
 import com.example.lowcarbondormitory.entity.UtilityRateConfig;
 import com.example.lowcarbondormitory.entity.DormFee;
@@ -55,6 +57,22 @@ public class AdminManagementController {
     @PostMapping("/students")
     public Result<AdminCreateStudentResponse> createStudent(@Valid @RequestBody AdminCreateStudentRequest request) {
         return Result.success(adminManagementService.createStudent(request));
+    }
+
+    @GetMapping("/students")
+    public Result<List<AdminStudentListItemResponse>> listStudents() {
+        return Result.success(adminManagementService.listStudents());
+    }
+
+    @GetMapping("/students/{studentId}/delete-check")
+    public Result<AdminStudentDeleteCheckResponse> getStudentDeleteCheck(@PathVariable Long studentId) {
+        return Result.success(adminManagementService.getDeleteCheck(studentId));
+    }
+
+    @DeleteMapping("/students/{studentId}")
+    public Result<Boolean> deleteStudent(@PathVariable Long studentId) {
+        adminManagementService.deleteStudent(studentId);
+        return Result.success(true);
     }
 
     @GetMapping("/rewards")

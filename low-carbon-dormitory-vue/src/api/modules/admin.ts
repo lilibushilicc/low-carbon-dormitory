@@ -37,6 +37,34 @@ export interface AdminCreateStudentResponse {
   dormId: number
 }
 
+export interface AdminStudentListItem {
+  studentId: number
+  stuNum: string
+  name: string
+  gender?: number
+  phone?: string
+  college?: string
+  major?: string
+  className?: string
+  grade?: string
+  carbonScore?: number
+  dormId?: number
+  dormBuilding?: string
+  dormRoom?: string
+  createTime?: string
+  updateTime?: string
+}
+
+export interface AdminStudentDeleteCheckResponse {
+  studentId: number
+  stuNum: string
+  deletable: boolean
+  rewardExchangeCount: number
+  feeHistoryCount: number
+  paymentOrderCount: number
+  reason: string
+}
+
 export interface AdminRewardItem {
   rewardId: number
   rewardName: string
@@ -90,6 +118,18 @@ export function updateUtilityRate(feeType: string, payload: { unitPrice: number;
 
 export function createStudentByAdmin(payload: AdminCreateStudentRequest) {
   return http.post<ApiResponse<AdminCreateStudentResponse>>('/api/admin/students', payload)
+}
+
+export function fetchStudentsByAdmin() {
+  return http.get<ApiResponse<AdminStudentListItem[]>>('/api/admin/students')
+}
+
+export function fetchStudentDeleteCheckByAdmin(studentId: number) {
+  return http.get<ApiResponse<AdminStudentDeleteCheckResponse>>(`/api/admin/students/${studentId}/delete-check`)
+}
+
+export function deleteStudentByAdmin(studentId: number) {
+  return http.delete<ApiResponse<boolean>>(`/api/admin/students/${studentId}`)
 }
 
 export function fetchRewardsByAdmin() {

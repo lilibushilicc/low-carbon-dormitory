@@ -2,12 +2,12 @@
 
 ## 功能目标
 
-该功能用于在管理端录入新学生，并同步完成：
+该功能用于管理员在管理端录入新学生，并同步完成：
 
 - 学生基础资料创建
 - 宿舍关联建立
-- 宿舍账户初始化
-- 宿舍床位可用数同步
+- 宿舍费用账户初始化
+- 宿舍可用床位同步
 
 ## 前端入口
 
@@ -15,23 +15,6 @@
 
 - 路由：`/manager/student-create`
 - 页面：`low-carbon-dormitory-vue/src/router/manager-router/student/student-create.vue`
-
-页面收集的字段包括：
-
-- 学号
-- 姓名
-- 密码
-- 宿舍楼栋
-- 宿舍房间
-- 宿舍人数
-- 性别
-- 手机号
-- 身份证号
-- 学院
-- 专业
-- 班级
-- 年级
-- 初始低碳积分
 
 ### 前端 API
 
@@ -42,68 +25,41 @@
 ## 后端入口
 
 - Controller：`low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/admin/AdminManagementController.java`
-- Service：`.../service/admin/AdminManagementService.java`
+- 管理服务：`low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/admin/AdminManagementService.java`
+- 共享注册服务：`low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/student/StudentRegistrationService.java`
 
-## 核心调用链
+## 调用链路
 
 1. `AdminManagementController.createStudent(...)`
-2. `AdminManagementService.createStudent(request)`
+2. `AdminManagementService.createStudent(...)`
+3. `StudentRegistrationService.createByAdmin(...)`
 
 ## 创建流程
 
-`AdminManagementService.createStudent(...)` 的核心逻辑：
+管理员建档与公开注册共用一套核心建档逻辑：
 
-1. 取出学号并去重校验
-2. 调用 `findOrCreateDorm(...)`
-3. 调用 `buildStudent(...)`
-4. 插入 `student_base`
-5. 调用 `ensureDormFeeExists(dormId)` 初始化宿舍费用账户
-6. 调用 `syncDormBedAvailable(dormId)` 同步宿舍可用床位
-7. 返回新学生 ID、学号、宿舍 ID
+1. 校验学号是否重复
+2. 查找或创建宿舍
+3. 写入 `student_base`
+4. 初始化宿舍费用账户
+5. 同步宿舍可用床位
 
-## 宿舍创建逻辑
+## 与公开注册的区别
 
-`findOrCreateDorm(...)` 的实现特征：
+管理员建档和公开注册的共同点：
 
-- 如果宿舍已存在，则复用该宿舍
-- 如果已存在但床位总数不一致，则直接报错
-- 如果不存在，则创建新的 `student_dorm_info`
+- 都会创建学生档案
+- 都会处理宿舍与费用账户初始化
+- 都会同步床位余量
 
-这说明“学生创建”同时承担了宿舍初始化入口的角色。
+管理员建档的额外能力：
 
-## 初始化的附带效果
-
-新增学生不仅是插入一条学生记录，还会连带影响：
-
-- 宿舍基础信息表
-- 宿舍费用账户表
-- 宿舍可用床位统计
-
-因此它本质上是一个“学生 + 宿舍”复合创建流程。
-
-## 核心数据对象
-
-前端：
-
-- `AdminCreateStudentRequest`
-- `AdminCreateStudentResponse`
-
-后端：
-
-- `AdminCreateStudentRequest`
-- `AdminCreateStudentResponse`
-- `StudentBase`
-- `DormInfo`
-
-## 相关文件
-
-- `low-carbon-dormitory-vue/src/router/manager-router/student/student-create.vue`
-- `low-carbon-dormitory-vue/src/api/modules/admin.ts`
-- `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/admin/AdminManagementController.java`
-- `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/admin/AdminManagementService.java`
+- 可以显式传入 `carbonScore`
+- 仍属于管理员操作链路
+- 继续通过管理端页面触发
 
 ## 维护注意点
 
-- 当前密码是明文写入 `student_base.password`，如果后续接入密码加密，这里要和学生登录一起改。
-- 宿舍已存在时会校验床位数一致，导入历史数据时要注意这个约束。
-- 如果后续把学生创建拆成“先建宿舍、再分配学生”，需要同步拆分当前服务职责。
+- 当前密码仍为明文存储，若后续接入加密，需要同时修改注册与登录逻辑
+- 若后续拆分“先建宿舍，再分配学生”，需要同步调整 `StudentRegistrationService`
+- 新增公开注册接口后，管理员入口依然保留，二者职责不同，不要相互替代

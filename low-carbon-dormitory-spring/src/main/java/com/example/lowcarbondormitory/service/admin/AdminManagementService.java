@@ -9,23 +9,27 @@ import com.example.lowcarbondormitory.dto.request.AdminUpdateRewardStockRequest;
 import com.example.lowcarbondormitory.dto.request.AdminUpdateUtilityRateRequest;
 import com.example.lowcarbondormitory.dto.response.AdminCreateStudentResponse;
 import com.example.lowcarbondormitory.dto.response.AdminLoginResponse;
+import com.example.lowcarbondormitory.dto.response.AdminStudentDeleteCheckResponse;
+import com.example.lowcarbondormitory.dto.response.AdminStudentListItemResponse;
 import com.example.lowcarbondormitory.entity.AdminAccount;
 import com.example.lowcarbondormitory.entity.DormFee;
-import com.example.lowcarbondormitory.entity.DormInfo;
 import com.example.lowcarbondormitory.entity.RewardItem;
 import com.example.lowcarbondormitory.entity.StudentBase;
+import com.example.lowcarbondormitory.entity.StudentExt;
 import com.example.lowcarbondormitory.entity.UtilityRateConfig;
 import com.example.lowcarbondormitory.mapper.AdminAccountMapper;
 import com.example.lowcarbondormitory.mapper.DormFeeMapper;
-import com.example.lowcarbondormitory.mapper.DormInfoMapper;
 import com.example.lowcarbondormitory.mapper.RewardItemMapper;
 import com.example.lowcarbondormitory.mapper.StudentBaseMapper;
+import com.example.lowcarbondormitory.mapper.StudentExtMapper;
 import com.example.lowcarbondormitory.mapper.UtilityRateConfigMapper;
 import com.example.lowcarbondormitory.service.auth.TokenService;
 import com.example.lowcarbondormitory.service.student.DormFeeAccountService;
+import com.example.lowcarbondormitory.service.student.StudentRegistrationService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,12 +50,6 @@ public class AdminManagementService {
     private UtilityRateConfigMapper utilityRateConfigMapper;
 
     @Autowired
-    private StudentBaseMapper studentBaseMapper;
-
-    @Autowired
-    private DormInfoMapper dormInfoMapper;
-
-    @Autowired
     private DormFeeMapper dormFeeMapper;
 
     @Autowired
@@ -65,6 +63,15 @@ public class AdminManagementService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private StudentRegistrationService studentRegistrationService;
+
+    @Autowired
+    private StudentBaseMapper studentBaseMapper;
+
+    @Autowired
+    private StudentExtMapper studentExtMapper;
 
     public AdminLoginResponse login(AdminLoginRequest request) {
         String username = request.getUsername().trim();
@@ -152,26 +159,34 @@ public class AdminManagementService {
 
     @Transactional
     public AdminCreateStudentResponse createStudent(AdminCreateStudentRequest request) {
-        String stuNum = request.getStuNum().trim();
-        if (studentBaseMapper.selectOne(new LambdaQueryWrapper<StudentBase>().eq(StudentBase::getStuNum, stuNum).last("LIMIT 1")) != null) {
-            throw new IllegalArgumentException("学号已存在: " + stuNum);
+        return studentRegistrationService.createByAdmin(request);
+    }
+
+    public List<AdminStudentListItemResponse> listStudents() {
+        return studentBaseMapper.selectList(
+                        new LambdaQueryWrapper<StudentBase>()
+                                .orderByDesc(StudentBase::getCreateTime)
+                                .orderByDesc(StudentBase::getStudentId)
+                ).stream()
+                .map(this::toAdminStudentListItem)
+                .toList();
+    }
+
+    public AdminStudentDeleteCheckResponse getDeleteCheck(Long studentId) {
+        return buildDeleteCheck(requireStudent(studentId));
+    }
+
+    @Transactional
+    public void deleteStudent(Long studentId) {
+        StudentBase student = requireStudent(studentId);
+        AdminStudentDeleteCheckResponse deleteCheck = buildDeleteCheck(student);
+        if (!deleteCheck.isDeletable()) {
+            throw new IllegalStateException(deleteCheck.getReason());
         }
 
-        DormInfo dormInfo = findOrCreateDorm(
-                request.getDormBuilding().trim(),
-                request.getDormRoom().trim(),
-                resolveBedTotal(request.getBedTotal())
-        );
-        StudentBase student = buildStudent(request, dormInfo, stuNum);
-        studentBaseMapper.insert(student);
-        ensureDormFeeExists(dormInfo.getDormId());
-        syncDormBedAvailable(dormInfo.getDormId());
-
-        AdminCreateStudentResponse response = new AdminCreateStudentResponse();
-        response.setStudentId(student.getStudentId());
-        response.setStuNum(student.getStuNum());
-        response.setDormId(dormInfo.getDormId());
-        return response;
+        studentExtMapper.delete(new LambdaQueryWrapper<StudentExt>().eq(StudentExt::getStudentId, studentId));
+        studentBaseMapper.deleteById(studentId);
+        studentRegistrationService.syncDormBedAvailability(student.getDormId());
     }
 
     public List<RewardItem> listRewards() {
@@ -223,89 +238,76 @@ public class AdminManagementService {
         rewardItemMapper.deleteById(rewardId);
     }
 
-    private DormInfo findOrCreateDorm(String dormBuilding, String dormRoom, int requestedBedTotal) {
-        DormInfo dormInfo = dormInfoMapper.selectOne(
-                new LambdaQueryWrapper<DormInfo>()
-                        .eq(DormInfo::getDormBuilding, dormBuilding)
-                        .eq(DormInfo::getDormRoom, dormRoom)
-                        .last("LIMIT 1")
-        );
-        if (dormInfo != null) {
-            Integer existingBedTotal = dormInfo.getBedTotal();
-            if (existingBedTotal == null || existingBedTotal <= 0) {
-                dormInfo.setBedTotal(requestedBedTotal);
-                dormInfo.setDormType(buildDormType(requestedBedTotal));
-                dormInfoMapper.updateById(dormInfo);
-            } else if (existingBedTotal != requestedBedTotal) {
-                throw new IllegalArgumentException("宿舍已存在，且床位数为 " + existingBedTotal + "，与本次录入不一致");
-            }
-            return dormInfo;
+    private StudentBase requireStudent(Long studentId) {
+        if (studentId == null) {
+            throw new IllegalArgumentException("学生ID不能为空");
         }
-        dormInfo = new DormInfo();
-        dormInfo.setDormBuilding(dormBuilding);
-        dormInfo.setDormRoom(dormRoom);
-        dormInfo.setBedTotal(requestedBedTotal);
-        dormInfo.setBedAvailable(requestedBedTotal);
-        dormInfo.setDormType(buildDormType(requestedBedTotal));
-        dormInfo.setCarbonScore(82);
-        dormInfoMapper.insert(dormInfo);
-        return dormInfo;
-    }
-
-    private StudentBase buildStudent(AdminCreateStudentRequest request, DormInfo dormInfo, String stuNum) {
-        LocalDateTime now = LocalDateTime.now();
-        StudentBase student = new StudentBase();
-        student.setStuNum(stuNum);
-        student.setName(request.getName().trim());
-        student.setPassword(request.getPassword().trim());
-        student.setGender(request.getGender() == null ? 1 : request.getGender());
-        student.setIdCard(trimToNull(request.getIdCard()));
-        student.setPhone(defaultIfBlank(request.getPhone(), "13800000000"));
-        student.setCollege(defaultIfBlank(request.getCollege(), "未分配学院"));
-        student.setMajor(defaultIfBlank(request.getMajor(), "未分配专业"));
-        student.setClassName(defaultIfBlank(request.getClassName(), "未分配班级"));
-        student.setGrade(defaultIfBlank(request.getGrade(), "未分配年级"));
-        student.setDormBuilding(dormInfo.getDormBuilding());
-        student.setDormRoom(dormInfo.getDormRoom());
-        student.setDormId(dormInfo.getDormId());
-        student.setCarbonScore(request.getCarbonScore() == null ? 0 : Math.max(request.getCarbonScore(), 0));
-        student.setCreateTime(now);
-        student.setUpdateTime(now);
+        StudentBase student = studentBaseMapper.selectById(studentId);
+        if (student == null) {
+            throw new IllegalArgumentException("学生不存在");
+        }
         return student;
     }
 
-    private void ensureDormFeeExists(Long dormId) {
-        if (dormId == null || dormFeeMapper.selectById(dormId) != null) {
-            return;
-        }
-        DormFee dormFee = new DormFee();
-        dormFee.setDormId(dormId);
-        dormFee.setElectricityBalance(scaleMoney(BigDecimal.ZERO));
-        dormFee.setWaterBalance(scaleMoney(BigDecimal.ZERO));
-        dormFeeMapper.insert(dormFee);
+    private AdminStudentDeleteCheckResponse buildDeleteCheck(StudentBase student) {
+        int rewardExchangeCount = countInt(
+                "SELECT COUNT(1) FROM student_reward_exchange WHERE student_id = ?",
+                student.getStudentId()
+        );
+        int feeHistoryCount = countInt(
+                "SELECT COUNT(1) FROM student_fee_history WHERE student_id = ?",
+                student.getStudentId()
+        );
+        int paymentOrderCount = countInt(
+                "SELECT COUNT(1) FROM student_payment_order WHERE student_id = ?",
+                student.getStudentId()
+        );
+
+        List<String> reasons = new ArrayList<>();
+        appendDeleteReason(reasons, rewardExchangeCount, "奖励兑换记录");
+        appendDeleteReason(reasons, feeHistoryCount, "费用流水记录");
+        appendDeleteReason(reasons, paymentOrderCount, "支付订单记录");
+
+        AdminStudentDeleteCheckResponse response = new AdminStudentDeleteCheckResponse();
+        response.setStudentId(student.getStudentId());
+        response.setStuNum(student.getStuNum());
+        response.setRewardExchangeCount(rewardExchangeCount);
+        response.setFeeHistoryCount(feeHistoryCount);
+        response.setPaymentOrderCount(paymentOrderCount);
+        response.setDeletable(reasons.isEmpty());
+        response.setReason(reasons.isEmpty() ? "可删除" : "该学生不能删除：" + String.join("、", reasons));
+        return response;
     }
 
-    private void syncDormBedAvailable(Long dormId) {
-        DormInfo dormInfo = dormInfoMapper.selectById(dormId);
-        if (dormInfo == null) {
-            return;
-        }
-        int bedTotal = dormInfo.getBedTotal() == null ? 4 : Math.max(dormInfo.getBedTotal(), 0);
-        Long residentCount = studentBaseMapper.selectCount(new LambdaQueryWrapper<StudentBase>().eq(StudentBase::getDormId, dormId));
-        dormInfo.setBedTotal(bedTotal);
-        dormInfo.setBedAvailable(Math.max(bedTotal - residentCount.intValue(), 0));
-        dormInfoMapper.updateById(dormInfo);
+    private int countInt(String sql, Object... args) {
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, args);
+        return count == null ? 0 : Math.max(count, 0);
     }
 
-    private int resolveBedTotal(Integer bedTotal) {
-        if (bedTotal == null) {
-            return 4;
+    private void appendDeleteReason(List<String> reasons, int count, String label) {
+        if (count > 0) {
+            reasons.add("已有" + count + "条" + label);
         }
-        return Math.max(bedTotal, 1);
     }
 
-    private String buildDormType(int bedTotal) {
-        return bedTotal + "人间";
+    private AdminStudentListItemResponse toAdminStudentListItem(StudentBase student) {
+        AdminStudentListItemResponse response = new AdminStudentListItemResponse();
+        response.setStudentId(student.getStudentId());
+        response.setStuNum(student.getStuNum());
+        response.setName(student.getName());
+        response.setGender(student.getGender());
+        response.setPhone(student.getPhone());
+        response.setCollege(student.getCollege());
+        response.setMajor(student.getMajor());
+        response.setClassName(student.getClassName());
+        response.setGrade(student.getGrade());
+        response.setCarbonScore(student.getCarbonScore());
+        response.setDormId(student.getDormId());
+        response.setDormBuilding(student.getDormBuilding());
+        response.setDormRoom(student.getDormRoom());
+        response.setCreateTime(student.getCreateTime());
+        response.setUpdateTime(student.getUpdateTime());
+        return response;
     }
 
     private String buildDeductOperationType(String remark) {

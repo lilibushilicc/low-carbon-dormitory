@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public Result<Void> handleBusinessException(RuntimeException exception) {
-        return Result.fail(exception.getMessage());
+        return Result.fail(400, exception.getMessage());
     }
 
     @ExceptionHandler(AuthException.class)
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .filter(value -> value != null && !value.isBlank())
                 .findFirst()
                 .orElse("请求参数校验失败");
-        return Result.fail(message);
+        return Result.fail(400, message);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -44,12 +44,12 @@ public class GlobalExceptionHandler {
                 .map(violation -> violation.getMessage())
                 .filter(value -> value != null && !value.isBlank())
                 .collect(Collectors.joining("，"));
-        return Result.fail(message.isBlank() ? "请求参数校验失败" : message);
+        return Result.fail(400, message.isBlank() ? "请求参数校验失败" : message);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
-        return Result.fail("请求体格式不正确");
+        return Result.fail(400, "请求体格式不正确");
     }
 
     @ExceptionHandler(Exception.class)

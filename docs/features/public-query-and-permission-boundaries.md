@@ -113,7 +113,10 @@
 | `GET` | `/admin/utility-rates` | `AdminManagementController` | 要求管理员 token |
 | `PUT` | `/admin/utility-rates/{feeType}` | `AdminManagementController` | 要求管理员 token |
 | `POST` | `/admin/dorms/{dormId}/fees/deduct` | `AdminManagementController` | 要求管理员 token |
+| `GET` | `/admin/students` | `AdminManagementController` | 要求管理员 token |
 | `POST` | `/admin/students` | `AdminManagementController` | 要求管理员 token |
+| `GET` | `/admin/students/{studentId}/delete-check` | `AdminManagementController` | 要求管理员 token |
+| `DELETE` | `/admin/students/{studentId}` | `AdminManagementController` | 要求管理员 token |
 | `GET` | `/admin/rewards` | `AdminManagementController` | 要求管理员 token |
 | `POST` | `/admin/rewards` | `AdminManagementController` | 要求管理员 token |
 | `PUT` | `/admin/rewards/{rewardId}/stock` | `AdminManagementController` | 要求管理员 token |

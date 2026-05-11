@@ -87,6 +87,11 @@ const routes: RouteRecordRaw[] = [
         component: lazyView(() => import('@/router/manager-router/config/low-carbon-rule-config.vue')),
       },
       {
+        path: 'student-manage',
+        name: 'manager-student-manage',
+        component: lazyView(() => import('@/router/manager-router/student/student-manage.vue')),
+      },
+      {
         path: 'student-create',
         name: 'manager-student-create',
         component: lazyView(() => import('@/router/manager-router/student/student-create.vue')),
