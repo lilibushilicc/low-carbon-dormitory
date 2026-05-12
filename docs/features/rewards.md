@@ -1,5 +1,7 @@
 # 奖励兑换实现文档
 
+> 2026-05-11 补充：奖励兑换手机端页面（`reward-exchange-antd.vue`）背景图资源使用 `low-carbon-dormitory-vue/public/images/reward-exchange-mobile-bg.jpg`；页面已调整为手机端全屏响应布局，背景图直接参与页面主视觉，仅保留轻度遮罩保证可读性；奖励列表与兑换记录两种视图统一使用同一套内容盒尺寸与间距规则。
+
 ## 功能目标
 
 奖励功能用于把学生的个人低碳积分转化为可兑换奖励，主要包含：
@@ -21,6 +23,11 @@
 - `reward-exchange-son.vue`
 - `reward-exchange-antd.vue`
 - `use-reward-center.ts`
+
+补充说明：
+
+- 桌面版奖励中心不再提供跳转到 `reward-exchange-antd` 的页面入口
+- 手机端奖励页当前仅支持通过 URL 直接访问
 
 ### 前端组合逻辑
 

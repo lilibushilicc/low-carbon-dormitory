@@ -1,89 +1,121 @@
-﻿<template>
-  <div class="pay-up">
-    <header class="top-bar">
-      <el-button link @click="$router.back()">
-        <el-icon><ArrowLeft /></el-icon>
-        返回
-      </el-button>
-      <el-button link type="primary" @click="$router.push('/index-student')">回到首页</el-button>
-    </header>
-
-    <main class="main-content">
-      <div class="pay-card">
-        <h1>费用缴纳</h1>
-        <p class="sub-title">创建支付订单后扫码支付。支付成功后系统会更新余额，并返回本次结算的积分结果。</p>
-
-        <div class="dorm-info">
-          <span>当前宿舍</span>
-          <strong>{{ currentDormLabel }}</strong>
+<template>
+  <div class="page">
+    <div class="page-shell">
+      <header class="top-bar">
+        <el-button class="top-action" text @click="goPrevious">
+          <el-icon><ArrowLeft /></el-icon>
+          返回
+        </el-button>
+        <div class="top-links">
+          <el-button class="top-action" text @click="goUtilityHome">水电费主页</el-button>
+          <el-button class="top-action" text @click="goHistory">缴费历史</el-button>
         </div>
+      </header>
 
-        <div v-if="rateInfo" class="rate-panel">
-          <div class="rate-item">
-            <span>水费单价</span>
-            <strong>{{ formatUnitPrice(rateInfo.waterUnitPrice, '吨水') }}</strong>
-          </div>
-          <div class="rate-item">
-            <span>电费单价</span>
-            <strong>{{ formatUnitPrice(rateInfo.electricityUnitPrice, '度电') }}</strong>
-          </div>
-        </div>
+      <el-skeleton :loading="loading" animated :rows="8">
+        <template #default>
+          <el-alert
+            v-if="errorMessage"
+            class="page-alert"
+            :title="errorMessage"
+            type="error"
+            :closable="false"
+            show-icon
+          />
 
-        <div class="fee-switcher">
-          <div class="slider-bg" :style="sliderStyle"></div>
-          <div class="switch-item" :class="{ 'is-active': feeType === 'water' }" @click="switchFeeType('water')">
-            <el-icon><Coffee /></el-icon>
-            水费
-          </div>
-          <div class="switch-item" :class="{ 'is-active': feeType === 'electric' }" @click="switchFeeType('electric')">
-            <el-icon><Sunny /></el-icon>
-            电费
-          </div>
-        </div>
-
-        <div class="input-wrapper">
-          <span class="currency">¥</span>
-          <input v-model="amount" type="text" :placeholder="'请输入' + feeLabel + '金额'" @input="formatAmountInput" />
-        </div>
-
-        <div v-if="estimatedQuantityText" class="estimate-box">
-          <span>预计可购</span>
-          <strong>{{ estimatedQuantityText }}</strong>
-        </div>
-
-        <div class="method-section">
-          <p>请选择缴费方式</p>
-          <div class="pay-methods">
-            <div
-              v-for="method in payMethods"
-              :key="method.value"
-              class="method-item"
-              :class="{ 'is-active': selectedMethod === method.value }"
-              @click="selectedMethod = method.value"
-            >
-              <span class="method-name">{{ method.name }}</span>
-              <el-icon class="check-icon"><Check /></el-icon>
+          <section v-else class="pay-card">
+            <div class="hero-copy">
+              <h1>费用缴纳</h1>
+              <p>创建支付订单后扫码支付。支付成功后系统会更新余额，并返回本次结算的积分结果。</p>
             </div>
-          </div>
 
-          <el-button
-            type="primary"
-            size="large"
-            class="pay-action-btn"
-            :disabled="!isPayable"
-            :loading="isPaying"
-            @click="handlePay"
-          >
-            缴纳 {{ feeLabel }}
-          </el-button>
-        </div>
-      </div>
-    </main>
+            <div class="dorm-info">
+              <span>当前宿舍</span>
+              <strong>{{ currentDormLabel }}</strong>
+            </div>
 
-    <footer class="action-buttons">
-      <el-button size="large" @click="$router.back()">返回</el-button>
-      <el-button size="large" type="primary" plain @click="goHistory">缴费历史</el-button>
-    </footer>
+            <div class="rate-panel">
+              <article class="rate-item">
+                <span>水费单价</span>
+                <strong>{{ formatUnitPrice(rateInfo?.waterUnitPrice, '吨水') }}</strong>
+              </article>
+              <article class="rate-item">
+                <span>电费单价</span>
+                <strong>{{ formatUnitPrice(rateInfo?.electricityUnitPrice, '度电') }}</strong>
+              </article>
+            </div>
+
+            <div class="fee-switcher">
+              <div class="slider-bg" :style="sliderStyle"></div>
+              <button
+                type="button"
+                class="switch-item"
+                :class="{ 'is-active': feeType === 'water' }"
+                @click="switchFeeType('water')"
+              >
+                <el-icon><Coffee /></el-icon>
+                <span>水费</span>
+              </button>
+              <button
+                type="button"
+                class="switch-item"
+                :class="{ 'is-active': feeType === 'electric' }"
+                @click="switchFeeType('electric')"
+              >
+                <el-icon><Sunny /></el-icon>
+                <span>电费</span>
+              </button>
+            </div>
+
+            <div class="amount-section">
+              <div class="amount-panel">
+                <span class="currency">¥</span>
+                <input
+                  v-model="amount"
+                  type="text"
+                  :placeholder="`请输入${feeLabel}金额`"
+                  @input="formatAmountInput"
+                />
+              </div>
+              <div class="balance-text">当前余额 {{ currentBalanceText }}</div>
+            </div>
+
+            <article class="estimate-card">
+              <span>预计可购</span>
+              <strong>{{ estimatedQuantityText || '-' }}</strong>
+            </article>
+
+            <div class="method-section">
+              <p>请选择缴费方式</p>
+              <div class="pay-methods">
+                <button
+                  v-for="method in payMethods"
+                  :key="method.value"
+                  type="button"
+                  class="method-item"
+                  :class="{ 'is-active': selectedMethod === method.value }"
+                  @click="selectedMethod = method.value"
+                >
+                  <span class="method-name">{{ method.name }}</span>
+                  <el-icon class="check-icon"><Check /></el-icon>
+                </button>
+              </div>
+            </div>
+
+            <el-button
+              type="primary"
+              size="large"
+              class="pay-action-btn"
+              :disabled="!isPayable"
+              :loading="isPaying"
+              @click="handlePay"
+            >
+              缴纳 {{ feeLabel }}
+            </el-button>
+          </section>
+        </template>
+      </el-skeleton>
+    </div>
 
     <el-dialog
       v-model="paymentDialogVisible"
@@ -128,7 +160,8 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft, Check, Coffee, Sunny } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
-import { formatDormLabel, formatNumber, formatUnitPrice } from '@/utils/formatters'
+import { formatCurrency, formatDormLabel, formatNumber, formatUnitPrice } from '@/utils/formatters'
+import { requireApiData, resolveErrorMessage } from '@/utils/api-response'
 import { useStudentTokenStore } from '@/stores/student-token'
 import {
   createStudentPaymentOrder,
@@ -143,6 +176,8 @@ const router = useRouter()
 const studentTokenStore = useStudentTokenStore()
 const { studentInfo, stuNum, dormId, dormLabel } = storeToRefs(studentTokenStore)
 
+const loading = ref(true)
+const errorMessage = ref('')
 const amount = ref('')
 const selectedMethod = ref('ALIPAY')
 const feeType = ref<'water' | 'electric'>('water')
@@ -153,6 +188,11 @@ const rateInfo = ref<WaterElectricityRateInfo | null>(null)
 const paymentDialogVisible = ref(false)
 const paymentOrder = ref<PaymentOrder | null>(null)
 let pollingTimer: number | null = null
+
+const payMethods = [
+  { name: '支付宝', value: 'ALIPAY' },
+  { name: '微信支付', value: 'WECHAT' },
+]
 
 const feeLabel = computed(() => (feeType.value === 'water' ? '水费' : '电费'))
 const currentDormLabel = computed(() => formatDormLabel(rateInfo.value, dormLabel.value))
@@ -171,6 +211,13 @@ const currentUnitName = computed(() => {
   return feeType.value === 'water' ? rateInfo.value.waterUnitName || '吨' : rateInfo.value.electricityUnitName || '度'
 })
 
+const currentBalanceText = computed(() => {
+  if (!rateInfo.value) return '-'
+  return feeType.value === 'water'
+    ? formatCurrency(rateInfo.value.waterBalance)
+    : formatCurrency(rateInfo.value.electricityBalance)
+})
+
 const estimatedQuantityText = computed(() => {
   const parsedAmount = Number.parseFloat(amount.value)
   if (!parsedAmount || parsedAmount <= 0 || !currentUnitPrice.value || currentUnitPrice.value <= 0) {
@@ -178,11 +225,6 @@ const estimatedQuantityText = computed(() => {
   }
   return `${formatNumber(parsedAmount / currentUnitPrice.value, 2)} ${currentUnitName.value}`
 })
-
-const payMethods = [
-  { name: '支付宝', value: 'ALIPAY' },
-  { name: '微信支付', value: 'WECHAT' },
-]
 
 const isPayable = computed(() => {
   return Boolean(amount.value) && Number.parseFloat(amount.value) > 0 && Boolean(stuNum.value) && Boolean(dormId.value)
@@ -211,6 +253,18 @@ function buildSettlementMessage(order?: PaymentOrder | null) {
   return `支付成功，系统已完成充值。本次宿舍积分 +${dormAdded}，个人积分 +${personalAdded}。`
 }
 
+function goPrevious() {
+  router.back()
+}
+
+function goUtilityHome() {
+  router.push('/water-electricity')
+}
+
+function goHistory() {
+  router.push('/history-fee')
+}
+
 function switchFeeType(type: 'water' | 'electric') {
   feeType.value = type
 }
@@ -219,23 +273,28 @@ function formatAmountInput() {
   amount.value = amount.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
 }
 
-function goHistory() {
-  router.push('/history-fee')
-}
-
 async function loadRateInfo() {
-  if (!stuNum.value && !dormId.value) return
+  if (!stuNum.value && !dormId.value) {
+    errorMessage.value = '未检测到登录信息，请重新登录'
+    loading.value = false
+    return
+  }
+
+  loading.value = true
+  errorMessage.value = ''
+
   try {
     const { data } = await fetchWaterElectricity({
       stuNum: stuNum.value || undefined,
       dormId: dormId.value || undefined,
     })
-    if (data.code === 200 && data.data) {
-      rateInfo.value = data.data
-      studentTokenStore.updateCarbonScore(data.data.personalCarbonScore)
-    }
+    rateInfo.value = requireApiData(data, '获取单价信息失败')
+    studentTokenStore.updateCarbonScore(rateInfo.value.personalCarbonScore)
   } catch (error) {
     console.error('获取单价信息失败:', error)
+    errorMessage.value = resolveErrorMessage(error, '获取单价信息失败，请稍后重试')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -256,17 +315,12 @@ async function handlePay() {
       payerAccount: studentInfo.value?.username || stuNum.value,
     })
 
-    if (data.code !== 200 || !data.data) {
-      ElMessage.error(data.msg || '创建支付订单失败')
-      return
-    }
-
-    paymentOrder.value = data.data
+    paymentOrder.value = requireApiData(data, '创建支付订单失败')
     paymentDialogVisible.value = true
     startPolling()
-  } catch (error: any) {
+  } catch (error) {
     console.error('创建支付订单失败:', error)
-    ElMessage.error(error.response?.data?.msg || '创建支付订单失败，请稍后重试')
+    ElMessage.error(resolveErrorMessage(error, '创建支付订单失败，请稍后重试'))
   } finally {
     isPaying.value = false
   }
@@ -278,18 +332,17 @@ async function checkPaymentStatus() {
   checkingStatus.value = true
   try {
     const { data } = await fetchStudentPaymentOrder(paymentOrder.value.orderNo, stuNum.value)
-    if (data.code === 200 && data.data) {
-      paymentOrder.value = data.data
-      if (data.data.status === 'SUCCESS') {
-        stopPolling()
-        ElMessage.success(buildSettlementMessage(data.data))
-        amount.value = ''
-        paymentDialogVisible.value = false
-        router.push('/water-electricity')
-      }
+    paymentOrder.value = requireApiData(data, '查询支付状态失败')
+    if (paymentOrder.value.status === 'SUCCESS') {
+      stopPolling()
+      ElMessage.success(buildSettlementMessage(paymentOrder.value))
+      amount.value = ''
+      paymentDialogVisible.value = false
+      router.push('/water-electricity')
     }
   } catch (error) {
     console.error('查询支付状态失败:', error)
+    ElMessage.error(resolveErrorMessage(error, '查询支付状态失败，请稍后重试'))
   } finally {
     checkingStatus.value = false
   }
@@ -301,20 +354,15 @@ async function simulatePaymentSuccess() {
   simulatingSuccess.value = true
   try {
     const { data } = await simulateStudentPaymentSuccess(paymentOrder.value.orderNo, stuNum.value)
-    if (data.code !== 200 || !data.data) {
-      ElMessage.error(data.msg || '模拟支付失败')
-      return
-    }
-
-    paymentOrder.value = data.data
+    paymentOrder.value = requireApiData(data, '模拟支付失败')
     stopPolling()
-    ElMessage.success(buildSettlementMessage(data.data))
+    ElMessage.success(buildSettlementMessage(paymentOrder.value))
     amount.value = ''
     paymentDialogVisible.value = false
     router.push('/water-electricity')
-  } catch (error: any) {
+  } catch (error) {
     console.error('模拟支付失败:', error)
-    ElMessage.error(error.response?.data?.msg || '模拟支付失败，请稍后重试')
+    ElMessage.error(resolveErrorMessage(error, '模拟支付失败，请稍后重试'))
   } finally {
     simulatingSuccess.value = false
   }
@@ -323,7 +371,7 @@ async function simulatePaymentSuccess() {
 function startPolling() {
   stopPolling()
   pollingTimer = window.setInterval(() => {
-    checkPaymentStatus()
+    void checkPaymentStatus()
   }, 3000)
 }
 
@@ -339,273 +387,307 @@ onBeforeUnmount(stopPolling)
 </script>
 
 <style scoped>
-.pay-up {
-  --primary-gradient: linear-gradient(135deg, #2b6a4f 0%, #5ea982 100%);
-  --shadow-card: 0 18px 40px rgba(36, 69, 54, 0.1);
-  --text-main: #1f372c;
-  --text-sub: #5f776b;
-  --bg-page: linear-gradient(180deg, #eef6f1 0%, #f8fbf9 100%);
-  --radius-card: 20px;
-  display: flex;
-  flex-direction: column;
+.page {
   min-height: 100vh;
-  background: var(--bg-page);
-  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  padding: 20px 16px 40px;
+  background:
+    radial-gradient(circle at 3% 4%, rgba(163, 223, 190, 0.24), transparent 18%),
+    radial-gradient(circle at 96% 8%, rgba(143, 211, 178, 0.22), transparent 20%),
+    linear-gradient(180deg, #eef7f2 0%, #f7fbf9 100%);
+}
+
+.page-shell {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 10px 24px rgba(36, 69, 54, 0.06);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(10px);
+  gap: 12px;
+  max-width: 740px;
+  margin: 0 auto 12px;
 }
 
-:deep(.top-bar .el-button) {
-  font-size: 15px;
+.top-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.top-action {
+  color: #5f776b;
+  font-size: 14px;
   font-weight: 600;
 }
 
-.main-content {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 30px 20px;
+.page-alert {
+  margin-bottom: 16px;
 }
 
 .pay-card {
-  width: 100%;
-  max-width: 520px;
+  width: min(100%, 740px);
+  margin: 0 auto;
+  padding: 30px 30px 28px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.98);
-  border-radius: var(--radius-card);
-  padding: 32px;
-  box-shadow: var(--shadow-card);
-  border: 1px solid #e5efe9;
+  border: 1px solid #e1ece4;
+  box-shadow: 0 22px 54px rgba(42, 86, 61, 0.1);
 }
 
-.pay-card h1 {
-  font-size: 26px;
-  color: #244536;
-  margin: 0 0 8px;
-  font-weight: 700;
+.hero-copy {
+  display: grid;
+  justify-items: center;
   text-align: center;
+  gap: 10px;
+  margin-bottom: 22px;
 }
 
-.sub-title {
-  margin: 0 0 16px;
-  text-align: center;
-  color: var(--text-sub);
-  line-height: 1.7;
+.hero-copy h1 {
+  margin: 0;
+  color: #234635;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
 }
 
-.dorm-info,
-.rate-panel,
-.estimate-box {
-  margin-bottom: 20px;
-  border-radius: 14px;
+.hero-copy p {
+  margin: 0;
+  max-width: 620px;
+  color: #6d8477;
+  font-size: 15px;
+  line-height: 1.75;
 }
 
 .dorm-info {
-  padding: 14px 16px;
-  background: #fcfefd;
-  border: 1px solid #e5efe9;
+  min-height: 64px;
+  margin-bottom: 16px;
+  padding: 0 20px;
+  border-radius: 18px;
+  border: 1px solid #dce9e0;
+  background: #fbfefd;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .dorm-info span {
-  color: var(--text-sub);
+  color: #6d8477;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .dorm-info strong {
-  color: var(--text-main);
+  color: #244536;
+  font-size: 18px;
+  font-weight: 800;
 }
 
 .rate-panel {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
-.rate-item,
-.estimate-box {
-  padding: 14px 16px;
-  background: #eef6f1;
-  border: 1px solid #e5efe9;
+.rate-item {
+  min-height: 92px;
+  padding: 16px 18px 14px;
+  background: #edf5f1;
+  display: grid;
+  align-content: start;
+  gap: 8px;
 }
 
-.rate-item span,
-.estimate-box span {
-  display: block;
-  font-size: 13px;
-  color: var(--text-sub);
-  margin-bottom: 6px;
+.rate-item span {
+  color: #5f776b;
+  font-size: 15px;
+  font-weight: 600;
 }
 
-.rate-item strong,
-.estimate-box strong {
-  color: var(--text-main);
+.rate-item strong {
+  color: #244536;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 800;
 }
 
 .fee-switcher {
   position: relative;
   display: flex;
-  background: #f1f7f3;
-  border: 1px solid #e5efe9;
-  border-radius: 14px;
-  padding: 4px;
-  margin-bottom: 32px;
+  padding: 6px;
+  margin-bottom: 28px;
+  border-radius: 20px;
+  border: 1px solid #dce9e0;
+  background: #eef5f1;
   overflow: hidden;
 }
 
 .slider-bg {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  width: calc(50% - 4px);
-  height: calc(100% - 8px);
+  top: 6px;
+  left: 6px;
+  width: calc(50% - 6px);
+  height: calc(100% - 12px);
+  border-radius: 14px;
   background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 8px 18px rgba(36, 69, 54, 0.08);
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px rgba(35, 70, 53, 0.08);
+  transition: transform 0.28s ease;
   z-index: 1;
 }
 
 .switch-item {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-sub);
-  cursor: pointer;
   position: relative;
   z-index: 2;
-  transition: color 0.3s;
-  user-select: none;
+  flex: 1;
+  min-height: 58px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  color: #5f776b;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .switch-item.is-active {
-  color: var(--text-main);
+  color: #244536;
 }
 
-.input-wrapper {
+.amount-section {
+  margin-bottom: 14px;
+}
+
+.amount-panel {
   display: flex;
-  align-items: flex-end;
-  border-bottom: 2px solid #dce9e1;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-  transition: border-color 0.3s;
-}
-
-.input-wrapper:focus-within {
-  border-bottom-color: #4f8f6e;
+  align-items: center;
+  padding: 6px 0 12px;
+  border-bottom: 3px solid #63a37d;
 }
 
 .currency {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-right: 8px;
-  padding-bottom: 4px;
+  margin-right: 14px;
+  color: #244536;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 800;
 }
 
-.input-wrapper input[type='text'] {
+.amount-panel input {
   flex: 1;
-  border: none;
+  border: 0;
   outline: none;
   background: transparent;
-  font-size: 42px;
-  font-weight: 700;
-  color: var(--text-main);
-  caret-color: #4f8f6e;
-  line-height: 1;
+  color: #244536;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
-.input-wrapper input[type='text']::placeholder {
-  color: #c9cdd4;
+.amount-panel input::placeholder {
+  color: #c8d1cb;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.balance-text {
+  margin-top: 10px;
+  color: #6d8477;
+  font-size: 13px;
+}
+
+.estimate-card {
+  min-height: 76px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: #edf5f1;
+  display: grid;
+  gap: 4px;
+}
+
+.estimate-card span {
+  color: #6d8477;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.estimate-card strong {
+  color: #244536;
   font-size: 18px;
-  font-weight: 400;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.method-section {
+  margin-bottom: 18px;
 }
 
 .method-section p {
-  color: var(--text-sub);
-  font-size: 14px;
-  margin: 0 0 16px;
-  font-weight: 500;
+  margin: 0 0 10px;
+  color: #5f776b;
+  font-size: 16px;
+  line-height: 1.4;
 }
 
 .pay-methods {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .method-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 56px;
+  min-height: 62px;
+  padding: 0 18px;
   border-radius: 16px;
-  border: 1px solid #e5efe9;
-  background: #fcfefd;
+  border: 1px solid #dce9e0;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #244536;
   cursor: pointer;
-  transition: all 0.25s ease;
-  user-select: none;
+  transition: all 0.22s ease;
+}
+
+.method-item.is-active {
+  background: #edf7f1;
+  border-color: #7db696;
 }
 
 .method-name {
   font-size: 16px;
-  font-weight: 600;
-  color: var(--text-main);
+  font-weight: 800;
 }
 
 .check-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%) scale(0);
-  color: #2b6a4f;
-  transition: transform 0.2s ease;
-}
-
-.method-item.is-active {
-  border-color: #8bb99f;
-  background: #eef6f1;
+  color: #2c7a56;
+  font-size: 16px;
+  opacity: 0;
 }
 
 .method-item.is-active .check-icon {
-  transform: translateY(-50%) scale(1);
+  opacity: 1;
 }
 
 .pay-action-btn {
   width: 100%;
-  height: 52px;
-  border: none;
+  min-height: 64px;
+  border: 0;
   border-radius: 16px;
-  background: var(--primary-gradient);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  padding: 0 20px 24px;
+  font-size: 18px;
+  font-weight: 800;
+  --el-button-bg-color: #4b9b6e;
+  --el-button-border-color: #4b9b6e;
+  --el-button-hover-bg-color: #3f895f;
+  --el-button-hover-border-color: #3f895f;
+  --el-button-active-bg-color: #35704e;
+  --el-button-active-border-color: #35704e;
 }
 
 .payment-dialog {
@@ -652,7 +734,7 @@ onBeforeUnmount(stopPolling)
 
 .payment-tip {
   margin: 0;
-  color: var(--text-sub);
+  color: #5f776b;
   line-height: 1.7;
 }
 
@@ -663,9 +745,7 @@ onBeforeUnmount(stopPolling)
 }
 
 :deep(.el-button) {
-  min-height: 42px;
   border-radius: 12px;
-  border-color: #d6e5dc;
   font-weight: 600;
 }
 
@@ -673,22 +753,136 @@ onBeforeUnmount(stopPolling)
   border-radius: 20px;
 }
 
-@media (max-width: 640px) {
-  .main-content {
-    padding: 20px 14px;
+@media (max-width: 1200px) {
+  .hero-copy h1 {
+    font-size: 28px;
+  }
+
+  .hero-copy p {
+    font-size: 15px;
+  }
+
+  .currency,
+  .amount-panel input {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 860px) {
+  .page {
+    padding: 16px 10px 28px;
+  }
+
+  .top-bar,
+  .pay-card {
+    max-width: none;
+    width: 100%;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .top-links {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .pay-card {
-    padding: 28px 20px;
+    padding: 28px 18px 24px;
+    border-radius: 24px;
+  }
+
+  .hero-copy h1 {
+    font-size: 32px;
+  }
+
+  .hero-copy p {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  .dorm-info {
+    min-height: 74px;
+    padding: 0 18px;
+    border-radius: 18px;
+  }
+
+  .dorm-info span,
+  .method-section p {
+    font-size: 16px;
+  }
+
+  .dorm-info strong {
+    font-size: 18px;
   }
 
   .rate-panel,
-  .pay-methods,
-  .action-buttons {
+  .pay-methods {
     grid-template-columns: 1fr;
-    flex-direction: column;
+    gap: 14px;
+  }
+
+  .rate-item {
+    min-height: 96px;
+    padding: 18px;
+  }
+
+  .rate-item span {
+    font-size: 15px;
+  }
+
+  .rate-item strong {
+    font-size: 18px;
+  }
+
+  .switch-item {
+    min-height: 62px;
+    font-size: 17px;
+  }
+
+  .currency {
+    font-size: 40px;
+  }
+
+  .amount-panel input {
+    font-size: 38px;
+  }
+
+  .amount-panel input::placeholder {
+    font-size: 18px;
+  }
+
+  .balance-text {
+    font-size: 14px;
+  }
+
+  .estimate-card {
+    padding: 16px 18px;
+  }
+
+  .estimate-card span {
+    font-size: 14px;
+  }
+
+  .estimate-card strong {
+    font-size: 18px;
+  }
+
+  .method-item {
+    min-height: 68px;
+    padding: 0 18px;
+  }
+
+  .method-name,
+  .check-icon {
+    font-size: 18px;
+  }
+
+  .pay-action-btn {
+    min-height: 72px;
+    font-size: 20px;
   }
 }
 </style>
-
-

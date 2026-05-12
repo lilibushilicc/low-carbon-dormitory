@@ -1,1 +1,0 @@
-import{t as e}from"./http-DkXUxceS.js";function t(t){return e.get(`/api/student/low-carbon-dashboard-personal`,{params:t})}function n(t){return e.get(`/api/student/low-carbon-dashboard`,{params:t})}export{t as n,n as t};

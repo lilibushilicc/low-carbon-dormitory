@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="page">
     <div class="header">
       <div>
@@ -499,5 +499,3 @@ onMounted(loadHistory)
   }
 }
 </style>
-
-

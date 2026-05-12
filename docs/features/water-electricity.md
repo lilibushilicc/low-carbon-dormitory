@@ -20,6 +20,16 @@
 - 路由：`/water-electricity`
 - 页面：`low-carbon-dormitory-vue/src/router/student-router/billing/water-electricity.vue`
 
+移动端补充入口：
+
+- 路由：`/water-electricity-antd`
+- 页面：`low-carbon-dormitory-vue/src/router/student-router/billing/water-electricity-antd.vue`
+- 页面会跳转到 `/pay-up-antd` 与 `/history-fee-antd` 两个手机端页面
+- 桌面页不再提供进入手机页的可视化入口，当前仅支持通过 URL 直接访问
+- 当通过 `?stuNum=学号` 公开访问时，跳转会继续透传 `stuNum`、`dormId` 与 `source=utility-mobile`，保证移动链路可直达缴费和历史订单
+- 从 `/pay-up-antd` 完成缴费后会返回 `/water-electricity-antd`，保持手机端链路闭环
+- 手机端水电、缴费和历史页共用 `low-carbon-dormitory-vue/src/utils/mobile-billing.ts` 拼装移动端查询参数，避免各页面重复维护跳转规则
+
 页面主要能力：
 
 - 加载当前宿舍水电信息

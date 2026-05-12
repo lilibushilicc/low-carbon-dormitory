@@ -57,8 +57,11 @@ const routes: RouteRecordRaw[] = [
   studentRoute('/index-student', 'index-student', lazyView(() => import('@/router/student-router/home/index-student.vue'))),
   studentRoute('/personal-info', 'personal-info', lazyView(() => import('@/router/student-router/profile/personal-info.vue'))),
   studentRoute('/pay-up', 'pay-up', lazyView(() => import('@/router/student-router/billing/pay-up.vue'))),
+  studentRoute('/pay-up-antd', 'pay-up-antd', lazyView(() => import('@/router/student-router/billing/pay-up-antd.vue'))),
   studentRoute('/water-electricity', 'water-electricity', lazyView(() => import('@/router/student-router/billing/water-electricity.vue'))),
+  studentRoute('/water-electricity-antd', 'water-electricity-antd', lazyView(() => import('@/router/student-router/billing/water-electricity-antd.vue'))),
   studentRoute('/history-fee', 'history-fee', lazyView(() => import('@/router/student-router/billing/history-fee.vue'))),
+  studentRoute('/history-fee-antd', 'history-fee-antd', lazyView(() => import('@/router/student-router/billing/history-fee-antd.vue'))),
   studentRoute('/low-carbon-dashboard', 'low-carbon-dashboard', lazyView(() => import('@/router/student-router/dashboard/low-carbon-dashboard.vue'))),
   studentRoute('/reward-exchange', 'reward-exchange', lazyView(() => import('@/router/student-router/reward/reward-exchange.vue'))),
   studentRoute('/reward-exchange-antd', 'reward-exchange-antd', lazyView(() => import('@/router/student-router/reward/reward-exchange-antd.vue'))),
@@ -159,9 +162,22 @@ function redirectToLogin(message: string) {
   }
 }
 
-function canAccessRewardExchangeByStuNum(to: RouteLocationNormalized) {
+function hasRouteStuNum(to: RouteLocationNormalized) {
   const routeStuNum = typeof to.query.stuNum === 'string' ? to.query.stuNum.trim() : ''
-  return to.name === 'reward-exchange-antd' && Boolean(routeStuNum)
+  return Boolean(routeStuNum)
+}
+
+function canAccessPublicStudentMobilePage(to: RouteLocationNormalized) {
+  if (!hasRouteStuNum(to)) {
+    return false
+  }
+
+  return (
+    to.name === 'reward-exchange-antd' ||
+    to.name === 'water-electricity-antd' ||
+    to.name === 'pay-up-antd' ||
+    to.name === 'history-fee-antd'
+  )
 }
 
 router.beforeEach((to, from) => {
@@ -245,7 +261,7 @@ router.beforeEach((to, from) => {
   }
 
   if (to.meta.requiresStudentAuth && !studentTokenState.isLoggedIn) {
-    if (canAccessRewardExchangeByStuNum(to)) {
+    if (canAccessPublicStudentMobilePage(to)) {
       return true
     }
     return redirectToLogin('请先登录学生账号')

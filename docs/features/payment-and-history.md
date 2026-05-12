@@ -10,10 +10,17 @@
 
 ## 前端入口
 
-### 充值页
+### 桌面充值页
 
 - 路由：`/pay-up`
 - 页面：`low-carbon-dormitory-vue/src/router/student-router/billing/pay-up.vue`
+
+当前实现补充：
+
+- 页面为桌面版 `Vue + Element Plus` 充值页
+- 需要学生登录态后访问，默认从桌面水电费页跳转进入
+- 支持创建支付单、扫码支付和模拟支付成功
+- 页面视觉已调整为居中大白卡布局，参考现网桌面缴费页的标题、宿舍条、单价卡、费用切换、金额输入与支付方式排布
 
 主要能力：
 
@@ -25,10 +32,41 @@
 - 查询支付状态
 - 模拟支付成功
 
-### 历史页
+### 手机端充值页
+
+- 路由：`/pay-up-antd`
+- 页面：`low-carbon-dormitory-vue/src/router/student-router/billing/pay-up-antd.vue`
+
+当前实现补充：
+
+- 页面采用手机端 `Ant Design Vue` 风格，使用移动卡片布局、底部支付弹层和扫码支付信息展示
+- 页头、单价卡、金额区和支付方式区已做紧凑化处理，适配手机端首屏信息密度
+- 当从 `/water-electricity-antd?stuNum=...` 进入时，会透传 `stuNum`、`dormId` 和 `source=utility-mobile`
+- 手机端支付成功后固定返回 `/water-electricity-antd`，不会因缺少 `stuNum` 或 `source` 参数退回桌面水电页
+- 未登录的公开移动链路可以直接进入该页面创建订单、查询订单状态和模拟支付成功
+
+### 桌面历史页
 
 - 路由：`/history-fee`
 - 页面：`low-carbon-dormitory-vue/src/router/student-router/billing/history-fee.vue`
+
+当前实现补充：
+
+- 页面为桌面版 `Vue + Element Plus` 历史订单页
+- 需要学生登录态后访问，默认从桌面水电费页跳转进入
+- 展示最近 30 条充值、刷新结算和周期扣费记录
+
+### 手机端历史页
+
+- 路由：`/history-fee-antd`
+- 页面：`low-carbon-dormitory-vue/src/router/student-router/billing/history-fee-antd.vue`
+
+当前实现补充：
+
+- 页面采用手机端 `Ant Design Vue` 风格，使用移动筛选条、订单卡片和摘要区块展示最近账单
+- 历史订单卡片默认仅展示事件类型、费用类型、金额增减和时间，其余宿舍、支付方式、付款人等字段折叠到“查看详情”
+- 页面会优先通过地址中的 `stuNum` 加载宿舍信息，再用宿舍 `dormId` 查询最近 30 条历史记录
+- 从移动版水电费页跳转时，页面会保留公开访问链路所需的查询参数
 
 主要能力：
 
@@ -50,7 +88,7 @@
 
 ### 前端流程
 
-`pay-up.vue` 中的核心顺序如下：
+`pay-up.vue` 与 `pay-up-antd.vue` 的核心支付顺序一致：
 
 1. 进入页面后调用 `fetchWaterElectricity(...)`，用于获取当前宿舍与单价信息
 2. 用户选择：
@@ -178,6 +216,7 @@
 这层映射发生在：
 
 - `low-carbon-dormitory-vue/src/router/student-router/billing/history-fee.vue`
+- `low-carbon-dormitory-vue/src/router/student-router/billing/history-fee-antd.vue`
 
 ## 核心数据对象
 
@@ -197,7 +236,9 @@
 ## 相关文件
 
 - `low-carbon-dormitory-vue/src/router/student-router/billing/pay-up.vue`
+- `low-carbon-dormitory-vue/src/router/student-router/billing/pay-up-antd.vue`
 - `low-carbon-dormitory-vue/src/router/student-router/billing/history-fee.vue`
+- `low-carbon-dormitory-vue/src/router/student-router/billing/history-fee-antd.vue`
 - `low-carbon-dormitory-vue/src/api/modules/student.ts`
 - `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/student/StudentPaymentController.java`
 - `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/student/StudentFeeHistoryController.java`

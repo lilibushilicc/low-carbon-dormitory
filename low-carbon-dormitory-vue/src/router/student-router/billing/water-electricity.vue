@@ -142,7 +142,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, HomeFilled } from '@element-plus/icons-vue'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { formatCurrency, formatDateTime, formatDormLabel, formatNumber, formatUnitPrice } from '@/utils/formatters'
 import { requireApiData, resolveErrorMessage } from '@/utils/api-response'

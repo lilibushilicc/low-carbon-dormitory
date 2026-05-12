@@ -161,7 +161,7 @@ class AdminStudentManagementControllerTest {
         mockMvc.perform(delete("/admin/students/{studentId}", created.getStudentId())
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.containsString("支付订单记录")));
 
         assertThat(findStudentByStuNum(stuNum)).isNotNull();

@@ -1,5 +1,19 @@
 # low-carbon-dormitory
 
+> 2026-05-12 更新：已抽取手机端水电链路的查询参数与宿舍 ID 解析工具，`/water-electricity-antd`、`/pay-up-antd`、`/history-fee-antd` 复用同一套 `stuNum`、`dormId`、`source=utility-mobile` 拼装规则，减少重复代码并保持移动端跳转闭环。
+
+> 2026-05-12 更新：手机端 `/pay-up-antd` 缴费成功后会固定返回手机端 `/water-electricity-antd` 水电页面，避免登录态移动访问因缺少查询参数跳回桌面水电页。
+
+> 2026-05-12 更新：`pay-up` 与 `history-fee` 已恢复为桌面版页面，并新增 `pay-up-antd` 与 `history-fee-antd` 两个手机端 `Ant Design Vue` 页面，专门用于嵌入式移动访问；从 `/water-electricity-antd?stuNum=学号` 进入时，会继续透传 `stuNum` 到这两个手机页。
+> 2026-05-12 更新：桌面版 `/pay-up` 页面样式已调整为居中大白卡布局，参考现网缴费页的标题、宿舍条、单价卡、费用切换、金额输入与支付方式排布。
+> 2026-05-12 更新：移动端 `pay-up` 与 `history-fee` 页面进一步压缩了头部和卡片尺寸；历史订单默认只展示金额增减与费用类型，其余字段改为按条展开查看详情。
+> 2026-05-12 更新：已移除桌面学生页中进入手机端页面的可视化入口；手机端页面现在仅支持通过 URL 直接访问。
+
+> 2026-05-11 更新：新增学生端 `water-electricity-antd` 手机版水电费页面，采用 Ant Design Vue 风格展示当前余额、近七天费用构成环形图、近七天费用趋势折线图与最近缴费记录。
+> 2026-05-11 更新：`/water-electricity-antd` 现支持通过 `?stuNum=学号` 方式未登录直达访问，便于外部移动端按学号打开对应学生的水电费手机页面。
+
+> 2026-05-11 更新：奖励兑换手机端背景图静态资源已放入 `low-carbon-dormitory-vue/public/images/reward-exchange-mobile-bg.jpg`，供 `/reward-exchange-antd` 页面使用；该页面现按手机端全屏响应布局展示，背景图直接参与页面视觉，奖励列表与兑换记录两种视图统一使用同一套内容盒尺寸与间距规则。
+
 低碳宿舍管理系统工作区，包含前端、后端、项目文档、规划文件、运行日志与发布产物目录。
 
 ## 项目结构

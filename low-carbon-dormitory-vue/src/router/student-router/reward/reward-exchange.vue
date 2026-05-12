@@ -8,7 +8,6 @@
         </div>
         <div class="header-actions">
           <el-button @click="goBack">返回首页</el-button>
-          <el-button @click="goToAntdVersion">切换到手机版</el-button>
           <el-button type="primary" plain @click="loadRewardCenter">刷新数据</el-button>
         </div>
       </div>
@@ -92,10 +91,6 @@ const {
 
 function goBack() {
   router.push('/index-student')
-}
-
-function goToAntdVersion() {
-  router.push('/reward-exchange-antd')
 }
 
 async function handleExchange(reward: RewardItem) {

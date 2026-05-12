@@ -170,8 +170,11 @@
 | `/index-student` | `index-student` | `student-router/home/index-student.vue` | 学生首页 |
 | `/personal-info` | `personal-info` | `student-router/profile/personal-info.vue` | 个人信息 |
 | `/pay-up` | `pay-up` | `student-router/billing/pay-up.vue` | 学生充值相关页面 |
+| `/pay-up-antd` | `pay-up-antd` | `student-router/billing/pay-up-antd.vue` | 学生端手机嵌入充值页面 |
 | `/water-electricity` | `water-electricity` | `student-router/billing/water-electricity.vue` | 宿舍水电信息 |
+| `/water-electricity-antd` | `water-electricity-antd` | `student-router/billing/water-electricity-antd.vue` | 学生端手机嵌入水电费页面 |
 | `/history-fee` | `history-fee` | `student-router/billing/history-fee.vue` | 费用历史 |
+| `/history-fee-antd` | `history-fee-antd` | `student-router/billing/history-fee-antd.vue` | 学生端手机嵌入费用历史页面 |
 | `/low-carbon-dashboard` | `low-carbon-dashboard` | `student-router/dashboard/low-carbon-dashboard.vue` | 个人低碳看板 |
 | `/reward-exchange` | `reward-exchange` | `student-router/reward/reward-exchange.vue` | 奖励兑换主页面 |
 | `/reward-exchange-antd` | `reward-exchange-antd` | `student-router/reward/reward-exchange-antd.vue` | 奖励兑换的另一实现 |
