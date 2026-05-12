@@ -21,6 +21,7 @@
 
 - 路径：`/login`
 - 文件：`low-carbon-dormitory-vue/src/login.vue`
+- 全局布局约束：未登录时不渲染学生端左侧导航栏；学生侧导航仅在“学生路由 + 已登录 + 非移动端”条件下显示
 
 ### 登录 API
 

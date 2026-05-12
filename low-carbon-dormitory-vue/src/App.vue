@@ -45,10 +45,12 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import StudentGlobalNav from '@/components/student-global-nav.vue'
 import { useRouteTransitionState } from '@/router/route-transition-state'
+import { useStudentTokenStore } from '@/stores/student-token'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 900px)'
 
 const route = useRoute()
+const studentTokenStore = useStudentTokenStore()
 const isMobileViewport = ref(typeof window !== 'undefined' ? window.matchMedia(MOBILE_MEDIA_QUERY).matches : false)
 let viewportMediaQueryList: MediaQueryList | null = null
 const { isRouteNavigating, progressScale } = useRouteTransitionState()
@@ -57,7 +59,9 @@ const isStudentRoute = computed(() => {
   return route.path !== '/' && route.path !== '/login' && !route.path.startsWith('/manager')
 })
 
-const showStudentNav = computed(() => isStudentRoute.value && !isMobileViewport.value)
+const showStudentNav = computed(() => {
+  return isStudentRoute.value && studentTokenStore.isLoggedIn && !isMobileViewport.value
+})
 
 function syncViewportMode() {
   isMobileViewport.value = viewportMediaQueryList?.matches ?? false

@@ -1,5 +1,7 @@
 # low-carbon-dormitory
 
+> 2026-05-12 更新：学生端全局左侧导航现在仅在“学生路由 + 已登录 + 非移动端”条件下显示，未登录访问时不会再渲染左侧导航栏。
+
 > 2026-05-12 更新：已抽取手机端水电链路的查询参数与宿舍 ID 解析工具，`/water-electricity-antd`、`/pay-up-antd`、`/history-fee-antd` 复用同一套 `stuNum`、`dormId`、`source=utility-mobile` 拼装规则，减少重复代码并保持移动端跳转闭环。
 
 > 2026-05-12 更新：手机端 `/pay-up-antd` 缴费成功后会固定返回手机端 `/water-electricity-antd` 水电页面，避免登录态移动访问因缺少查询参数跳回桌面水电页。
