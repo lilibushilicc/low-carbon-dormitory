@@ -109,6 +109,70 @@ const routes: RouteRecordRaw[] = [
         name: 'manager-dorm-fee-deduct',
         component: lazyView(() => import('@/router/manager-router/fee/dorm-fee-deduct.vue')),
       },
+      {
+        path: 'restaurant/summary',
+        name: 'manager-restaurant-summary',
+        component: lazyView(() => import('@/modules/restaurant/views/summary.vue')),
+      },
+      {
+        path: 'restaurant/student/list',
+        name: 'manager-restaurant-student-list',
+        component: lazyView(() => import('@/modules/restaurant/views/student.vue')),
+      },
+      {
+        path: 'restaurant/student/add',
+        name: 'manager-restaurant-student-add',
+        component: lazyView(() => import('@/modules/restaurant/views/mealAdd.vue')),
+      },
+      {
+        path: 'restaurant/student/meal',
+        component: lazyView(() => import('@/modules/restaurant/views/period.vue')),
+        redirect: '/manager/restaurant/student/meal/daliy',
+        children: [
+          {
+            path: 'daliy',
+            name: 'manager-restaurant-student-meal-daily',
+            component: lazyView(() => import('@/modules/restaurant/views/MealWasteDaliy.vue')),
+          },
+          {
+            path: 'week',
+            name: 'manager-restaurant-student-meal-week',
+            component: lazyView(() => import('@/modules/restaurant/views/MealWasteWeek.vue')),
+          },
+          {
+            path: 'month',
+            name: 'manager-restaurant-student-meal-month',
+            component: lazyView(() => import('@/modules/restaurant/views/MealWasteMonth.vue')),
+          },
+          {
+            path: 'term',
+            name: 'manager-restaurant-student-meal-term',
+            component: lazyView(() => import('@/modules/restaurant/views/MealWasteTerm.vue')),
+          },
+          {
+            path: 'year',
+            name: 'manager-restaurant-student-meal-year',
+            component: lazyView(() => import('@/modules/restaurant/views/MealWasteYear.vue')),
+          },
+        ],
+      },
+      {
+        path: 'restaurant/student/period',
+        component: lazyView(() => import('@/modules/restaurant/views/period.vue')),
+        redirect: '/manager/restaurant/student/period/week',
+        children: [
+          {
+            path: 'week',
+            name: 'manager-restaurant-student-period-week',
+            component: lazyView(() => import('@/modules/restaurant/views/week.vue')),
+          },
+          {
+            path: 'month',
+            name: 'manager-restaurant-student-period-month',
+            component: lazyView(() => import('@/modules/restaurant/views/month.vue')),
+          },
+        ],
+      },
     ],
   },
 ]

@@ -389,8 +389,8 @@ onMounted(() => {
 .history-hero__top {
   position: relative;
   display: grid;
-  grid-template-columns: 88px 1fr 88px;
-  gap: 10px;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
   margin-bottom: 14px;
 }
@@ -416,14 +416,15 @@ onMounted(() => {
 
 .hero-text-button {
   min-width: 76px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.84);
   color: #246645;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   box-shadow: inset 0 0 0 1px rgba(169, 221, 186, 0.9);
   justify-self: end;
+  white-space: nowrap;
 }
 
 .history-hero__copy {
@@ -431,6 +432,7 @@ onMounted(() => {
   gap: 3px;
   justify-items: center;
   text-align: center;
+  min-width: 0;
 }
 
 .history-hero__eyebrow {
@@ -447,12 +449,14 @@ onMounted(() => {
   font-size: 24px;
   line-height: 1.1;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .history-hero__copy span {
   color: #265f3f;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .summary-grid {

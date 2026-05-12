@@ -7,9 +7,9 @@
       <div class="login-story">
         <div class="login-story__intro">
           <p class="login-story__eyebrow">低碳宿舍管理平台</p>
-          <h1>聚焦低碳宿舍管理的统一入口</h1>
+          <h1>聚焦低碳校园的统一入口</h1>
           <p class="login-story__desc">
-            围绕宿舍账务、低碳积分与日常运营建立统一登录界面，让学生端与管理端在同一套绿色视觉体系下快速进入各自工作场景。
+            围绕低碳宿舍账务、低碳餐厅与日常运动建立统一登录界面，让学生端与管理端在同一套绿色视觉体系下快速进入各自工作场景。
           </p>
         </div>
 
@@ -25,11 +25,13 @@
           </article>
           <article class="login-story__card">
             <span>管理端</span>
-            <strong>面向宿舍管理的运营工作台</strong>
+            <strong>面向低碳管理的运营工作台</strong>
             <ul class="login-story__list">
               <li>总览宿舍运行与低碳数据</li>
               <li>维护规则、奖品与活动配置</li>
               <li>处理学生账户与扣费管理</li>
+              <li>低碳餐厅管理与残损可视化分析</li>
+              <li>低碳运动数据统计与分析</li>
             </ul>
           </article>
         </div>

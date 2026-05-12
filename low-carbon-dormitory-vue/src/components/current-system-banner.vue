@@ -16,32 +16,47 @@ const router = useRouter()
 const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
 
 const isPortalRoute = computed(() => (props.managerMode ? route.path === '/manager/home' : route.path === '/index-student'))
+const isRestaurantRoute = computed(() => props.managerMode && route.path.startsWith('/manager/restaurant'))
 
 const banner = computed(() => {
   if (isPortalRoute.value) {
     return {
       eyebrow: 'Unified Portal',
-      title: '当前位于宿舍管理入口',
-      description: '这里汇总了宿舍系统的核心入口，你可以快速进入低碳总览、规则配置、奖励管理和费用处理。',
-      badge: '宿舍入口',
+      title: '当前位于统一管理后台入口',
+      description: '这里汇总了宿舍管理和餐厅管理两个模块，你可以按业务场景直接进入对应模块继续处理。',
+      badge: '统一入口',
       accent: 'portal',
       primaryLabel: props.managerMode ? '进入宿舍总览' : '进入个人信息',
       primaryPath: props.managerMode ? '/manager/low-carbon-overview' : '/personal-info',
-      secondaryLabel: props.managerMode ? '进入奖励管理' : '进入低碳看板',
-      secondaryPath: props.managerMode ? '/manager/reward-manage' : '/low-carbon-dashboard',
+      secondaryLabel: props.managerMode ? '进入餐厅总览' : '进入低碳看板',
+      secondaryPath: props.managerMode ? '/manager/restaurant/summary' : '/low-carbon-dashboard',
+    }
+  }
+
+  if (isRestaurantRoute.value) {
+    return {
+      eyebrow: 'Restaurant Module',
+      title: '当前位于餐厅管理模块',
+      description: '你正在使用餐厅碳排放管理相关能力，可继续查看统计、学生档案、用餐记录和周期趋势，也可随时切回宿舍模块。',
+      badge: '餐厅模块',
+      accent: 'restaurant',
+      primaryLabel: '返回管理员首页',
+      primaryPath: '/manager/home',
+      secondaryLabel: '切换到宿舍总览',
+      secondaryPath: '/manager/low-carbon-overview',
     }
   }
 
   return {
-    eyebrow: 'Current System',
-    title: '当前位于低碳宿舍系统',
-    description: '你正在使用宿舍费用、积分和奖励相关功能，当前页面只保留宿舍模块入口。',
+    eyebrow: 'Dormitory Module',
+    title: '当前位于宿舍管理模块',
+    description: '你正在使用宿舍费用、积分和奖励相关功能，可继续维护宿舍模块，也可切换到餐厅管理模块查看餐饮碳排放数据。',
     badge: '宿舍模块',
     accent: 'dorm',
-    primaryLabel: props.managerMode ? '返回管理首页' : '返回学生首页',
+    primaryLabel: props.managerMode ? '返回管理员首页' : '返回学生首页',
     primaryPath: props.managerMode ? '/manager/home' : '/index-student',
-    secondaryLabel: props.managerMode ? '查看宿舍总览' : '查看低碳看板',
-    secondaryPath: props.managerMode ? '/manager/low-carbon-overview' : '/low-carbon-dashboard',
+    secondaryLabel: props.managerMode ? '切换到餐厅总览' : '查看低碳看板',
+    secondaryPath: props.managerMode ? '/manager/restaurant/summary' : '/low-carbon-dashboard',
   }
 })
 
@@ -111,6 +126,13 @@ function isPending(path: string) {
   border-color: rgba(91, 132, 108, 0.16);
 }
 
+.system-banner--restaurant {
+  border-color: rgba(153, 129, 67, 0.2);
+  background:
+    radial-gradient(circle at top left, rgba(231, 217, 165, 0.22), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(252, 249, 239, 0.96));
+}
+
 .system-banner__eyebrow {
   margin: 0 0 12px;
   color: #5e7d6d;
@@ -154,6 +176,12 @@ function isPending(path: string) {
   background: #edf7f1;
   font-size: 12px;
   font-weight: 900;
+}
+
+.system-banner--restaurant .system-banner__badge {
+  border-color: rgba(153, 129, 67, 0.2);
+  color: #6c5520;
+  background: #fbf4df;
 }
 
 .system-banner__actions {
@@ -201,6 +229,11 @@ function isPending(path: string) {
   color: #fffdf8;
   background: linear-gradient(135deg, #2f8f68 0%, #2a7b59 100%);
   box-shadow: 0 14px 28px rgba(43, 120, 84, 0.22);
+}
+
+.system-banner--restaurant .system-banner__action--primary {
+  background: linear-gradient(135deg, #a67b1f 0%, #7a5912 100%);
+  box-shadow: 0 14px 28px rgba(122, 89, 18, 0.22);
 }
 
 .system-banner__action--ghost {

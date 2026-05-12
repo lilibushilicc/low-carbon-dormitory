@@ -5,6 +5,12 @@ import { useStudentTokenStore } from '@/stores/student-token'
 import { useAdminTokenStore } from '@/stores/admin-token'
 import { useRouteTransitionState } from '@/router/route-transition-state'
 
+type NavItem = {
+  title: string
+  desc: string
+  path: string
+}
+
 const router = useRouter()
 const route = useRoute()
 const studentTokenStore = useStudentTokenStore()
@@ -12,23 +18,46 @@ const adminStore = useAdminTokenStore()
 const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
 
 const isHomeRoute = computed(() => route.path === '/manager/home')
-const currentSection = computed(() => (isHomeRoute.value ? '管理员首页' : '宿舍管理'))
+const isRestaurantRoute = computed(() => route.path.startsWith('/manager/restaurant'))
+const currentSection = computed(() => {
+  if (isHomeRoute.value) {
+    return '管理员首页'
+  }
 
-const homeItems = [
-  { title: '返回管理员首页', desc: '回到宿舍项目管理入口', path: '/manager/home' },
-  { title: '宿舍总览', desc: '查看宿舍整体低碳表现', path: '/manager/low-carbon-overview' },
-] as const
+  return isRestaurantRoute.value ? '餐厅管理' : '宿舍管理'
+})
 
-const configItems = [
+const portalItems: readonly NavItem[] = [
+  { title: '返回管理员首页', desc: '查看统一后台入口与模块概览', path: '/manager/home' },
+  { title: '宿舍总览', desc: '查看宿舍模块的整体低碳表现', path: '/manager/low-carbon-overview' },
+]
+
+const dormConfigItems: readonly NavItem[] = [
   { title: '规则配置', desc: '维护积分、荣誉和系数规则', path: '/manager/low-carbon-rule-config' },
-  { title: '学生管理', desc: '查看学生列表并执行删除操作', path: '/manager/student-manage' },
-  { title: '新增学生', desc: '录入学生及宿舍基础信息', path: '/manager/student-create' },
-] as const
+  { title: '学生管理', desc: '查看宿舍系统学生档案并执行维护', path: '/manager/student-manage' },
+  { title: '新增学生', desc: '录入宿舍系统学生及宿舍信息', path: '/manager/student-create' },
+]
 
-const operationItems = [
-  { title: '奖励管理', desc: '维护奖励库存和兑换配置', path: '/manager/reward-manage' },
-  { title: '宿舍水电扣费', desc: '处理宿舍费用扣减', path: '/manager/dorm-fee-deduct' },
-] as const
+const dormOperationItems: readonly NavItem[] = [
+  { title: '奖励管理', desc: '维护宿舍奖励库存和兑换配置', path: '/manager/reward-manage' },
+  { title: '宿舍水电扣费', desc: '处理宿舍费用扣减与账单操作', path: '/manager/dorm-fee-deduct' },
+]
+
+const restaurantItems: readonly NavItem[] = [
+  { title: '餐厅总览', desc: '查看学院餐饮碳排放统计汇总', path: '/manager/restaurant/summary' },
+  { title: '餐厅学生列表', desc: '查询餐厅系统中的学生与用餐档案', path: '/manager/restaurant/student/list' },
+  { title: '新增用餐记录', desc: '录入学生取餐重量和剩余重量', path: '/manager/restaurant/student/add' },
+]
+
+const restaurantReportItems: readonly NavItem[] = [
+  { title: '每日餐饮记录', desc: '按天查看学生餐饮碳排放数据', path: '/manager/restaurant/student/meal/daliy' },
+  { title: '每周餐饮记录', desc: '按周查看学生餐饮碳排放数据', path: '/manager/restaurant/student/meal/week' },
+  { title: '每月餐饮记录', desc: '按月查看学生餐饮碳排放数据', path: '/manager/restaurant/student/meal/month' },
+  { title: '学期餐饮记录', desc: '按学期汇总学生餐饮碳排放数据', path: '/manager/restaurant/student/meal/term' },
+  { title: '年度餐饮记录', desc: '按年度汇总学生餐饮碳排放数据', path: '/manager/restaurant/student/meal/year' },
+  { title: '每周碳排趋势', desc: '查看每周餐饮碳排放折线趋势', path: '/manager/restaurant/student/period/week' },
+  { title: '每月碳排趋势', desc: '查看每月餐饮碳排放折线趋势', path: '/manager/restaurant/student/period/month' },
+]
 
 function goTo(path: string) {
   if (route.path !== path) {
@@ -58,8 +87,8 @@ async function logout() {
       <button type="button" class="brand" @click="goTo('/manager/home')">
         <span class="brand__icon">LC</span>
         <span class="brand__text">
-          <strong>低碳宿舍</strong>
-          <small>管理端导航</small>
+          <strong>低碳校园</strong>
+          <small>统一管理后台</small>
         </span>
       </button>
 
@@ -72,9 +101,9 @@ async function logout() {
 
       <nav class="menu">
         <section class="menu-group">
-          <p class="menu-group__label">管理导航</p>
+          <p class="menu-group__label">统一入口</p>
           <button
-            v-for="item in homeItems"
+            v-for="item in portalItems"
             :key="item.path"
             type="button"
             class="nav-card"
@@ -87,9 +116,9 @@ async function logout() {
         </section>
 
         <section class="menu-group">
-          <p class="menu-group__label">基础配置</p>
+          <p class="menu-group__label">宿舍配置</p>
           <button
-            v-for="item in configItems"
+            v-for="item in dormConfigItems"
             :key="item.path"
             type="button"
             class="nav-card nav-card--sub"
@@ -102,9 +131,9 @@ async function logout() {
         </section>
 
         <section class="menu-group">
-          <p class="menu-group__label">运营管理</p>
+          <p class="menu-group__label">宿舍运营</p>
           <button
-            v-for="item in operationItems"
+            v-for="item in dormOperationItems"
             :key="item.path"
             type="button"
             class="nav-card nav-card--sub"
@@ -115,11 +144,41 @@ async function logout() {
             <small class="nav-card__desc">{{ item.desc }}</small>
           </button>
         </section>
+
+        <section class="menu-group">
+          <p class="menu-group__label">餐厅管理</p>
+          <button
+            v-for="item in restaurantItems"
+            :key="item.path"
+            type="button"
+            class="nav-card nav-card--restaurant"
+            :class="{ 'nav-card--active': isActive(item.path), 'nav-card--pending': isPending(item.path) }"
+            @click="goTo(item.path)"
+          >
+            <span class="nav-card__title">{{ item.title }}</span>
+            <small class="nav-card__desc">{{ item.desc }}</small>
+          </button>
+        </section>
+
+        <section class="menu-group">
+          <p class="menu-group__label">餐厅报表</p>
+          <button
+            v-for="item in restaurantReportItems"
+            :key="item.path"
+            type="button"
+            class="nav-card nav-card--sub nav-card--restaurant-sub"
+            :class="{ 'nav-card--active': isActive(item.path), 'nav-card--pending': isPending(item.path) }"
+            @click="goTo(item.path)"
+          >
+            <span class="nav-card__title">{{ item.title }}</span>
+            <small class="nav-card__desc">{{ item.desc }}</small>
+          </button>
+        </section>
       </nav>
 
       <div class="footer-card">
-        <strong>低碳宿舍管理</strong>
-        <span>{{ isHomeRoute ? '从这里进入宿舍管理功能' : '当前仅保留宿舍项目菜单' }}</span>
+        <strong>统一管理后台</strong>
+        <span>{{ isHomeRoute ? '从这里进入宿舍管理与餐厅管理两个业务模块。' : `当前正在使用${currentSection}模块。` }}</span>
         <button type="button" class="footer-card__btn" @click="logout">退出登录</button>
       </div>
     </div>
@@ -140,7 +199,6 @@ async function logout() {
   --sidebar-text: #204232;
   --sidebar-muted: #698275;
   --sidebar-line: rgba(93, 131, 109, 0.12);
-  --sidebar-line-strong: rgba(93, 131, 109, 0.22);
   position: relative;
   height: calc(100vh - 32px);
   height: calc(100dvh - 32px);
@@ -347,6 +405,17 @@ async function logout() {
 .nav-card--sub {
   min-height: 62px;
   padding: 12px 16px;
+}
+
+.nav-card--restaurant {
+  border-color: rgba(160, 145, 95, 0.16);
+  background:
+    radial-gradient(circle at right top, rgba(231, 217, 165, 0.18), transparent 34%),
+    rgba(255, 255, 255, 0.82);
+}
+
+.nav-card--restaurant-sub {
+  border-color: rgba(160, 145, 95, 0.14);
 }
 
 .nav-card:hover {
