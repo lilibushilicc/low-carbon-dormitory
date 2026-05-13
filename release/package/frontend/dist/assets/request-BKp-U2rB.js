@@ -1,0 +1,1 @@
+import{t as e}from"./axios-DMo-6c5r.js";function t(){let e=`/api/restaurant`?.trim();return e?e===`/`?``:e.replace(/\/+$/,``):`http://39.98.69.153:8081/api`}var n=e.create({baseURL:t(),timeout:5e3});n.interceptors.request.use(e=>e,e=>Promise.reject(e)),n.interceptors.response.use(e=>e.data,e=>Promise.reject(e));export{n as t};

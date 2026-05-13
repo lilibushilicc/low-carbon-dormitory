@@ -1,0 +1,1 @@
+import{Dt as e,at as t,wt as n}from"./element-plus-BSGtrlHV.js";import{t as r}from"./_plugin-vue_export-helper-DAAOZMkq.js";var i={};function a(r,i){let a=e(`router-view`);return n(),t(a)}var o=r(i,[[`render`,a]]);export{o as default};

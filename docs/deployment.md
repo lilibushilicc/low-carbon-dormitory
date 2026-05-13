@@ -26,22 +26,42 @@
 
 ## 2. 前端 API 基址配置
 
-前端现在支持通过环境变量 `VITE_API_BASE_URL` 控制请求前缀：
+前端现在支持通过环境变量 `VITE_API_BASE_URL` 控制宿舍系统请求前缀，通过 `VITE_RESTAURANT_API_BASE_URL` 控制餐厅模块请求前缀：
 
 - 开发环境默认值：`/api/dorm`
 - 生产环境默认值：空字符串，即直接请求 `/student/login`、`/admin/login`
+- 餐厅模块开发环境默认值：`/api/restaurant`
+- 餐厅模块生产环境默认值：`http://39.98.69.153:8081/api`
 
 可在 `low-carbon-dormitory-vue/.env.example` 基础上创建实际环境文件，例如：
 
 ```env
 VITE_API_BASE_URL=
+VITE_RESTAURANT_API_BASE_URL=
 ```
+
+当前仓库已新增 `low-carbon-dormitory-vue/.env.production`，其中默认配置为：
+
+```env
+VITE_API_BASE_URL=
+VITE_RESTAURANT_API_BASE_URL=/api/restaurant
+```
+
+这表示生产打包后的前端页面会同域请求 `/api/restaurant/**`，不再直接从浏览器跨域访问 `http://39.98.69.153:8081/api/**`。
 
 常见可选值：
 
 - `VITE_API_BASE_URL=`：前端与后端同域部署，后端直接暴露根路径
 - `VITE_API_BASE_URL=/api`：服务器把后端统一挂到 `/api`
 - `VITE_API_BASE_URL=/api/dorm`：服务器显式保留了 `/api/dorm` 这一层代理前缀
+- `VITE_RESTAURANT_API_BASE_URL=/api/restaurant`：开发环境通过 Vite 代理转发餐厅接口，避免浏览器直接跨域到远端餐厅服务
+- `VITE_RESTAURANT_API_BASE_URL=http://39.98.69.153:8081/api`：生产环境或允许直连的环境直接访问默认餐厅接口
+
+如果使用当前仓库默认的生产配置，则服务器必须额外提供：
+
+- `/api/restaurant/**` -> `http://39.98.69.153:8081/api/**`
+
+否则部署后餐厅首页、按周碳排放、按月碳排放等页面会因为请求不到餐厅接口而显示无数据或报错。
 
 ## 3. 推荐部署方式
 

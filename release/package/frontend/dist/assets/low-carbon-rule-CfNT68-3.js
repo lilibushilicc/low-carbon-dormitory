@@ -1,0 +1,1 @@
+import{t as e}from"./http-DI25S-P3.js";function t(){return e.get(`/api/admin/low-carbon-rules`)}function n(t){return e.put(`/api/admin/low-carbon-rules`,t)}function r(t){return e.post(`/api/admin/low-carbon-rules/preview`,t)}function i(){return e.get(`/api/student/low-carbon-rules`)}export{n as i,i as n,r,t};

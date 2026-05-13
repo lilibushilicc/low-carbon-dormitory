@@ -4,6 +4,8 @@
 > 2026-05-12 更新：手机端 `/reward-exchange-antd` 头部在保留同行布局的同时，已补充少量顶部留白，避免标题和搜索框贴边。
 > 2026-05-12 更新：手机端 `/reward-exchange-antd` 积分商城新增明确的首次加载提示和骨架屏；奖励图片未加载完成前会显示独立转圈占位，避免外部图片较慢时页面看起来像白屏。
 
+> 2026-05-13 更新：餐厅模块在开发环境下改为默认通过 Vite 代理访问 `/api/restaurant/**`，由本地开发服务器转发到默认餐厅接口 `http://39.98.69.153:8081/api/**`，避免浏览器直接跨域请求被 CORS 拦截；如需覆盖可配置 `VITE_RESTAURANT_API_BASE_URL`。
+> 2026-05-13 更新：前端新增 `low-carbon-dormitory-vue/.env.production`，生产构建默认把餐厅模块请求基址固定为同域 `/api/restaurant`；部署到服务器后需配合 Nginx 将 `/api/restaurant/**` 反向代理到 `http://39.98.69.153:8081/api/**`。
 > 2026-05-12 更新：管理员后台已整合餐厅管理模块；宿舍路由显示宿舍导航，餐厅路由显示餐厅导航，两个系统在同一后台内按模块切换，餐厅模块请求默认指向 `http://39.98.69.153:8081/api`。
 > 2026-05-12 更新：原管理员左侧导航栏中的“餐厅系统”外部跳转入口已升级为站内模块切换入口，进入餐厅后会切换成餐厅系统自己的导航。
 
@@ -69,6 +71,7 @@ npm run dev
 
 - `/api/dorm/**` -> `http://localhost:3000/**`
 - `/api/**` -> `http://localhost:3000/**`
+- `/api/restaurant/**` -> `http://39.98.69.153:8081/api/**`
 
 ## 登录与注册
 
@@ -157,5 +160,7 @@ npm run dev
 - `docs/features/admin-student-create.md`
 - `docs/features/admin-student-management.md`
 - `docs/features/student-register.md`
+- `docs/low-carbon-dormitory-summary-outline.docx`
+- `docs/low-carbon-dormitory-summary-presentation.pptx`
 - `docs/deployment.md`
 - `docs/database-deployment.md`

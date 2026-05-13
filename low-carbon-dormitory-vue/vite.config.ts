@@ -19,6 +19,11 @@ export default defineConfig({
   ],
   server: {
     proxy: {
+      '/api/restaurant': {
+        target: 'http://39.98.69.153:8081',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/restaurant/, '/api'),
+      },
       '/api/dorm': {
         target: 'http://localhost:3000',
         changeOrigin: true,
