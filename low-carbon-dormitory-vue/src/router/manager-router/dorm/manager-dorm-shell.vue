@@ -1,7 +1,7 @@
 <template>
-  <div class="page dorm-shell">
+  <div class="page dorm-shell" :class="{ 'dorm-shell--restaurant': isRestaurantRoute }">
     <div class="shell">
-      <AdminGlobalNav />
+      <component :is="activeNav" />
       <section class="content">
         <CurrentSystemBanner manager-mode />
         <RouterView v-slot="{ Component, route }">
@@ -17,8 +17,15 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import AdminGlobalNav from '@/components/admin-global-nav.vue'
+import RestaurantGlobalNav from '@/components/restaurant-global-nav.vue'
 import CurrentSystemBanner from '@/components/current-system-banner.vue'
+
+const route = useRoute()
+const isRestaurantRoute = computed(() => route.path.startsWith('/manager/restaurant'))
+const activeNav = computed(() => (isRestaurantRoute.value ? RestaurantGlobalNav : AdminGlobalNav))
 </script>
 
 <style scoped>
@@ -29,6 +36,13 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
     radial-gradient(circle at 100% 100%, rgba(230, 216, 164, 0.14), transparent 26%),
     linear-gradient(180deg, #edf6f0 0%, #f8fbf9 48%, #f5faf7 100%);
   padding: clamp(14px, 2vw, 24px);
+}
+
+.dorm-shell--restaurant {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(231, 217, 165, 0.18), transparent 28%),
+    radial-gradient(circle at 100% 100%, rgba(170, 140, 74, 0.12), transparent 24%),
+    linear-gradient(180deg, #f7f3e8 0%, #fcfaf4 48%, #f8f5ec 100%);
 }
 
 .shell {
@@ -122,6 +136,19 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
     0 20px 46px rgba(37, 72, 54, 0.06);
 }
 
+.dorm-shell--restaurant :deep(.card),
+.dorm-shell--restaurant :deep(.el-card),
+.dorm-shell--restaurant :deep(.meal-record-card) {
+  border-radius: 24px;
+  border: 1px solid rgba(160, 145, 95, 0.18);
+  background:
+    radial-gradient(circle at right top, rgba(231, 217, 165, 0.12), transparent 34%),
+    rgba(255, 255, 255, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 18px 38px rgba(92, 70, 19, 0.06);
+}
+
 .dorm-shell :deep(.hero-card),
 .dorm-shell :deep(.hero) {
   padding: 28px 28px;
@@ -160,6 +187,11 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
   font-weight: 800;
 }
 
+.dorm-shell--restaurant :deep(.el-form-item__label) {
+  color: #7e6941;
+  font-weight: 700;
+}
+
 .dorm-shell :deep(.card-grid),
 .dorm-shell :deep(.stats),
 .dorm-shell :deep(.grid),
@@ -185,6 +217,12 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
   box-shadow: inset 0 0 0 1px rgba(93, 131, 109, 0.12) !important;
 }
 
+.dorm-shell--restaurant :deep(.el-input__wrapper),
+.dorm-shell--restaurant :deep(.el-select__wrapper),
+.dorm-shell--restaurant :deep(.el-textarea__inner) {
+  box-shadow: inset 0 0 0 1px rgba(160, 145, 95, 0.18) !important;
+}
+
 .dorm-shell :deep(.el-button--primary),
 .dorm-shell :deep(.el-button--success),
 .dorm-shell :deep(.module-card__action) {
@@ -193,10 +231,23 @@ import CurrentSystemBanner from '@/components/current-system-banner.vue'
   box-shadow: 0 12px 24px rgba(29, 90, 60, 0.18);
 }
 
+.dorm-shell--restaurant :deep(.el-button--primary),
+.dorm-shell--restaurant :deep(.el-button--success),
+.dorm-shell--restaurant :deep(.module-card__action) {
+  background: linear-gradient(135deg, #a67b1f 0%, #7a5912 100%);
+  box-shadow: 0 12px 24px rgba(122, 89, 18, 0.18);
+}
+
 .dorm-shell :deep(.el-button:not(.el-button--primary):not(.el-button--success)) {
   border-color: rgba(93, 131, 109, 0.12);
   background: rgba(255, 255, 255, 0.9);
   color: #204232;
+}
+
+.dorm-shell--restaurant :deep(.el-table) {
+  --el-table-row-hover-bg-color: #fcf7e9;
+  --el-table-header-bg-color: #f8f2e4;
+  --el-table-border-color: rgba(160, 145, 95, 0.18);
 }
 
 .dorm-shell :deep(.el-table) {

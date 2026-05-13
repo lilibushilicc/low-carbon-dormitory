@@ -2,7 +2,7 @@
   <div class="reward-mall-page">
     <div class="reward-mall-shell">
       <div class="reward-mall-phone">
-        <ASpin :spinning="loading">
+        <ASpin :spinning="loading && Boolean(rewardCenter)">
           <header class="mall-hero">
             <div class="mall-hero__glow"></div>
 
@@ -10,16 +10,14 @@
               <div class="mall-hero__copy">
                 <h1>积分兑换商城</h1>
               </div>
+              <div class="mall-hero__search">
+                <AInput v-model:value="keyword" size="large" allow-clear placeholder="搜索奖励名称">
+                  <template #prefix>
+                    <SearchOutlined />
+                  </template>
+                </AInput>
+              </div>
             </div>
-
-            <div class="mall-hero__search">
-              <AInput v-model:value="keyword" size="large" allow-clear placeholder="搜索奖励名称">
-                <template #prefix>
-                  <SearchOutlined />
-                </template>
-              </AInput>
-            </div>
-
           </header>
 
           <AAlert
@@ -29,6 +27,47 @@
             show-icon
             :message="errorMessage"
           />
+
+          <section v-else-if="loading && !rewardCenter" class="mall-loading-state" aria-live="polite">
+            <div class="mall-loading-state__header">
+              <span class="mall-loading-state__spinner" aria-hidden="true"></span>
+              <div>
+                <strong>正在加载积分商城</strong>
+                <p>奖励列表和兑换记录马上就绪</p>
+              </div>
+            </div>
+
+            <div class="view-strip view-strip--skeleton">
+              <span class="skeleton-line skeleton-line--tab"></span>
+              <span class="skeleton-line skeleton-line--tab"></span>
+            </div>
+
+            <section class="summary-row">
+              <article class="summary-pill summary-pill--skeleton">
+                <span class="skeleton-line skeleton-line--short"></span>
+                <strong class="skeleton-line skeleton-line--value"></strong>
+              </article>
+              <article class="summary-pill summary-pill--skeleton">
+                <span class="skeleton-line skeleton-line--short"></span>
+                <strong class="skeleton-line skeleton-line--value"></strong>
+              </article>
+            </section>
+
+            <section class="card-list">
+              <article v-for="index in 3" :key="index" class="reward-card reward-card--skeleton">
+                <div class="reward-card__media reward-card__media--skeleton">
+                  <span class="mall-loading-state__spinner mall-loading-state__spinner--small" aria-hidden="true"></span>
+                </div>
+                <div class="reward-card__content">
+                  <span class="skeleton-line skeleton-line--title"></span>
+                  <div class="reward-card__bottom">
+                    <span class="skeleton-line skeleton-line--points"></span>
+                    <span class="skeleton-line skeleton-line--button"></span>
+                  </div>
+                </div>
+              </article>
+            </section>
+          </section>
 
           <template v-else-if="rewardCenter">
             <section class="view-strip">
@@ -57,13 +96,23 @@
 
             <section v-if="activeView === 'rewards'" class="card-list">
               <article v-for="item in pagedRewards" :key="item.rewardId" class="reward-card">
-                <div class="reward-card__media">
+                <div
+                  class="reward-card__media"
+                  :class="{ 'reward-card__media--loading': !isRewardImageReady(item.rewardId) }"
+                >
+                  <span
+                    v-if="!isRewardImageReady(item.rewardId)"
+                    class="reward-card__image-spinner"
+                    aria-hidden="true"
+                  ></span>
                   <img
                     :src="safeImageUrl(item.imageUrl)"
                     :alt="item.rewardName"
                     class="reward-card__image"
+                    :class="{ 'reward-card__image--ready': isRewardImageReady(item.rewardId) }"
                     loading="lazy"
-                    @error="handleImageError"
+                    @load="markRewardImageReady(item.rewardId)"
+                    @error="handleImageError($event, item.rewardId)"
                   />
                 </div>
 
@@ -282,6 +331,7 @@ const {
 const selectedReward = ref<DisplayReward | null>(null)
 const exchangeModalOpen = ref(false)
 const exchangeConfirmLoading = ref(false)
+const readyRewardImageIds = ref(new Set<number>())
 
 const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase())
 const rewardItems = computed(() => rewardCenter.value?.rewardItems || [])
@@ -400,11 +450,26 @@ function safeImageUrl(imageUrl?: string) {
   return imageUrl && imageUrl.trim() ? imageUrl : FALLBACK_IMAGE
 }
 
-function handleImageError(event: Event) {
+function isRewardImageReady(rewardId: number) {
+  return readyRewardImageIds.value.has(rewardId)
+}
+
+function markRewardImageReady(rewardId: number) {
+  if (readyRewardImageIds.value.has(rewardId)) {
+    return
+  }
+
+  readyRewardImageIds.value = new Set([...readyRewardImageIds.value, rewardId])
+}
+
+function handleImageError(event: Event, rewardId: number) {
   const target = event.target as HTMLImageElement | null
   if (target && target.src !== FALLBACK_IMAGE) {
     target.src = FALLBACK_IMAGE
+    return
   }
+
+  markRewardImageReady(rewardId)
 }
 
 function openExchangeModal(reward: DisplayReward) {
@@ -476,9 +541,14 @@ onMounted(() => {
 
 <style scoped>
 .reward-mall-page {
-  --mall-content-max: 360px;
+  --mall-phone-max: 860px;
+  --mall-content-max: 515px;
+  --mall-content-inset: 28px;
   --mall-hero-height: 156px;
-  --mall-section-gap: 14px;
+  --mall-section-gap: 10px;
+  --mall-search-to-tabs-gap: 22px;
+  --mall-search-height: 42px;
+  --mall-tab-height: 64px;
   --mall-font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
   --mall-ink-strong: #18372a;
   --mall-ink: #2f5140;
@@ -505,7 +575,7 @@ onMounted(() => {
 }
 
 .reward-mall-phone {
-  width: min(100%, 430px);
+  width: min(100%, var(--mall-phone-max));
   height: 100%;
   min-height: 0;
   position: relative;
@@ -535,12 +605,10 @@ onMounted(() => {
 .mall-hero {
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: var(--mall-section-gap);
-  height: var(--mall-hero-height);
-  padding: 22px 20px 16px;
+  display: block;
+  height: auto;
+  min-height: 0;
+  padding: 10px 0 0;
   border-radius: 28px 28px 18px 18px;
   background: transparent;
   border: none;
@@ -566,30 +634,30 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  width: 100%;
-  max-width: var(--mall-content-max);
+  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   margin: 0 auto;
-  gap: 10px;
+  min-height: var(--mall-search-height);
+  gap: 16px;
 }
 
 .mall-hero__copy {
   min-width: 0;
-  width: 100%;
-  max-width: 100%;
+  width: auto;
+  max-width: none;
   display: flex;
-  justify-content: center;
-  text-align: center;
+  justify-content: flex-start;
+  text-align: left;
   box-sizing: border-box;
 }
 
 .mall-hero h1 {
   margin: 0;
-  width: 100%;
+  width: auto;
   color: var(--mall-ink-strong);
-  font-size: 25px;
-  line-height: 1.08;
+  font-size: 24px;
+  line-height: 1;
   font-weight: 900;
   letter-spacing: -0.03em;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.24);
@@ -599,9 +667,13 @@ onMounted(() => {
 .mall-hero__search {
   position: relative;
   z-index: 1;
-  width: 100%;
-  max-width: var(--mall-content-max);
-  margin: 0 auto;
+  display: flex;
+  align-items: stretch;
+  width: 240px;
+  max-width: 100%;
+  height: var(--mall-search-height);
+  min-height: var(--mall-search-height);
+  margin: 0;
 }
 
 .public-entry-chip {
@@ -657,12 +729,11 @@ onMounted(() => {
 }
 
 .view-strip {
-  width: 100%;
-  max-width: var(--mall-content-max);
+  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin: var(--mall-section-gap) auto 0;
+  margin: var(--mall-search-to-tabs-gap) auto 0;
   padding: 8px;
   border: 1px solid rgba(70, 123, 92, 0.12);
   border-radius: 26px;
@@ -678,8 +749,103 @@ onMounted(() => {
   display: none;
 }
 
-.view-chip {
+.mall-loading-state {
+  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
+  margin: var(--mall-section-gap) auto 0;
+}
+
+.mall-loading-state__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(218, 239, 224, 0.92);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 12px 26px rgba(44, 114, 67, 0.08);
+}
+
+.mall-loading-state__header strong {
+  display: block;
+  color: var(--mall-ink-strong);
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 900;
+}
+
+.mall-loading-state__header p {
+  margin: 4px 0 0;
+  color: var(--mall-ink-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mall-loading-state__spinner,
+.reward-card__image-spinner {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid rgba(34, 179, 87, 0.16);
+  border-top-color: var(--mall-accent);
+  animation: mallSpin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+
+.mall-loading-state__spinner--small {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+}
+
+.view-strip--skeleton {
+  box-shadow: none;
+}
+
+.summary-pill--skeleton,
+.reward-card--skeleton {
+  pointer-events: none;
+}
+
+.skeleton-line {
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(225, 243, 231, 0.88), rgba(248, 255, 250, 0.96), rgba(225, 243, 231, 0.88));
+  background-size: 220% 100%;
+  animation: mallSkeleton 1.2s ease-in-out infinite;
+}
+
+.skeleton-line--tab {
   min-height: 42px;
+}
+
+.skeleton-line--short {
+  width: 64px;
+  height: 14px;
+}
+
+.skeleton-line--value {
+  width: 42px;
+  height: 18px;
+}
+
+.skeleton-line--title {
+  width: 72%;
+  height: 18px;
+}
+
+.skeleton-line--points {
+  width: 58px;
+  height: 18px;
+}
+
+.skeleton-line--button {
+  width: 112px;
+  height: 42px;
+}
+
+.view-chip {
+  min-height: calc(var(--mall-tab-height) - 18px);
   padding: 0 18px;
   border: none;
   border-radius: 999px;
@@ -704,8 +870,7 @@ onMounted(() => {
 .summary-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: 100%;
-  max-width: var(--mall-content-max);
+  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   gap: 10px;
   margin-top: var(--mall-section-gap);
   margin-left: auto;
@@ -714,6 +879,7 @@ onMounted(() => {
 
 .summary-pill {
   min-width: 0;
+  min-height: 76px;
   padding: 14px 12px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.84);
@@ -748,8 +914,7 @@ onMounted(() => {
 .record-list {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: var(--mall-content-max);
+  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   gap: 12px;
   margin-top: var(--mall-section-gap);
   margin-left: auto;
@@ -777,6 +942,9 @@ onMounted(() => {
 }
 
 .reward-card__media {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: 76px;
   height: 76px;
   border-radius: 20px;
@@ -784,10 +952,35 @@ onMounted(() => {
   background: #eef7f1;
 }
 
+.reward-card__media--loading {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.92), transparent 34%),
+    linear-gradient(135deg, #edf8f1, #dff2e7);
+}
+
+.reward-card__media--skeleton {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.92), transparent 34%),
+    linear-gradient(135deg, #edf8f1, #dff2e7);
+}
+
+.reward-card__image-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  z-index: 1;
+}
+
 .reward-card__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.reward-card__image--ready {
+  opacity: 1;
 }
 
 .reward-card__content {
@@ -831,6 +1024,22 @@ onMounted(() => {
   font-weight: 800;
 }
 
+@keyframes mallSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mallSkeleton {
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
+}
+
 .record-card__head {
   display: flex;
   justify-content: space-between;
@@ -868,8 +1077,7 @@ onMounted(() => {
 .list-pagination {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: 100%;
-  max-width: var(--mall-content-max);
+  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   gap: 10px;
   margin-top: 4px;
   margin-left: auto;
@@ -916,8 +1124,7 @@ onMounted(() => {
 }
 
 .mall-error {
-  width: 100%;
-  max-width: var(--mall-content-max);
+  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   margin-top: 18px;
   margin-left: auto;
   margin-right: auto;
@@ -926,8 +1133,7 @@ onMounted(() => {
 }
 
 .empty-block {
-  width: 100%;
-  max-width: var(--mall-content-max);
+  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   padding: 36px 0 10px;
   margin-left: auto;
   margin-right: auto;
@@ -1092,8 +1298,12 @@ onMounted(() => {
 }
 
 :deep(.ant-input-affix-wrapper) {
-  min-height: 46px;
-  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--mall-search-height);
+  height: var(--mall-search-height);
+  padding: 0 12px;
   border: 1px solid rgba(213, 238, 219, 0.98);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
@@ -1101,6 +1311,8 @@ onMounted(() => {
 }
 
 :deep(.ant-input) {
+  height: 100%;
+  line-height: normal;
   font-size: 15px;
   color: var(--mall-ink-strong);
   font-family: var(--mall-font-family);
@@ -1111,6 +1323,8 @@ onMounted(() => {
 }
 
 :deep(.ant-input-prefix) {
+  display: inline-flex;
+  align-items: center;
   color: var(--mall-accent-strong);
 }
 
@@ -1156,9 +1370,14 @@ onMounted(() => {
 
 @media (max-width: 640px) {
   .reward-mall-page {
-    --mall-content-max: none;
+    --mall-phone-max: 100%;
+    --mall-content-max: min(515px, calc(100% - 28px));
+    --mall-content-inset: 0px;
     --mall-hero-height: 148px;
-    --mall-section-gap: 12px;
+    --mall-section-gap: 10px;
+    --mall-search-to-tabs-gap: 18px;
+    --mall-search-height: 42px;
+    --mall-tab-height: 64px;
     padding: 0 0 calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
@@ -1169,7 +1388,7 @@ onMounted(() => {
   }
 
   .mall-hero {
-    padding: 28px 16px 14px;
+    padding: 10px 0 0;
     border-radius: 0 0 18px 18px;
   }
 
@@ -1178,7 +1397,7 @@ onMounted(() => {
   }
 
   .mall-hero__top {
-    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .public-entry-chip {
@@ -1293,9 +1512,13 @@ onMounted(() => {
 
 @media (max-width: 520px) {
   .reward-mall-page {
-    --mall-content-max: none;
-    --mall-hero-height: 142px;
-    --mall-section-gap: 12px;
+    --mall-content-max: calc(100% - 28px);
+    --mall-content-inset: 0px;
+    --mall-hero-height: 138px;
+    --mall-section-gap: 10px;
+    --mall-search-to-tabs-gap: 16px;
+    --mall-search-height: 40px;
+    --mall-tab-height: 60px;
     padding: 0 0 calc(10px + env(safe-area-inset-bottom, 0px));
   }
 
@@ -1304,13 +1527,13 @@ onMounted(() => {
   }
 
   .mall-hero {
-    padding: 22px 14px 12px;
+    padding: 8px 0 0;
     border-radius: 22px 22px 15px 15px;
   }
 
   .mall-hero__top {
-    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
-    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
   }
 
   .public-entry-chip--inline {
@@ -1322,8 +1545,12 @@ onMounted(() => {
   }
 
   .mall-hero__copy {
-    width: 100%;
-    max-width: 100%;
+    width: auto;
+    max-width: none;
+  }
+
+  .mall-hero__search {
+    width: 188px;
   }
 
   .view-strip {
@@ -1383,18 +1610,22 @@ onMounted(() => {
 
 @media (max-width: 390px) {
   .reward-mall-page {
-    --mall-content-max: none;
-    --mall-hero-height: 136px;
-    --mall-section-gap: 12px;
+    --mall-content-max: calc(100% - 24px);
+    --mall-content-inset: 0px;
+    --mall-hero-height: 128px;
+    --mall-section-gap: 8px;
+    --mall-search-to-tabs-gap: 14px;
+    --mall-search-height: 38px;
+    --mall-tab-height: 56px;
   }
 
   .mall-hero {
-    padding: 20px 12px 10px;
+    padding: 8px 0 0;
   }
 
   .mall-hero__top {
-    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
-    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
   }
 
   .public-entry-chip--inline {
@@ -1402,12 +1633,16 @@ onMounted(() => {
   }
 
   .mall-hero h1 {
-    font-size: 16px;
+    font-size: 20px;
   }
 
   .mall-hero__copy {
-    width: 100%;
-    max-width: 100%;
+    width: auto;
+    max-width: none;
+  }
+
+  .mall-hero__search {
+    width: 160px;
   }
 
   .view-strip {
