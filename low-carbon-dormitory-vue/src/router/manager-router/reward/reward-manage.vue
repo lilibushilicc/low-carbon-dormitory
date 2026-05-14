@@ -54,8 +54,33 @@
           <el-form-item label="排序">
             <el-input-number v-model="rewardForm.sortOrder" :min="0" />
           </el-form-item>
-          <el-form-item label="图片URL(可选)">
-            <el-input v-model="rewardForm.imageUrl" />
+          <el-form-item label="奖励图片(可选)">
+            <div class="reward-upload-field">
+              <input
+                ref="rewardImageInputRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="reward-upload-input"
+                @change="handleRewardImageChange"
+              />
+              <div class="reward-upload-actions">
+                <el-button :loading="uploadingImage" @click="openRewardImagePicker">选择图片</el-button>
+                <el-button
+                  v-if="rewardForm.imageUrl"
+                  :disabled="uploadingImage"
+                  text
+                  type="danger"
+                  @click="clearRewardImage"
+                >
+                  清除图片
+                </el-button>
+              </div>
+              <div class="reward-upload-tip">支持 JPG、PNG、WEBP，大小不超过 2MB。</div>
+              <el-input v-model="rewardForm.imageUrl" readonly placeholder="上传后自动生成图片地址" />
+              <div v-if="rewardPreviewUrl" class="reward-upload-preview">
+                <img :src="rewardPreviewUrl" alt="奖励图片预览" />
+              </div>
+            </div>
           </el-form-item>
         </div>
         <el-button type="primary" @click="createReward">创建奖励</el-button>
@@ -88,11 +113,13 @@
 import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { resolveErrorMessage } from '@/utils/api-response'
 import {
   createRewardByAdmin,
   deleteRewardByAdmin,
   fetchRewardsByAdmin,
   fetchUtilityRates,
+  uploadRewardImageByAdmin,
   updateRewardStockByAdmin,
   updateUtilityRate,
   type AdminRewardItem,
@@ -101,8 +128,11 @@ import {
 
 const router = useRouter()
 const loading = ref(false)
+const uploadingImage = ref(false)
 const rates = ref<UtilityRateItem[]>([])
 const rewards = ref<AdminRewardItem[]>([])
+const rewardImageInputRef = ref<HTMLInputElement | null>(null)
+const rewardPreviewUrl = ref('')
 const rewardForm = reactive({
   rewardName: '',
   rewardDesc: '',
@@ -114,6 +144,46 @@ const rewardForm = reactive({
 
 function goHome() {
   router.push('/manager/home')
+}
+
+function openRewardImagePicker() {
+  rewardImageInputRef.value?.click()
+}
+
+function clearRewardImage() {
+  rewardForm.imageUrl = ''
+  rewardPreviewUrl.value = ''
+  if (rewardImageInputRef.value) {
+    rewardImageInputRef.value.value = ''
+  }
+}
+
+async function handleRewardImageChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) {
+    return
+  }
+
+  uploadingImage.value = true
+  try {
+    const { data } = await uploadRewardImageByAdmin(file)
+    if (data.code !== 200 || !data.data) {
+      ElMessage.error(data.msg || '图片上传失败')
+      return
+    }
+    rewardForm.imageUrl = data.data.imageUrl
+    rewardPreviewUrl.value = data.data.imageUrl
+    ElMessage.success('图片上传成功')
+  } catch (error) {
+    console.error(error)
+    ElMessage.error(resolveErrorMessage(error, '图片上传失败'))
+  } finally {
+    uploadingImage.value = false
+    if (rewardImageInputRef.value) {
+      rewardImageInputRef.value.value = ''
+    }
+  }
 }
 
 async function loadAll() {
@@ -177,7 +247,7 @@ async function createReward() {
     ElMessage.success('奖励新增成功')
     rewardForm.rewardName = ''
     rewardForm.rewardDesc = ''
-    rewardForm.imageUrl = ''
+    clearRewardImage()
     await loadAll()
   } catch (error) {
     console.error(error)
@@ -280,6 +350,41 @@ h2 {
   border: 1px solid #e4ece8;
   border-radius: 12px;
   padding: 12px;
+}
+
+.reward-upload-field {
+  display: grid;
+  gap: 10px;
+}
+
+.reward-upload-input {
+  display: none;
+}
+
+.reward-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reward-upload-tip {
+  font-size: 12px;
+  color: #5f776b;
+}
+
+.reward-upload-preview {
+  width: min(240px, 100%);
+  overflow: hidden;
+  border: 1px solid #dce7e1;
+  border-radius: 12px;
+  background: #f5faf7;
+}
+
+.reward-upload-preview img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
 }
 
 .rate-item :deep(.el-switch) {

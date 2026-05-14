@@ -1,5 +1,6 @@
 # low-carbon-dormitory
 
+> 2026-05-14 更新：管理员“新增奖励”现已支持本地图片上传。后端默认将图片保存到项目根目录 `storage/reward-images/`，并通过 `/uploads/rewards/**` 对外提供访问；数据库继续只保存 `image_url` 字符串，不保存图片二进制内容。
 > 2026-05-14 更新：新增“水费是否参与计费”开关，管理员可在费率配置页单独关闭水费计费。关闭后，水费不再允许充值、不再允许管理员扣费，低碳看板与个人低碳统计也不再把水费计入费用和碳排计算。首次升级现有数据库时，需要先为 `system_utility_rate_config` 补充 `enabled` 字段，示例 SQL 见 `docs/database-deployment.md`。
 
 > 2026-05-14 更新：手机端 `/reward-exchange-antd` 奖励兑换页已压缩交互层级，顶部摘要改为单张积分卡，奖励卡片前置库存与兑换提示，确认弹层收敛为扣分、剩余积分、库存三项核心信息。
@@ -44,6 +45,7 @@
 - `log/`：运行日志、构建日志、排查记录
 - `release/package/`：打包产物
 - `release/docker/`：Docker 相关文件和镜像构建产物
+- `storage/reward-images/`：奖励图片上传后的运行时存储目录，由后端在首次上传时自动创建
 
 说明：
 
@@ -79,7 +81,19 @@ npm run dev
 
 - `/api/dorm/**` -> `http://localhost:3000/**`
 - `/api/**` -> `http://localhost:3000/**`
+- `/uploads/**` -> `http://localhost:3000/uploads/**`
 - `/api/restaurant/**` -> `http://39.98.69.153:8081/api/**`
+
+### 奖励图片上传
+
+- 管理端页面：`/manager/reward-manage`
+- 上传方式：选择本地 JPG、PNG、WEBP 图片后，由前端以 `multipart/form-data` 上传到后端
+- 默认大小限制：单张 `2MB`
+- 默认存储目录：`storage/reward-images/YYYYMM/`
+- 默认访问前缀：`/uploads/rewards/YYYYMM/<uuid>.<ext>`
+- 可通过环境变量覆盖：
+  - `APP_UPLOAD_REWARD_DIR`
+  - `APP_UPLOAD_REWARD_URL_PREFIX`
 
 ## 登录与注册
 
@@ -174,4 +188,5 @@ npm run dev
 - `docs/project-difficulties-implementation.md`
 - `docs/springboot-annotations-reference.md`
 - `docs/deployment.md`
+  说明：服务器发布时请重点参考该文档中的图片上传目录配置 `APP_UPLOAD_REWARD_DIR` 与 `/uploads/**` 代理要求。
 - `docs/database-deployment.md`

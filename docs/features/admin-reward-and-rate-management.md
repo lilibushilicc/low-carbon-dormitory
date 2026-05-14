@@ -41,6 +41,7 @@
 - `GET /admin/utility-rates`
 - `PUT /admin/utility-rates/{feeType}`
 - `GET /admin/rewards`
+- `POST /admin/rewards/upload-image`
 - `POST /admin/rewards`
 - `PUT /admin/rewards/{rewardId}/stock`
 - `DELETE /admin/rewards/{rewardId}`
@@ -82,6 +83,23 @@
 1. 组装 `RewardItem`
 2. 设置默认排序、状态、创建时间、更新时间
 3. 插入奖励表
+
+### 奖励图片上传
+
+管理端新增奖励页现在支持先上传本地图片，再把返回的图片地址写入 `imageUrl`：
+
+1. 前端选择本地图片文件
+2. 通过 `POST /admin/rewards/upload-image` 以 `multipart/form-data` 提交
+3. 后端校验文件类型与大小，只允许 `JPG/PNG/WEBP`，单张不超过 `2MB`
+4. 后端把文件写入项目根目录 `storage/reward-images/YYYYMM/`
+5. 返回相对访问地址，例如 `/uploads/rewards/202605/xxxxxx.png`
+6. 前端再调用 `POST /admin/rewards` 创建奖励，数据库仅保存 `image_url`
+
+默认运行配置：
+
+- 存储目录：`app.upload.reward-dir=${APP_UPLOAD_REWARD_DIR:../storage/reward-images}`
+- 访问前缀：`app.upload.reward-url-prefix=${APP_UPLOAD_REWARD_URL_PREFIX:/uploads/rewards}`
+- 静态映射：`/uploads/rewards/** -> reward-images 目录`
 
 ### 更新库存
 
@@ -135,6 +153,8 @@
 - `low-carbon-dormitory-vue/src/api/modules/admin.ts`
 - `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/admin/AdminManagementController.java`
 - `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/admin/AdminManagementService.java`
+- `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/admin/AdminRewardImageStorageService.java`
+- `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/config/WebCorsConfig.java`
 
 ## 维护注意点
 

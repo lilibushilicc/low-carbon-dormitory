@@ -9,6 +9,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -43,13 +45,23 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(violation -> violation.getMessage())
                 .filter(value -> value != null && !value.isBlank())
-                .collect(Collectors.joining("，"));
+                .collect(Collectors.joining("；"));
         return Result.fail(400, message.isBlank() ? "请求参数校验失败" : message);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
         return Result.fail(400, "请求体格式不正确");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Result<Void> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException exception) {
+        return Result.fail(400, "图片大小不能超过2MB");
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public Result<Void> handleMultipartException(MultipartException exception) {
+        return Result.fail(400, "图片上传请求格式不正确，请重新选择图片后重试");
     }
 
     @ExceptionHandler(Exception.class)

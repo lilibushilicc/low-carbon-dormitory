@@ -7,11 +7,13 @@ import com.example.lowcarbondormitory.dto.request.AdminDeductDormFeeRequest;
 import com.example.lowcarbondormitory.dto.request.AdminUpdateRewardStockRequest;
 import com.example.lowcarbondormitory.dto.request.AdminUpdateUtilityRateRequest;
 import com.example.lowcarbondormitory.dto.response.AdminCreateStudentResponse;
+import com.example.lowcarbondormitory.dto.response.AdminRewardImageUploadResponse;
 import com.example.lowcarbondormitory.dto.response.AdminStudentDeleteCheckResponse;
 import com.example.lowcarbondormitory.dto.response.AdminStudentListItemResponse;
 import com.example.lowcarbondormitory.entity.RewardItem;
 import com.example.lowcarbondormitory.entity.UtilityRateConfig;
 import com.example.lowcarbondormitory.entity.DormFee;
+import com.example.lowcarbondormitory.service.admin.AdminRewardImageStorageService;
 import com.example.lowcarbondormitory.service.admin.AdminManagementService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +22,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,6 +36,9 @@ public class AdminManagementController {
 
     @Autowired
     private AdminManagementService adminManagementService;
+
+    @Autowired
+    private AdminRewardImageStorageService adminRewardImageStorageService;
 
     @GetMapping("/utility-rates")
     public Result<List<UtilityRateConfig>> listUtilityRates() {
@@ -83,6 +90,11 @@ public class AdminManagementController {
     @PostMapping("/rewards")
     public Result<RewardItem> createReward(@Valid @RequestBody AdminCreateRewardRequest request) {
         return Result.success(adminManagementService.createReward(request));
+    }
+
+    @PostMapping("/rewards/upload-image")
+    public Result<AdminRewardImageUploadResponse> uploadRewardImage(@RequestParam("file") MultipartFile file) {
+        return Result.success(adminRewardImageStorageService.store(file));
     }
 
     @PutMapping("/rewards/{rewardId}/stock")

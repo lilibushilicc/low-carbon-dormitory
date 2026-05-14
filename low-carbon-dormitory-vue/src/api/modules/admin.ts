@@ -89,6 +89,12 @@ export interface AdminCreateRewardRequest {
   status?: number
 }
 
+export interface AdminRewardImageUploadResponse {
+  imageUrl: string
+  originalName: string
+  size: number
+}
+
 export interface AdminDeductDormFeeRequest {
   amount: number
   feeType: 'ELECTRIC' | 'WATER'
@@ -139,6 +145,16 @@ export function fetchRewardsByAdmin() {
 
 export function createRewardByAdmin(payload: AdminCreateRewardRequest) {
   return http.post<ApiResponse<AdminRewardItem>>('/api/admin/rewards', payload)
+}
+
+export function uploadRewardImageByAdmin(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return http.post<ApiResponse<AdminRewardImageUploadResponse>>('/api/admin/rewards/upload-image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
 }
 
 export function updateRewardStockByAdmin(rewardId: number, stock: number) {
