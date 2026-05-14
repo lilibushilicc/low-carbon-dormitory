@@ -152,17 +152,30 @@ public class LowCarbonDashboardSupport {
             BigDecimal waterUnitPrice,
             ScoreRuleSnapshot rule
     ) {
+        return buildMetric(aggregate, electricUnitPrice, waterUnitPrice, true, true, rule);
+    }
+
+    public MetricSnapshot buildMetric(
+            FeeAggregate aggregate,
+            BigDecimal electricUnitPrice,
+            BigDecimal waterUnitPrice,
+            boolean electricEnabled,
+            boolean waterEnabled,
+            ScoreRuleSnapshot rule
+    ) {
         ScoreRuleSnapshot activeRule = rule == null ? defaultScoreRule() : rule;
         FeeAggregate safeAggregate = aggregate == null ? new FeeAggregate() : aggregate;
-        BigDecimal electricFee = scale(safeAggregate.electricFee, 2);
-        BigDecimal waterFee = scale(safeAggregate.waterFee, 2);
+        BigDecimal electricFee = electricEnabled ? scale(safeAggregate.electricFee, 2) : ZERO;
+        BigDecimal waterFee = waterEnabled ? scale(safeAggregate.waterFee, 2) : ZERO;
         BigDecimal totalFee = electricFee.add(waterFee);
-        BigDecimal electricUsage = divideSafe(electricFee, electricUnitPrice, 4);
-        BigDecimal waterUsage = divideSafe(waterFee, waterUnitPrice, 4);
-        BigDecimal electricCarbon = scale(electricUsage.multiply(activeRule.electricCarbonFactor()), 2);
-        BigDecimal waterCarbon = scale(waterUsage.multiply(activeRule.waterCarbonFactor()), 2);
+        BigDecimal electricUsage = electricEnabled ? divideSafe(electricFee, electricUnitPrice, 4) : ZERO;
+        BigDecimal waterUsage = waterEnabled ? divideSafe(waterFee, waterUnitPrice, 4) : ZERO;
+        BigDecimal electricCarbon = electricEnabled ? scale(electricUsage.multiply(activeRule.electricCarbonFactor()), 2) : ZERO;
+        BigDecimal waterCarbon = waterEnabled ? scale(waterUsage.multiply(activeRule.waterCarbonFactor()), 2) : ZERO;
         BigDecimal totalCarbon = electricCarbon.add(waterCarbon);
-        boolean hasMetricInput = safeAggregate.hasAnyData() || totalFee.compareTo(ZERO) > 0;
+        boolean hasMetricInput = (electricEnabled && safeAggregate.isElectricDataAvailable())
+                || (waterEnabled && safeAggregate.isWaterDataAvailable())
+                || totalFee.compareTo(ZERO) > 0;
         BigDecimal carbonScore = hasMetricInput
                 ? clamp(
                         activeRule.baseScore().subtract(totalCarbon.multiply(activeRule.carbonPenaltyFactor())),

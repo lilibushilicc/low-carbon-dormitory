@@ -118,6 +118,8 @@ public class LowCarbonRuleService {
                 aggregate,
                 electricRate.getUnitPrice(),
                 waterRate.getUnitPrice(),
+                electricRate.isBillingEnabled(),
+                waterRate.isBillingEnabled(),
                 snapshot
         );
 

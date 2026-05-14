@@ -113,6 +113,7 @@ public class AdminManagementService {
         }
         target.setUnitPrice(scaleRate(request.getUnitPrice()));
         target.setUnitName(request.getUnitName().trim());
+        target.setEnabled(request.getEnabled() == null ? Boolean.TRUE : request.getEnabled());
         if (exists) {
             utilityRateConfigMapper.updateById(target);
         } else {
@@ -132,6 +133,7 @@ public class AdminManagementService {
         }
 
         String feeType = normalizeFeeType(request.getFeeType());
+        assertBillingEnabled(feeType);
         BigDecimal amount = scaleMoney(request.getAmount());
         BigDecimal balanceAfter = dormFeeAccountService.deductBalance(dormFee, feeType, amount);
         LocalDateTime now = LocalDateTime.now();
@@ -356,5 +358,15 @@ public class AdminManagementService {
             throw new IllegalArgumentException("费用类型仅支持 ELECTRIC 或 WATER");
         }
         return upper;
+    }
+
+    private void assertBillingEnabled(String feeType) {
+        UtilityRateConfig rateConfig = utilityRateConfigMapper.selectById(feeType);
+        if (rateConfig == null) {
+            throw new IllegalStateException("缂哄皯璐圭巼閰嶇疆: " + feeType);
+        }
+        if (!rateConfig.isBillingEnabled()) {
+            throw new IllegalStateException(feeType + " 宸插仠鐢ㄨ璐癸紝鏃犳硶鎵ц鎵ｈ垂");
+        }
     }
 }

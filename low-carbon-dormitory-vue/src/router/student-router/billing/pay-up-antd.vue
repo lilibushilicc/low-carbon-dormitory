@@ -52,6 +52,7 @@
                   type="button"
                   class="fee-chip"
                   :class="{ 'fee-chip--active': feeType === 'water' }"
+                  :disabled="!waterBillingEnabled"
                   @click="switchFeeType('water')"
                 >
                   水费
@@ -249,6 +250,7 @@ const currentDormLabel = computed(() => formatDormLabel(rateInfo.value, dormLabe
 const publicAccessMode = computed(() => Boolean(routeStuNum.value))
 const feeLabel = computed(() => (feeType.value === 'water' ? '水费' : '电费'))
 const paymentMethodLabel = computed(() => (selectedMethod.value === 'WECHAT' ? '微信支付' : '支付宝'))
+const waterBillingEnabled = computed(() => rateInfo.value?.waterBillingEnabled !== false)
 
 const currentUnitPrice = computed(() => {
   if (!rateInfo.value) return null
@@ -269,7 +271,11 @@ const estimatedQuantityText = computed(() => {
 })
 
 const isPayable = computed(() => {
-  return Boolean(amount.value) && Number.parseFloat(amount.value) > 0 && Boolean(resolvedStuNum.value) && Boolean(resolvedDormId.value)
+  return Boolean(amount.value)
+    && Number.parseFloat(amount.value) > 0
+    && Boolean(resolvedStuNum.value)
+    && Boolean(resolvedDormId.value)
+    && (feeType.value !== 'water' || waterBillingEnabled.value)
 })
 
 const paymentStatusText = computed(() => {
@@ -311,6 +317,7 @@ function buildHistoryTarget() {
 }
 
 function switchFeeType(type: FeeType) {
+  if (type === 'water' && !waterBillingEnabled.value) return
   feeType.value = type
 }
 
@@ -369,6 +376,9 @@ async function loadRateInfo() {
     })
     const result = requireApiData(data, '获取宿舍水电信息失败')
     rateInfo.value = result
+    if (!waterBillingEnabled.value && feeType.value === 'water') {
+      feeType.value = 'electric'
+    }
 
     if (!publicAccessMode.value) {
       studentTokenStore.updateCarbonScore(result.personalCarbonScore)
@@ -381,6 +391,10 @@ async function loadRateInfo() {
 }
 
 async function handlePay() {
+  if (feeType.value === 'water' && !waterBillingEnabled.value) {
+    message.warning('水费计费已关闭，当前不能充值水费')
+    return
+  }
   if (!isPayable.value || !resolvedDormId.value) {
     message.warning('请先完善缴费信息')
     return
@@ -693,6 +707,11 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #2f9c66, #4fbf86);
   color: #ffffff;
   box-shadow: 0 12px 24px rgba(54, 151, 103, 0.26);
+}
+
+.fee-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .amount-panel {

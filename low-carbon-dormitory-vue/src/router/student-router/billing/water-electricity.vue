@@ -35,14 +35,14 @@
               <div class="balance-grid">
                 <article class="info-card info-card--electric info-card--featured" :class="statusInfo.electricClass">
                   <span class="info-card__label">电费余额</span>
-                  <strong>{{ formatCurrency(waterElectricity.electricityBalance) }}</strong>
-                  <small>预计可用电量 {{ formatAvailable(waterElectricity.electricityAvailable, waterElectricity.electricityUnitName) }}</small>
+                  <strong>{{ formatBalanceDisplay(waterElectricity.electricityBalance, waterElectricity.electricityBillingEnabled) }}</strong>
+                  <small>{{ formatAvailableLabel('电', waterElectricity.electricityAvailable, waterElectricity.electricityUnitName, waterElectricity.electricityBillingEnabled) }}</small>
                 </article>
 
                 <article class="info-card info-card--water info-card--featured" :class="statusInfo.waterClass">
                   <span class="info-card__label">水费余额</span>
-                  <strong>{{ formatCurrency(waterElectricity.waterBalance) }}</strong>
-                  <small>预计可用水量 {{ formatAvailable(waterElectricity.waterAvailable, waterElectricity.waterUnitName) }}</small>
+                  <strong>{{ formatBalanceDisplay(waterElectricity.waterBalance, waterElectricity.waterBillingEnabled) }}</strong>
+                  <small>{{ formatAvailableLabel('水', waterElectricity.waterAvailable, waterElectricity.waterUnitName, waterElectricity.waterBillingEnabled) }}</small>
                 </article>
               </div>
 
@@ -160,10 +160,18 @@ const waterElectricity = ref<StudentWaterElectricity | null>(null)
 
 const currentDormLabel = computed(() => formatDormLabel(waterElectricity.value, dormLabel.value))
 const electricityRateText = computed(() =>
-  waterElectricity.value ? formatUnitPrice(waterElectricity.value.electricityUnitPrice, '度电') : '-',
+  waterElectricity.value
+    ? waterElectricity.value.electricityBillingEnabled === false
+      ? '已停用计费'
+      : formatUnitPrice(waterElectricity.value.electricityUnitPrice, '度电')
+    : '-',
 )
 const waterRateText = computed(() =>
-  waterElectricity.value ? formatUnitPrice(waterElectricity.value.waterUnitPrice, '吨水') : '-',
+  waterElectricity.value
+    ? waterElectricity.value.waterBillingEnabled === false
+      ? '已停用计费'
+      : formatUnitPrice(waterElectricity.value.waterUnitPrice, '吨水')
+    : '-',
 )
 
 const latestSettlementSummary = computed(() => {
@@ -174,8 +182,10 @@ const latestSettlementSummary = computed(() => {
 })
 
 const statusInfo = computed(() => {
-  const electric = Number(waterElectricity.value?.electricityBalance || 0)
-  const water = Number(waterElectricity.value?.waterBalance || 0)
+  const electricEnabled = waterElectricity.value?.electricityBillingEnabled !== false
+  const waterEnabled = waterElectricity.value?.waterBillingEnabled !== false
+  const electric = electricEnabled ? Number(waterElectricity.value?.electricityBalance || 0) : Number.POSITIVE_INFINITY
+  const water = waterEnabled ? Number(waterElectricity.value?.waterBalance || 0) : Number.POSITIVE_INFINITY
 
   if (electric <= 20 || water <= 40) {
     return {
@@ -232,6 +242,27 @@ function normalizeUnit(unitName: string | null) {
 function formatAvailable(value: number | null, unitName: string | null) {
   if (value === null || value === undefined) return '-'
   return `${formatNumber(value, 2)} ${normalizeUnit(unitName)}`.trim()
+}
+
+function isBillingEnabled(enabled: boolean | null | undefined) {
+  return enabled !== false
+}
+
+function formatBalanceDisplay(value: number | null, enabled: boolean | null | undefined) {
+  if (!isBillingEnabled(enabled)) return '∞'
+  return formatCurrency(value)
+}
+
+function formatAvailableLabel(
+  label: '水' | '电',
+  value: number | null,
+  unitName: string | null,
+  enabled: boolean | null | undefined,
+) {
+  if (!isBillingEnabled(enabled)) {
+    return `${label}费已停用计费，可用量 ∞`
+  }
+  return `预计可用${label}量 ${formatAvailable(value, unitName)}`
 }
 
 async function loadWaterElectricity() {

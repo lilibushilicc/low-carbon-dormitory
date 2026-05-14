@@ -1,169 +1,49 @@
-# 宿舍水电查询与刷新实现文档
+# 宿舍水电查询与刷新
 
-## 功能目标
+## 功能说明
 
-该功能用于展示当前学生所在宿舍的：
+学生端用于查看宿舍水电余额、单价、可用量、最近扣费时间和积分信息，并支持刷新水电信息、进入充值页和历史页。
 
-- 电费余额
-- 水费余额
-- 可用量估算
-- 单价信息
-- 最后扣费时间
-- 宿舍周期积分与个人积分
-
-并支持执行“刷新”动作，把当前余额同步成一条新的结算事件。
-
-## 前端入口
-
-### 路由与页面
-
-- 路由：`/water-electricity`
-- 页面：`low-carbon-dormitory-vue/src/router/student-router/billing/water-electricity.vue`
-
-移动端补充入口：
-
-- 路由：`/water-electricity-antd`
-- 页面：`low-carbon-dormitory-vue/src/router/student-router/billing/water-electricity-antd.vue`
-- 页面会跳转到 `/pay-up-antd` 与 `/history-fee-antd` 两个手机端页面
-- 桌面页不再提供进入手机页的可视化入口，当前仅支持通过 URL 直接访问
-- 当通过 `?stuNum=学号` 公开访问时，跳转会继续透传 `stuNum`、`dormId` 与 `source=utility-mobile`，保证移动链路可直达缴费和历史订单
-- 从 `/pay-up-antd` 完成缴费后会返回 `/water-electricity-antd`，保持手机端链路闭环
-- 手机端水电、缴费和历史页共用 `low-carbon-dormitory-vue/src/utils/mobile-billing.ts` 拼装移动端查询参数，避免各页面重复维护跳转规则
-
-页面主要能力：
-
-- 加载当前宿舍水电信息
-- 展示余额状态
-- 调用刷新接口
-- 跳转充值页与历史页
-
-### 前端 API
-
-- 文件：`low-carbon-dormitory-vue/src/api/modules/student.ts`
-- 方法：
-  - `fetchWaterElectricity(...)`
-  - `refreshWaterElectricity(...)`
-
-## 前端状态与行为
-
-页面从 `studentTokenStore` 读取：
-
-- `stuNum`
-- `dormId`
-- `dormLabel`
-
-核心流程：
-
-1. 页面加载时调用 `fetchWaterElectricity`
-2. 后端返回余额、单价、可用量和积分信息
-3. 页面根据阈值计算“余额正常 / 余额提醒 / 余额偏低”
-4. 点击“刷新数据”时调用 `refreshWaterElectricity`
-5. 刷新成功后显示最近一次积分结算摘要
-6. 查询与刷新返回的 `personalCarbonScore` 会同步回学生端本地状态，保证侧栏个人积分与页面主内容一致
-
-## 后端入口
-
-- Controller：`low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/student/StudentWaterElectricityController.java`
-- Service：
-  - `StudentContextService`
-  - `StudentDormService`
-  - `DormFeeAccountService`
-  - `StudentPaymentService`
-
-## 查询流程
-
-### 接口
-
-- `GET /student/water-electricity`
-
-### 调用链
-
-1. `StudentWaterElectricityController.waterElectricity(stuNum, dormId)`
-2. `StudentContextService.findStudent(stuNum)`
-3. `StudentContextService.resolveRequiredDormId(student, dormId)`
-4. `DormFeeAccountService.getOrCreate(resolvedDormId)`
-5. `StudentDormService.getDormInfo(resolvedDormId)`
-6. `StudentDormService.buildWaterElectricityResponse(...)`
-
-### 查询特征
-
-该接口允许两种定位方式：
-
-- 通过 `stuNum`
-- 通过 `dormId`
-
-如果提供 `stuNum`，系统会先解析出学生和宿舍。  
-如果只提供 `dormId`，系统也可以直接查宿舍账户。
-
-## 刷新流程
-
-### 接口
-
-- `POST /student/water-electricity/refresh`
-
-### 调用链
-
-1. `StudentWaterElectricityController.refreshWaterElectricity(...)`
-2. `StudentPaymentService.refreshWaterElectricity(stuNum, dormId)`
-
-### 核心逻辑
-
-`StudentPaymentService.refreshWaterElectricity(...)` 不只是“重新读取”，它会执行一次带副作用的刷新结算：
-
-1. 解析当前学生与宿舍
-2. 读取并锁定宿舍账户
-3. 找到电费、水费最近一次锚点记录
-4. 写入两条 `REFRESH` 类型流水
-5. 依据当前事件补加宿舍积分与个人积分
-6. 返回最新余额与积分变化
-
-注意：
-
-- 刷新不会再按系统估算结果自动扣减水电余额
-- 学生侧充值也只更新目标费用项余额，不会顺带对水、电两项做自动周期扣费
-- `lastDeductTime` 仅表示真实扣费动作时间，不再由学生刷新或充值推进
-
-### 为什么刷新会影响积分
-
-从实现上看，系统把“刷新”视为一次显式结算事件。  
-因此刷新后响应里可能出现：
-
-- `carbonPointsAdded`
-- `personalPointsAdded`
-
-前端页面会把这两个字段转成“最近结算摘要”。
-
-这里的字段口径为：
-
-- `dormCarbonScore`：宿舍周期积分
-- `personalCarbonScore`：个人积分
-- `carbonPointsAdded` / `personalPointsAdded`：本次刷新新增的积分，不是新的第三种积分类型
-
-## 核心数据对象
-
-前端：
-
-- `StudentWaterElectricity`
-
-后端：
-
-- `StudentWaterElectricityResponse`
-- `DormFee`
-- `DormInfo`
-- `UtilityRateConfig`
-
-## 相关文件
+相关页面：
 
 - `low-carbon-dormitory-vue/src/router/student-router/billing/water-electricity.vue`
-- `low-carbon-dormitory-vue/src/api/modules/student.ts`
+- `low-carbon-dormitory-vue/src/router/student-router/billing/water-electricity-antd.vue`
+- `low-carbon-dormitory-vue/src/router/student-router/billing/pay-up.vue`
+- `low-carbon-dormitory-vue/src/router/student-router/billing/pay-up-antd.vue`
+
+相关后端：
+
 - `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/student/StudentWaterElectricityController.java`
-- `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/student/StudentPaymentService.java`
 - `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/student/StudentDormService.java`
-- `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/student/DormFeeAccountService.java`
+- `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/student/StudentPaymentService.java`
+
+## 接口
+
+- `GET /student/water-electricity`
+- `POST /student/water-electricity/refresh`
+- `POST /student/payments/orders`
+
+## 水费不计费开关
+
+系统现在支持对 `WATER` 单独关闭计费。
+
+实现方式：
+
+- 配置来源为 `system_utility_rate_config.enabled`
+- 学生端水电信息接口会返回：
+- `waterBillingEnabled`
+- `electricityBillingEnabled`
+
+关闭水费计费后的效果：
+
+- 学生仍可查看当前水费余额和历史余额数据。
+- 学生端不能再创建水费充值订单。
+- 刷新水电信息时，不再为水费写入新的 `REFRESH` 记录。
+- 低碳看板和个人低碳统计不再把水费计入费用、用量和碳排计算。
+- 支付页如果检测到水费已关闭，会自动切换到电费，并禁止再切回水费充值。
 
 ## 维护注意点
 
-- 查询接口和刷新接口共享 `StudentDormService.buildWaterElectricityResponse(...)`，字段调整会同时影响两个行为。
-- 刷新会写流水、更新积分，不能把它当成纯只读接口。
-- 学生侧余额变化只应来自真实充值或真实扣费，不应再由刷新流程用估算值改写。
-- 当前功能与账单历史、缴费功能共用同一套 `student_fee_history` 数据，改流水类型时要同步检查历史页展示逻辑。
+- 查询接口和刷新接口共用 `StudentDormService.buildWaterElectricityResponse(...)`，字段变更会同时影响桌面端和移动端。
+- 刷新接口不是纯查询，它会写费用流水，并可能触发积分结算。
+- 若后续需要把“停止计费”扩展为“隐藏水费模块”，需要继续同步调整前端展示层，而不仅是后端拦截。

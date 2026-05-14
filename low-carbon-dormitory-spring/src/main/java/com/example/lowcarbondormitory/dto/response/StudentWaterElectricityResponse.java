@@ -21,6 +21,8 @@ public class StudentWaterElectricityResponse {
     private BigDecimal waterUnitPrice;
     private String electricityUnitName;
     private String waterUnitName;
+    private Boolean electricityBillingEnabled;
+    private Boolean waterBillingEnabled;
     private LocalDateTime lastDeductTime;
     private Integer dormCarbonScore;
     private Integer personalCarbonScore;

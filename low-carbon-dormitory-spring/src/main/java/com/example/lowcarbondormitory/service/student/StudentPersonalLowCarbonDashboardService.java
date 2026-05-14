@@ -108,6 +108,8 @@ public class StudentPersonalLowCarbonDashboardService {
                 latestAggregateMap,
                 electricRate.getUnitPrice(),
                 waterRate.getUnitPrice(),
+                electricRate.isBillingEnabled(),
+                waterRate.isBillingEnabled(),
                 scoreRule,
                 latestUpdatedAtByDorm,
                 currentPeriodAggregateMap,
@@ -135,6 +137,8 @@ public class StudentPersonalLowCarbonDashboardService {
                 residentsByDorm,
                 electricRate.getUnitPrice(),
                 waterRate.getUnitPrice(),
+                electricRate.isBillingEnabled(),
+                waterRate.isBillingEnabled(),
                 scoreRule,
                 metrics
         ));
@@ -270,6 +274,8 @@ public class StudentPersonalLowCarbonDashboardService {
             Map<Long, List<StudentBase>> residentsByDorm,
             BigDecimal electricUnitPrice,
             BigDecimal waterUnitPrice,
+            boolean electricBillingEnabled,
+            boolean waterBillingEnabled,
             LowCarbonDashboardSupport.ScoreRuleSnapshot scoreRule,
             List<DormMetrics> currentMetrics
     ) {
@@ -282,7 +288,16 @@ public class StudentPersonalLowCarbonDashboardService {
                 .collect(Collectors.toSet());
 
         for (LowCarbonDashboardSupport.PeriodWindow window : windows) {
-            List<DormMetrics> metrics = buildDormMetricsForWindow(allDorms, residentsByDorm, window, electricUnitPrice, waterUnitPrice, scoreRule);
+            List<DormMetrics> metrics = buildDormMetricsForWindow(
+                    allDorms,
+                    residentsByDorm,
+                    window,
+                    electricUnitPrice,
+                    waterUnitPrice,
+                    electricBillingEnabled,
+                    waterBillingEnabled,
+                    scoreRule
+            );
             DormMetrics currentMetric = metrics.stream()
                     .filter(item -> Objects.equals(item.getDormId(), dormId))
                     .findFirst()
@@ -333,6 +348,8 @@ public class StudentPersonalLowCarbonDashboardService {
             Map<Long, LowCarbonDashboardSupport.FeeAggregate> aggregateMap,
             BigDecimal electricUnitPrice,
             BigDecimal waterUnitPrice,
+            boolean electricBillingEnabled,
+            boolean waterBillingEnabled,
             LowCarbonDashboardSupport.ScoreRuleSnapshot scoreRule,
             Map<Long, LocalDateTime> latestUpdatedAtByDorm,
             Map<Long, LowCarbonDashboardSupport.FeeAggregate> currentPeriodAggregateMap,
@@ -344,6 +361,8 @@ public class StudentPersonalLowCarbonDashboardService {
                     aggregateMap.getOrDefault(dorm.getDormId(), new LowCarbonDashboardSupport.FeeAggregate()),
                     electricUnitPrice,
                     waterUnitPrice,
+                    electricBillingEnabled,
+                    waterBillingEnabled,
                     scoreRule
             );
             List<StudentBase> residents = residentsByDorm.getOrDefault(dorm.getDormId(), List.of());
@@ -368,6 +387,8 @@ public class StudentPersonalLowCarbonDashboardService {
             LowCarbonDashboardSupport.PeriodWindow window,
             BigDecimal electricUnitPrice,
             BigDecimal waterUnitPrice,
+            boolean electricBillingEnabled,
+            boolean waterBillingEnabled,
             LowCarbonDashboardSupport.ScoreRuleSnapshot scoreRule
     ) {
         List<DormFeeHistory> histories = dormFeeHistoryMapper.selectList(
@@ -395,6 +416,8 @@ public class StudentPersonalLowCarbonDashboardService {
                 aggregateMap,
                 electricUnitPrice,
                 waterUnitPrice,
+                electricBillingEnabled,
+                waterBillingEnabled,
                 scoreRule,
                 updatedAtByDorm,
                 aggregateMap,

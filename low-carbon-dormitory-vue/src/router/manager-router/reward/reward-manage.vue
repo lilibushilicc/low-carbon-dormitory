@@ -26,6 +26,9 @@
             <el-form-item label="单位名称">
               <el-input v-model="rate.unitName" />
             </el-form-item>
+            <el-form-item label="计费开关">
+              <el-switch v-model="rate.enabled" active-text="参与计费" inactive-text="不计费" />
+            </el-form-item>
             <el-button type="primary" @click="saveRate(rate)">保存单价</el-button>
           </el-form>
         </div>
@@ -118,7 +121,7 @@ async function loadAll() {
   try {
     const [ratesRes, rewardsRes] = await Promise.all([fetchUtilityRates(), fetchRewardsByAdmin()])
     if (ratesRes.data.code === 200 && ratesRes.data.data) {
-      rates.value = ratesRes.data.data.map((item) => ({ ...item }))
+      rates.value = ratesRes.data.data.map((item) => ({ ...item, enabled: item.enabled !== false }))
     }
     if (rewardsRes.data.code === 200 && rewardsRes.data.data) {
       rewards.value = rewardsRes.data.data.map((item) => ({ ...item }))
@@ -136,6 +139,7 @@ async function saveRate(item: UtilityRateItem) {
     const { data } = await updateUtilityRate(item.feeType, {
       unitPrice: Number(item.unitPrice),
       unitName: item.unitName,
+      enabled: item.enabled !== false,
     })
     if (data.code !== 200) {
       ElMessage.error(data.msg || `保存${item.feeType}单价失败`)
@@ -276,6 +280,10 @@ h2 {
   border: 1px solid #e4ece8;
   border-radius: 12px;
   padding: 12px;
+}
+
+.rate-item :deep(.el-switch) {
+  --el-switch-on-color: #4b9b6e;
 }
 
 @media (max-width: 1000px) {

@@ -63,19 +63,22 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
-import { deductDormFeeByAdmin, type DormFeeInfo } from '@/api/modules/admin'
+import { deductDormFeeByAdmin, fetchUtilityRates, type DormFeeInfo, type UtilityRateItem } from '@/api/modules/admin'
 
 const router = useRouter()
 const route = useRoute()
 const deductLoading = ref(false)
 const lastResult = ref<DormFeeInfo | null>(null)
-const feeTypeOptions = [
-  { label: '电费 (ELECTRIC)', value: 'ELECTRIC' },
-  { label: '水费 (WATER)', value: 'WATER' },
-] as const
+const utilityRates = ref<UtilityRateItem[]>([])
+const feeTypeOptions = computed(() => utilityRates.value
+  .filter((item) => item.enabled !== false)
+  .map((item) => ({
+    label: item.feeType === 'WATER' ? '水费 (WATER)' : '电费 (ELECTRIC)',
+    value: item.feeType as 'ELECTRIC' | 'WATER',
+  })))
 const payTypeOptions = ['SYSTEM', 'ALIPAY', 'WECHAT', 'CASH'] as const
 
 const deductForm = reactive({
@@ -90,6 +93,20 @@ const deductForm = reactive({
 
 function goHome() {
   router.push('/manager/home')
+}
+
+async function loadUtilityRates() {
+  try {
+    const { data } = await fetchUtilityRates()
+    if (data.code === 200 && data.data) {
+      utilityRates.value = data.data.map((item) => ({ ...item, enabled: item.enabled !== false }))
+      if (!feeTypeOptions.value.some((item) => item.value === deductForm.feeType)) {
+        deductForm.feeType = feeTypeOptions.value[0]?.value || 'ELECTRIC'
+      }
+    }
+  } catch (error) {
+    console.error('加载费率配置失败:', error)
+  }
 }
 
 async function submitDeduct() {
@@ -131,6 +148,10 @@ function buildDeductPayload() {
     remark: deductForm.remark.trim() || undefined,
   }
 }
+
+onMounted(() => {
+  void loadUtilityRates()
+})
 </script>
 
 <style scoped>

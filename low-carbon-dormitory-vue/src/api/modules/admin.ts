@@ -12,6 +12,7 @@ export interface UtilityRateItem {
   feeType: 'ELECTRIC' | 'WATER' | string
   unitPrice: number
   unitName: string
+  enabled: boolean
 }
 
 export interface AdminCreateStudentRequest {
@@ -112,7 +113,7 @@ export function fetchUtilityRates() {
   return http.get<ApiResponse<UtilityRateItem[]>>('/api/admin/utility-rates')
 }
 
-export function updateUtilityRate(feeType: string, payload: { unitPrice: number; unitName: string }) {
+export function updateUtilityRate(feeType: string, payload: { unitPrice: number; unitName: string; enabled: boolean }) {
   return http.put<ApiResponse<UtilityRateItem>>(`/api/admin/utility-rates/${feeType}`, payload)
 }
 

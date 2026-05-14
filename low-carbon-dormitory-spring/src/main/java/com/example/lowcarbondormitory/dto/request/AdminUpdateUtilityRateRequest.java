@@ -15,4 +15,5 @@ public class AdminUpdateUtilityRateRequest {
 
     @NotBlank(message = "单位名称不能为空")
     private String unitName;
+    private Boolean enabled;
 }

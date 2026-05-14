@@ -229,8 +229,12 @@ public class StudentDormService {
         response.setWaterUnitPrice(waterRate.getUnitPrice());
         response.setElectricityUnitName(electricRate.getUnitName());
         response.setWaterUnitName(waterRate.getUnitName());
+        response.setElectricityBillingEnabled(electricRate.isBillingEnabled());
+        response.setWaterBillingEnabled(waterRate.isBillingEnabled());
         response.setElectricityAvailable(calculateAvailableQuantity(response.getElectricityBalance(), electricRate.getUnitPrice()));
-        response.setWaterAvailable(calculateAvailableQuantity(response.getWaterBalance(), waterRate.getUnitPrice()));
+        response.setWaterAvailable(waterRate.isBillingEnabled()
+                ? calculateAvailableQuantity(response.getWaterBalance(), waterRate.getUnitPrice())
+                : BigDecimal.ZERO);
 
         if (student != null) {
             applyDormLocation(response, student.getDormBuilding(), student.getDormRoom());

@@ -1,5 +1,7 @@
 # low-carbon-dormitory
 
+> 2026-05-14 更新：新增“水费是否参与计费”开关，管理员可在费率配置页单独关闭水费计费。关闭后，水费不再允许充值、不再允许管理员扣费，低碳看板与个人低碳统计也不再把水费计入费用和碳排计算。首次升级现有数据库时，需要先为 `system_utility_rate_config` 补充 `enabled` 字段，示例 SQL 见 `docs/database-deployment.md`。
+
 > 2026-05-14 更新：手机端 `/reward-exchange-antd` 奖励兑换页已压缩交互层级，顶部摘要改为单张积分卡，奖励卡片前置库存与兑换提示，确认弹层收敛为扣分、剩余积分、库存三项核心信息。
 
 > 2026-05-13 更新：学生端 `reward-exchange.vue` 已去除对 `reward-exchange-son.vue` 的依赖，奖励列表展示逻辑已合并回父页面，项目内不再保留该 `-son` 文件。

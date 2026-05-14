@@ -24,8 +24,8 @@
                   <span class="hero-balance-card__icon">⚡</span>
                   <span>电费余额</span>
                 </div>
-                <strong>{{ formatCurrency(waterElectricity?.electricityBalance) }}</strong>
-                <small>预计可用 {{ formatAvailable(waterElectricity?.electricityAvailable, waterElectricity?.electricityUnitName || null) }}</small>
+                <strong>{{ formatBalanceDisplay(waterElectricity?.electricityBalance, waterElectricity?.electricityBillingEnabled) }}</strong>
+                <small>{{ formatAvailableLabel('电', waterElectricity?.electricityAvailable, waterElectricity?.electricityUnitName || null, waterElectricity?.electricityBillingEnabled) }}</small>
               </article>
 
               <article class="hero-balance-card hero-balance-card--water" :class="statusInfo.waterClass">
@@ -33,8 +33,8 @@
                   <span class="hero-balance-card__icon">💧</span>
                   <span>水费余额</span>
                 </div>
-                <strong>{{ formatCurrency(waterElectricity?.waterBalance) }}</strong>
-                <small>预计可用 {{ formatAvailable(waterElectricity?.waterAvailable, waterElectricity?.waterUnitName || null) }}</small>
+                <strong>{{ formatBalanceDisplay(waterElectricity?.waterBalance, waterElectricity?.waterBillingEnabled) }}</strong>
+                <small>{{ formatAvailableLabel('水', waterElectricity?.waterAvailable, waterElectricity?.waterUnitName || null, waterElectricity?.waterBillingEnabled) }}</small>
               </article>
             </div>
           </header>
@@ -190,8 +190,10 @@ const routeStuNum = computed(() => readQueryText(route.query.stuNum))
 const activeStuNum = computed(() => routeStuNum.value || stuNum.value || '')
 
 const statusInfo = computed(() => {
-  const electric = Number(waterElectricity.value?.electricityBalance || 0)
-  const water = Number(waterElectricity.value?.waterBalance || 0)
+  const electricEnabled = waterElectricity.value?.electricityBillingEnabled !== false
+  const waterEnabled = waterElectricity.value?.waterBillingEnabled !== false
+  const electric = electricEnabled ? Number(waterElectricity.value?.electricityBalance || 0) : Number.POSITIVE_INFINITY
+  const water = waterEnabled ? Number(waterElectricity.value?.waterBalance || 0) : Number.POSITIVE_INFINITY
 
   if (electric <= 20 || water <= 40) {
     return {
@@ -281,6 +283,27 @@ function normalizeUnit(unitName: string | null) {
 function formatAvailable(value: number | null | undefined, unitName: string | null) {
   if (value === null || value === undefined) return '-'
   return `${formatNumber(value, 2)} ${normalizeUnit(unitName)}`.trim()
+}
+
+function isBillingEnabled(enabled: boolean | null | undefined) {
+  return enabled !== false
+}
+
+function formatBalanceDisplay(value: number | null | undefined, enabled: boolean | null | undefined) {
+  if (!isBillingEnabled(enabled)) return '∞'
+  return formatCurrency(value ?? null)
+}
+
+function formatAvailableLabel(
+  label: '水' | '电',
+  value: number | null | undefined,
+  unitName: string | null,
+  enabled: boolean | null | undefined,
+) {
+  if (!isBillingEnabled(enabled)) {
+    return `${label}费已停用计费，可用量 ∞`
+  }
+  return `预计可用 ${formatAvailable(value, unitName)}`
 }
 
 function isRecentCostRecord(item: FeeHistoryRecord) {

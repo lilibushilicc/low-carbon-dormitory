@@ -98,6 +98,8 @@ public class LowCarbonDashboardService {
                 currentDormId,
                 electricRate.getUnitPrice(),
                 waterRate.getUnitPrice(),
+                electricRate.isBillingEnabled(),
+                waterRate.isBillingEnabled(),
                 scoreRule,
                 overallMode ? allDataUpdatedAtMap : rankingUpdatedAtMap,
                 rankingUpdatedAtMap,
@@ -205,6 +207,8 @@ public class LowCarbonDashboardService {
             Long currentDormId,
             BigDecimal electricUnitPrice,
             BigDecimal waterUnitPrice,
+            boolean electricBillingEnabled,
+            boolean waterBillingEnabled,
             LowCarbonDashboardSupport.ScoreRuleSnapshot scoreRule,
             Map<Long, LocalDateTime> allDataUpdatedAtMap,
             Map<Long, LocalDateTime> currentPeriodUpdatedAtMap,
@@ -220,7 +224,14 @@ public class LowCarbonDashboardService {
                     dormInfo.getDormId(),
                     new LowCarbonDashboardSupport.FeeAggregate()
             );
-            LowCarbonDashboardSupport.MetricSnapshot metric = dashboardSupport.buildMetric(aggregate, electricUnitPrice, waterUnitPrice, scoreRule);
+            LowCarbonDashboardSupport.MetricSnapshot metric = dashboardSupport.buildMetric(
+                    aggregate,
+                    electricUnitPrice,
+                    waterUnitPrice,
+                    electricBillingEnabled,
+                    waterBillingEnabled,
+                    scoreRule
+            );
             boolean currentPeriodParticipating = currentPeriodAggregate.hasAnyData();
 
             LowCarbonDashboardResponse.DormItem item = new LowCarbonDashboardResponse.DormItem();

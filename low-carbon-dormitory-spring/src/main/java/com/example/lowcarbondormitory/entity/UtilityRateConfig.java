@@ -16,4 +16,14 @@ public class UtilityRateConfig {
     private BigDecimal unitPrice;
 
     private String unitName;
+
+    private Boolean enabled;
+
+    public Boolean getEnabled() {
+        return enabled == null ? Boolean.TRUE : enabled;
+    }
+
+    public boolean isBillingEnabled() {
+        return Boolean.TRUE.equals(getEnabled());
+    }
 }

@@ -23,6 +23,8 @@ export interface StudentWaterElectricity {
   waterUnitPrice: number | null
   electricityUnitName: string | null
   waterUnitName: string | null
+  electricityBillingEnabled?: boolean | null
+  waterBillingEnabled?: boolean | null
   lastDeductTime: string | null
   dormCarbonScore?: number | null
   personalCarbonScore?: number | null

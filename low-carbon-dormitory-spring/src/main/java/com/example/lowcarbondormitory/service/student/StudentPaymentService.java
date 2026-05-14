@@ -7,8 +7,10 @@ import com.example.lowcarbondormitory.entity.DormFee;
 import com.example.lowcarbondormitory.entity.DormFeeHistory;
 import com.example.lowcarbondormitory.entity.DormInfo;
 import com.example.lowcarbondormitory.entity.StudentBase;
+import com.example.lowcarbondormitory.entity.UtilityRateConfig;
 import com.example.lowcarbondormitory.mapper.DormFeeMapper;
 import com.example.lowcarbondormitory.mapper.DormInfoMapper;
+import com.example.lowcarbondormitory.mapper.UtilityRateConfigMapper;
 import com.example.lowcarbondormitory.service.dashboard.LowCarbonDashboardSupport;
 import com.example.lowcarbondormitory.service.rule.LowCarbonRuleService;
 import java.math.BigDecimal;
@@ -62,6 +64,9 @@ public class StudentPaymentService {
     @Autowired
     private LowCarbonRuleService lowCarbonRuleService;
 
+    @Autowired
+    private UtilityRateConfigMapper utilityRateConfigMapper;
+
     @Transactional(rollbackFor = Exception.class)
     public StudentWaterElectricityResponse pay(StudentPayRequest request) {
         return applyRecharge(request);
@@ -78,14 +83,17 @@ public class StudentPaymentService {
 
         LocalDateTime operateTime = LocalDateTime.now();
         DormFeeHistory latestElectricAnchor = findLatestAnchorRecord(resolvedDormId, FEE_TYPE_ELECTRIC, operateTime);
-        DormFeeHistory latestWaterAnchor = findLatestAnchorRecord(resolvedDormId, FEE_TYPE_WATER, operateTime);
+        boolean waterBillingEnabled = isBillingEnabled(FEE_TYPE_WATER);
+        DormFeeHistory latestWaterAnchor = waterBillingEnabled ? findLatestAnchorRecord(resolvedDormId, FEE_TYPE_WATER, operateTime) : null;
         BigDecimal electricBalanceBeforeRefresh = dormFee.getElectricityBalance();
         BigDecimal waterBalanceBeforeRefresh = dormFee.getWaterBalance();
 
         insertHistory(student, resolvedDormId, FEE_TYPE_ELECTRIC, OPERATION_REFRESH, PAY_TYPE_SYSTEM,
                 BigDecimal.ZERO, dormFee.getElectricityBalance(), operateTime, student.getStuNum());
-        insertHistory(student, resolvedDormId, FEE_TYPE_WATER, OPERATION_REFRESH, PAY_TYPE_SYSTEM,
-                BigDecimal.ZERO, dormFee.getWaterBalance(), operateTime, student.getStuNum());
+        if (waterBillingEnabled) {
+            insertHistory(student, resolvedDormId, FEE_TYPE_WATER, OPERATION_REFRESH, PAY_TYPE_SYSTEM,
+                    BigDecimal.ZERO, dormFee.getWaterBalance(), operateTime, student.getStuNum());
+        }
 
         DormInfo dormInfo = studentDormService.getDormInfo(resolvedDormId);
         RechargeScoreResult electricScoreResult = addCarbonScoreOnAnchorEvent(
@@ -120,6 +128,7 @@ public class StudentPaymentService {
         if (feeType == null) {
             throw new IllegalArgumentException("费用类型不合法");
         }
+        assertBillingEnabled(feeType);
 
         String payType = normalizePayType(request.getPayType());
         if (payType == null) {
@@ -251,6 +260,7 @@ public class StudentPaymentService {
         if (feeType == null) {
             throw new IllegalArgumentException("费用类型不合法");
         }
+        assertBillingEnabled(feeType);
 
         String payType = normalizePayType(request.getPayType());
         if (payType == null) {
@@ -543,6 +553,17 @@ public class StudentPaymentService {
             return trimmed;
         }
         return trimmed.substring(0, 50);
+    }
+
+    private boolean isBillingEnabled(String feeType) {
+        UtilityRateConfig rateConfig = utilityRateConfigMapper.selectById(feeType);
+        return rateConfig == null || rateConfig.isBillingEnabled();
+    }
+
+    private void assertBillingEnabled(String feeType) {
+        if (!isBillingEnabled(feeType)) {
+            throw new IllegalStateException(feeType + " 已停用计费，无法继续充值");
+        }
     }
 
     private record RechargeScoreResult(int dormPointsAdded, int personalPointsAdded) {
