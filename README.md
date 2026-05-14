@@ -168,5 +168,8 @@ npm run dev
 - `docs/features/student-register.md`
 - `docs/low-carbon-dormitory-summary-outline.docx`
 - `docs/low-carbon-dormitory-summary-presentation.pptx`
+- `docs/low-carbon-dormitory-defense.md`
+- `docs/project-difficulties-implementation.md`
+- `docs/springboot-annotations-reference.md`
 - `docs/deployment.md`
 - `docs/database-deployment.md`

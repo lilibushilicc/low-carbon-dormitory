@@ -654,6 +654,12 @@ onMounted(() => {
   z-index: 1;
   display: grid;
   gap: 14px;
+  justify-items: center;
+}
+
+.mall-hero__copy {
+  width: 100%;
+  text-align: center;
 }
 
 .mall-hero__copy h1 {

@@ -1,10 +1,13 @@
 
 > low-carbon-dormitory@0.0.0 dev
-> vite --host 0.0.0.0
+> vite --host 127.0.0.1 --port 5173
 
+[2m18:23:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
 
-  [32m[1mVITE[22m v8.0.8[39m  [2mready in [0m[1m397[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v8.0.8[39m  [2mready in [0m[1m480[22m[2m[0m ms[22m
 
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://10.76.106.136:[1m5173[22m/[39m
-[2m08:47:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/router/student-router/reward/reward-exchange-antd.vue[22m
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m18:23:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
+[2m19:13:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
+[2m19:13:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ new dependencies optimized: [33melement-plus/es, element-plus/es/components/base/style/css, element-plus/es/components/button/style/css, element-plus/es/components/form-item/style/css, element-plus/es/components/form/style/css, element-plus/es/components/input/style/css[32m[39m
+[2m19:13:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32m✨ optimized dependencies changed. reloading[39m

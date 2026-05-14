@@ -2,6 +2,16 @@ import axios from 'axios'
 
 const STUDENT_TOKEN_KEY = 'studentToken'
 const ADMIN_TOKEN_KEY = 'adminToken'
+const PUBLIC_STUDENT_MOBILE_PATHS = new Set([
+  '/reward-exchange-antd',
+  '/reward-exchange-antd/',
+  '/water-electricity-antd',
+  '/water-electricity-antd/',
+  '/pay-up-antd',
+  '/pay-up-antd/',
+  '/history-fee-antd',
+  '/history-fee-antd/',
+])
 
 function resolveApiBaseUrl() {
   const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
@@ -10,6 +20,17 @@ function resolveApiBaseUrl() {
   }
 
   return import.meta.env.DEV ? '/api/dorm' : ''
+}
+
+function isPublicStudentMobileAccess() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  const pathname = window.location.pathname
+  const searchParams = new URLSearchParams(window.location.search)
+  const routeStuNum = searchParams.get('stuNum')?.trim()
+  return Boolean(routeStuNum) && PUBLIC_STUDENT_MOBILE_PATHS.has(pathname)
 }
 
 export const http = axios.create({
@@ -31,9 +52,13 @@ http.interceptors.request.use((config) => {
     return config
   }
 
-  const token = url.startsWith('/admin/')
+  const isAdminRequest = url.startsWith('/admin/')
+  const token = isAdminRequest
     ? localStorage.getItem(ADMIN_TOKEN_KEY)
-    : localStorage.getItem(STUDENT_TOKEN_KEY) || localStorage.getItem(ADMIN_TOKEN_KEY)
+    : isPublicStudentMobileAccess()
+      ? ''
+      : localStorage.getItem(STUDENT_TOKEN_KEY) || localStorage.getItem(ADMIN_TOKEN_KEY)
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
