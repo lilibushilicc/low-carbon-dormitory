@@ -8,10 +8,6 @@
             <div class="history-hero__glow history-hero__glow--right"></div>
 
             <div class="history-hero__top">
-              <button type="button" class="hero-icon-button" @click="goPrevious">
-                <LeftOutlined />
-              </button>
-
               <div class="history-hero__copy">
                 <p class="history-hero__eyebrow">最近 30 条</p>
                 <h1>历史订单</h1>
@@ -121,7 +117,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Alert as AAlert, Empty as AEmpty, Spin as ASpin, Tag as ATag, message } from 'ant-design-vue'
-import { LeftOutlined } from '@ant-design/icons-vue'
 import { storeToRefs } from 'pinia'
 import 'ant-design-vue/dist/reset.css'
 import { formatCurrency, formatDateTime, formatDormLabel, formatFeeTypeText, formatPayTypeText } from '@/utils/formatters'
@@ -201,17 +196,6 @@ const latestPayTime = computed(() => historyList.value[0]?.payTime || '-')
 
 function buildMobileQuery() {
   return buildUtilityMobileQuery(routeStuNum.value, resolvedDormId.value, routeSource.value === UTILITY_MOBILE_SOURCE)
-}
-
-function goPrevious() {
-  if (window.history.length > 1) {
-    router.back()
-    return
-  }
-  void router.push({
-    path: '/water-electricity-antd',
-    query: buildMobileQuery(),
-  })
 }
 
 function goPay() {
@@ -389,29 +373,16 @@ onMounted(() => {
 .history-hero__top {
   position: relative;
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   margin-bottom: 14px;
 }
 
-.hero-icon-button,
 .hero-text-button,
 .filter-chip {
   border: 0;
   cursor: pointer;
-}
-
-.hero-icon-button {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.8);
-  color: #2a7a53;
-  box-shadow: inset 0 0 0 1px rgba(167, 222, 184, 0.8);
-  justify-self: start;
 }
 
 .hero-text-button {

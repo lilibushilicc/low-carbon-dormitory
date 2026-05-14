@@ -37,12 +37,40 @@
 
         <el-tabs v-model="activeTab" class="tabs">
           <el-tab-pane label="奖励列表" name="rewards">
-            <RewardExchangeSon
-              :reward-list="rewardCenter.rewardItems"
-              :current-points="currentPoints"
-              :submitting-reward-id="submittingRewardId"
-              @exchange="handleExchange"
-            />
+            <div v-if="rewardCenter.rewardItems.length" class="reward-grid">
+              <div v-for="item in rewardCenter.rewardItems" :key="item.rewardId" class="reward-card">
+                <div class="reward-image-wrap">
+                  <img :src="safeImageUrl(item.imageUrl)" :alt="item.rewardName" class="reward-image" />
+                  <span class="reward-stock">库存 {{ item.stock }}</span>
+                </div>
+
+                <div class="reward-body">
+                  <div class="reward-title-row">
+                    <h3>{{ item.rewardName }}</h3>
+                    <el-tag type="success" effect="light">{{ item.pointsCost }} 积分</el-tag>
+                  </div>
+
+                  <p class="reward-desc">{{ item.rewardDesc }}</p>
+
+                  <div class="reward-footer">
+                    <div class="reward-meta">
+                      <span>当前个人积分：{{ currentPoints }}</span>
+                      <small :class="{ disabled: !item.canExchange }">{{ item.exchangeTip }}</small>
+                    </div>
+                    <el-button
+                      type="primary"
+                      :disabled="!item.canExchange || submittingRewardId === item.rewardId"
+                      :loading="submittingRewardId === item.rewardId"
+                      @click="handleExchange(item)"
+                    >
+                      立即兑换
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <el-empty v-else description="当前没有可兑换奖励" />
           </el-tab-pane>
 
           <el-tab-pane label="个人兑换记录" name="records">
@@ -63,34 +91,88 @@
         </el-tabs>
       </template>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import RewardExchangeSon from './reward-exchange-son.vue'
+import { storeToRefs } from 'pinia'
 import type { RewardItem } from '@/api/modules/reward'
+import { exchangeReward, fetchRewardCenter, type RewardCenter } from '@/api/modules/reward'
 import { formatDateTime } from '@/utils/formatters'
-import { resolveErrorMessage } from '@/utils/api-response'
-import { useRewardCenter } from './use-reward-center'
+import { requireApiData, resolveErrorMessage } from '@/utils/api-response'
+import { useStudentTokenStore } from '@/stores/student-token'
 
+const MISSING_STUDENT_MESSAGE = '未检测到学生学号，请重新登录或在地址中传入 stuNum'
+const route = useRoute()
 const router = useRouter()
+const studentTokenStore = useStudentTokenStore()
+const { stuNum } = storeToRefs(studentTokenStore)
+
 const activeTab = ref('rewards')
-const {
-  loading,
-  errorMessage,
-  rewardCenter,
-  submittingRewardId,
-  currentPoints,
-  loadRewardCenter,
-  exchangeRewardById,
-} = useRewardCenter()
+const loading = ref(false)
+const errorMessage = ref('')
+const rewardCenter = ref<RewardCenter | null>(null)
+const submittingRewardId = ref<number | null>(null)
+
+const routeStuNum = computed(() => {
+  const value = route.query.stuNum
+  return typeof value === 'string' ? value.trim() : ''
+})
+const resolvedStuNum = computed(() => routeStuNum.value || stuNum.value || '')
+const publicAccessMode = computed(() => Boolean(routeStuNum.value) && routeStuNum.value !== stuNum.value)
+const currentPoints = computed(() => rewardCenter.value?.currentPoints ?? 0)
 
 function goBack() {
   router.push('/index-student')
+}
+
+function safeImageUrl(imageUrl?: string) {
+  const fallback =
+    'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=900&q=80'
+  return imageUrl && imageUrl.trim() ? imageUrl : fallback
+}
+
+async function loadRewardCenter() {
+  if (!resolvedStuNum.value) {
+    errorMessage.value = MISSING_STUDENT_MESSAGE
+    return null
+  }
+
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const { data } = await fetchRewardCenter(resolvedStuNum.value)
+    const result = requireApiData(data, '获取奖励中心失败')
+    rewardCenter.value = result
+    if (!publicAccessMode.value) {
+      studentTokenStore.updateCarbonScore(result.currentPoints)
+    }
+    return result
+  } catch (error) {
+    errorMessage.value = resolveErrorMessage(error, '获取奖励中心失败，请稍后重试')
+    return null
+  } finally {
+    loading.value = false
+  }
+}
+
+async function exchangeRewardById(rewardId: number) {
+  if (!resolvedStuNum.value) {
+    throw new Error(MISSING_STUDENT_MESSAGE)
+  }
+
+  submittingRewardId.value = rewardId
+
+  try {
+    const { data } = await exchangeReward(resolvedStuNum.value, rewardId)
+    return requireApiData(data, '兑换失败')
+  } finally {
+    submittingRewardId.value = null
+  }
 }
 
 async function handleExchange(reward: RewardItem) {
@@ -194,6 +276,96 @@ onMounted(loadRewardCenter)
   opacity: 0.9;
 }
 
+.reward-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.reward-card {
+  overflow: hidden;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid #e6efe9;
+  box-shadow: 0 10px 24px rgba(32, 67, 52, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.reward-image-wrap {
+  position: relative;
+  height: 180px;
+  background: #f3f8f5;
+}
+
+.reward-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reward-stock {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(20, 39, 30, 0.72);
+  color: #fff;
+  font-size: 12px;
+}
+
+.reward-body {
+  padding: 18px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reward-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reward-title-row h3 {
+  margin: 0;
+  color: #244536;
+  font-size: 18px;
+}
+
+.reward-desc {
+  margin: 0;
+  color: #60776b;
+  line-height: 1.6;
+  min-height: 44px;
+}
+
+.reward-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.reward-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #5f776b;
+}
+
+.reward-meta small {
+  color: #1f7a51;
+}
+
+.reward-meta small.disabled {
+  color: #d96c52;
+}
+
 .record-list {
   display: grid;
   gap: 10px;
@@ -247,6 +419,11 @@ onMounted(loadRewardCenter)
 
   .header-actions {
     flex-wrap: wrap;
+  }
+
+  .reward-footer {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .record-item {

@@ -26,91 +26,7 @@
 [INFO] Compiling 8 source files with javac [debug parameters release 17] to target\test-classes
 [INFO] 
 [INFO] --- surefire:3.5.2:test (default-test) @ low-carbon-dormitory ---
-[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
-[INFO] 
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running com.example.lowcarbondormitory.AdminStudentManagementControllerTest
-20:14:45.849 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.lowcarbondormitory.AdminStudentManagementControllerTest]: AdminStudentManagementControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-20:14:46.051 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.lowcarbondormitory.LowCarbonDormitoryApplication for test class com.example.lowcarbondormitory.AdminStudentManagementControllerTest
-
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
-
- :: Spring Boot ::                (v3.4.4)
-
-2026-05-13T20:14:46.761+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] e.l.AdminStudentManagementControllerTest : Starting AdminStudentManagementControllerTest using Java 17.0.12 with PID 29460 (started by zt417 in D:\study\system\low-carbon-dormitory\low-carbon-dormitory-spring)
-2026-05-13T20:14:46.764+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] e.l.AdminStudentManagementControllerTest : No active profile set, falling back to 1 default profile: "default"
- _ _   |_  _ _|_. ___ _ |    _ 
-| | |\/|_)(_| | |_\  |_)||_|_\ 
-     /               |         
-                        3.5.11 
-2026-05-13T20:14:54.175+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
-2026-05-13T20:14:54.175+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
-2026-05-13T20:14:54.183+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
-2026-05-13T20:14:54.363+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] e.l.AdminStudentManagementControllerTest : Started AdminStudentManagementControllerTest in 8.152 seconds (process running for 9.507)
-Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
-2026-05-13T20:14:55.864+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-05-13T20:14:56.078+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@32428874
-2026-05-13T20:14:56.081+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.34 s -- in com.example.lowcarbondormitory.AdminStudentManagementControllerTest
-[INFO] Running com.example.lowcarbondormitory.LowCarbonDashboardServiceTest
-2026-05-13T20:14:57.035+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.lowcarbondormitory.LowCarbonDashboardServiceTest]: LowCarbonDashboardServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-05-13T20:14:57.044+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.lowcarbondormitory.LowCarbonDormitoryApplication for test class com.example.lowcarbondormitory.LowCarbonDashboardServiceTest
-
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
-
- :: Spring Boot ::                (v3.4.4)
-
-2026-05-13T20:14:57.179+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] c.e.l.LowCarbonDashboardServiceTest      : Starting LowCarbonDashboardServiceTest using Java 17.0.12 with PID 29460 (started by zt417 in D:\study\system\low-carbon-dormitory\low-carbon-dormitory-spring)
-2026-05-13T20:14:57.179+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] c.e.l.LowCarbonDashboardServiceTest      : No active profile set, falling back to 1 default profile: "default"
- _ _   |_  _ _|_. ___ _ |    _ 
-| | |\/|_)(_| | |_\  |_)||_|_\ 
-     /               |         
-                        3.5.11 
-2026-05-13T20:14:59.018+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] c.e.l.LowCarbonDashboardServiceTest      : Started LowCarbonDashboardServiceTest in 1.959 seconds (process running for 14.162)
-2026-05-13T20:14:59.031+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
-2026-05-13T20:14:59.141+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection org.postgresql.jdbc.PgConnection@45c2c396
-2026-05-13T20:14:59.142+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.890 s -- in com.example.lowcarbondormitory.LowCarbonDashboardServiceTest
-[INFO] Running com.example.lowcarbondormitory.LowCarbonDormitoryApplicationTests
-2026-05-13T20:14:59.929+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.lowcarbondormitory.LowCarbonDormitoryApplicationTests]: LowCarbonDormitoryApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-05-13T20:14:59.932+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.lowcarbondormitory.LowCarbonDormitoryApplication for test class com.example.lowcarbondormitory.LowCarbonDormitoryApplicationTests
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.019 s -- in com.example.lowcarbondormitory.LowCarbonDormitoryApplicationTests
-[INFO] Running com.example.lowcarbondormitory.PlainJdbcKeyDuplicateCheckTest
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.206 s -- in com.example.lowcarbondormitory.PlainJdbcKeyDuplicateCheckTest
-[INFO] Running com.example.lowcarbondormitory.PublicStudentDashboardControllerTest
-2026-05-13T20:15:00.166+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.lowcarbondormitory.PublicStudentDashboardControllerTest]: PublicStudentDashboardControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-05-13T20:15:00.181+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.lowcarbondormitory.LowCarbonDormitoryApplication for test class com.example.lowcarbondormitory.PublicStudentDashboardControllerTest
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.388 s -- in com.example.lowcarbondormitory.PublicStudentDashboardControllerTest
-[INFO] Running com.example.lowcarbondormitory.StudentPersonalLowCarbonDashboardServiceTest
-2026-05-13T20:15:00.555+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.lowcarbondormitory.StudentPersonalLowCarbonDashboardServiceTest]: StudentPersonalLowCarbonDashboardServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-05-13T20:15:00.558+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.lowcarbondormitory.LowCarbonDormitoryApplication for test class com.example.lowcarbondormitory.StudentPersonalLowCarbonDashboardServiceTest
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.501 s -- in com.example.lowcarbondormitory.StudentPersonalLowCarbonDashboardServiceTest
-[INFO] Running com.example.lowcarbondormitory.StudentPublicAccessByStuNumTest
-2026-05-13T20:15:01.068+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.lowcarbondormitory.StudentPublicAccessByStuNumTest]: StudentPublicAccessByStuNumTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-05-13T20:15:01.075+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.lowcarbondormitory.LowCarbonDormitoryApplication for test class com.example.lowcarbondormitory.StudentPublicAccessByStuNumTest
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.164 s -- in com.example.lowcarbondormitory.StudentPublicAccessByStuNumTest
-[INFO] Running com.example.lowcarbondormitory.StudentRegisterControllerTest
-2026-05-13T20:15:01.232+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.lowcarbondormitory.StudentRegisterControllerTest]: StudentRegisterControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-05-13T20:15:01.235+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.lowcarbondormitory.LowCarbonDormitoryApplication for test class com.example.lowcarbondormitory.StudentRegisterControllerTest
-2026-05-13T20:15:01.284+08:00  INFO 29460 --- [low-carbon-dormitory] [           main] c.e.l.s.s.StudentAuthenticationService   : Student login succeeded, loginId=REG1778674501241, stuNum=REG1778674501241
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.063 s -- in com.example.lowcarbondormitory.StudentRegisterControllerTest
-[INFO] 
-[INFO] Results:
-[INFO] 
-[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
+[INFO] Tests are skipped.
 [INFO] 
 [INFO] --- jar:3.4.2:jar (default-jar) @ low-carbon-dormitory ---
 [INFO] Building jar: D:\study\system\low-carbon-dormitory\low-carbon-dormitory-spring\target\low-carbon-dormitory-0.0.1-SNAPSHOT.jar
@@ -121,6 +37,6 @@ Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot lo
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  42.273 s
-[INFO] Finished at: 2026-05-13T20:15:04+08:00
+[INFO] Total time:  18.116 s
+[INFO] Finished at: 2026-05-14T09:47:50+08:00
 [INFO] ------------------------------------------------------------------------

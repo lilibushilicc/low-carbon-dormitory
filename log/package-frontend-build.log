@@ -11,7 +11,7 @@
 > vite build
 
 [36mvite v8.0.8 [32mbuilding client environment for production...[36m[39m
-[2Ktransforming...✓ 4987 modules transformed.
+[2Ktransforming...✓ 4983 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                                              1.35 kB │ gzip:   0.50 kB
@@ -34,30 +34,32 @@ dist/assets/low-carbon-rule-readonly-BwQ9X41G.css            1.38 kB │ gzip:  
 dist/assets/low-carbon-rule-config-CoCI7Enh.css              1.54 kB │ gzip:   0.48 kB
 dist/assets/manager-low-carbon-dorm-detail-Bjf5GtYH.css      1.76 kB │ gzip:   0.55 kB
 dist/assets/reset-B6VCboLO.css                               3.10 kB │ gzip:   1.17 kB
-dist/assets/reward-exchange-DZeZMc_m.css                     3.23 kB │ gzip:   1.01 kB
+dist/assets/reward-exchange-Cu6NSpao.css                     3.21 kB │ gzip:   0.98 kB
 dist/assets/history-fee-CSt30Kyt.css                         4.13 kB │ gzip:   1.17 kB
 dist/assets/manager-home-C7yOUThM.css                        4.59 kB │ gzip:   1.24 kB
 dist/assets/low-carbon-dashboard-overview-CUP96smk.css       4.60 kB │ gzip:   1.17 kB
-dist/assets/history-fee-antd-DhYsjZbS.css                    5.04 kB │ gzip:   1.45 kB
-dist/assets/water-electricity-antd-w_JhfXa7.css              6.08 kB │ gzip:   1.64 kB
+dist/assets/history-fee-antd-3p_PqCMH.css                    4.80 kB │ gzip:   1.40 kB
+dist/assets/water-electricity-antd-DovEUAzQ.css              5.89 kB │ gzip:   1.62 kB
 dist/assets/index-student-Cvr-zt-8.css                       6.09 kB │ gzip:   1.68 kB
 dist/assets/water-electricity-9rZ-bUFH.css                   6.13 kB │ gzip:   1.51 kB
 dist/assets/admin-global-nav-DWEFAF4K.css                    6.19 kB │ gzip:   1.77 kB
 dist/assets/login-Dt26F4Cw.css                               6.19 kB │ gzip:   1.90 kB
 dist/assets/pay-up-Si1tsheN.css                              7.12 kB │ gzip:   1.76 kB
-dist/assets/pay-up-antd-Dpwvyro9.css                         8.23 kB │ gzip:   2.10 kB
+dist/assets/pay-up-antd-bXcRAQ-p.css                         7.99 kB │ gzip:   2.05 kB
 dist/assets/low-carbon-dashboard-Cgwsiie2.css                8.48 kB │ gzip:   1.97 kB
 dist/assets/index-CE8Wo5Z_.css                              11.82 kB │ gzip:   2.89 kB
+dist/assets/reward-exchange-antd-D_LIv5Nm.css               13.93 kB │ gzip:   3.19 kB
 dist/assets/manager-dorm-shell-CNP1KIFW.css                 15.21 kB │ gzip:   3.36 kB
-dist/assets/reward-exchange-antd-BYoPiOHE.css               20.44 kB │ gzip:   4.08 kB
 dist/assets/element-plus-Rg6-sB1a.css                      381.87 kB │ gzip:  50.98 kB
 dist/assets/_plugin-vue_export-helper-DAAOZMkq.js            0.08 kB │ gzip:   0.09 kB
 dist/assets/app-navigation-DQwA2GJC.js                       0.09 kB │ gzip:   0.10 kB
+dist/assets/reward-I9PqkWI3.js                               0.21 kB │ gzip:   0.16 kB
 dist/assets/dashboard-CzrGQ5nz.js                            0.22 kB │ gzip:   0.15 kB
 dist/assets/period-DfvisJiM.js                               0.23 kB │ gzip:   0.19 kB
-dist/assets/api-response-SvGbI9vA.js                         0.25 kB │ gzip:   0.18 kB
+dist/assets/api-response-DsFPSJTi.js                         0.25 kB │ gzip:   0.18 kB
 dist/assets/low-carbon-rule-CfNT68-3.js                      0.31 kB │ gzip:   0.17 kB
 dist/assets/request-BKp-U2rB.js                              0.32 kB │ gzip:   0.25 kB
+dist/assets/mobile-billing-BFUeuKkG.js                       0.33 kB │ gzip:   0.23 kB
 dist/assets/studentMealWaste-CoKRKCLd.js                     0.45 kB │ gzip:   0.19 kB
 dist/assets/http-DI25S-P3.js                                 0.61 kB │ gzip:   0.39 kB
 dist/assets/admin-token-Dt3Ekjz2.js                          0.68 kB │ gzip:   0.36 kB
@@ -66,8 +68,6 @@ dist/assets/student-y1oTR-OT.js                              0.72 kB │ gzip:  
 dist/assets/route-transition-state-C5Rpo74Q.js               0.76 kB │ gzip:   0.40 kB
 dist/assets/admin-BFSrNsYK.js                                0.84 kB │ gzip:   0.31 kB
 dist/assets/formatters-BUpS74KC.js                           1.18 kB │ gzip:   0.65 kB
-dist/assets/mobile-billing-D6Xu7hq3.js                       1.31 kB │ gzip:   0.78 kB
-dist/assets/use-reward-center-C4AxwgyS.js                    1.39 kB │ gzip:   0.82 kB
 dist/assets/student-token-4vh1kQvd.js                        1.42 kB │ gzip:   0.65 kB
 dist/assets/MealWasteWeek-C9hPdZ3y.js                        2.31 kB │ gzip:   1.20 kB
 dist/assets/MealWasteYear-DuxK-U7Y.js                        2.31 kB │ gzip:   1.20 kB
@@ -78,7 +78,7 @@ dist/assets/MealWasteDaliy-F3NFHLp-.js                       2.74 kB │ gzip:  
 dist/assets/low-carbon-rule-readonly-CW9UaMm3.js             2.84 kB │ gzip:   1.44 kB
 dist/assets/week-Dnxzl0aJ.js                                 2.91 kB │ gzip:   1.53 kB
 dist/assets/month-CUuNPiD2.js                                3.17 kB │ gzip:   1.73 kB
-dist/assets/personal-info-CQYL1kn3.js                        3.64 kB │ gzip:   1.59 kB
+dist/assets/personal-info-DXcQhv99.js                        3.64 kB │ gzip:   1.59 kB
 dist/assets/student-manage-C3OoMuhy.js                       3.87 kB │ gzip:   2.01 kB
 dist/assets/dorm-fee-deduct-KP6ZPTaV.js                      3.88 kB │ gzip:   1.78 kB
 dist/assets/admin-global-nav-Ddacuudo.js                     3.88 kB │ gzip:   1.74 kB
@@ -88,23 +88,23 @@ dist/assets/manager-low-carbon-dorm-detail-B9ZdgxYh.js       4.40 kB │ gzip:  
 dist/assets/student-create-BsyfoHTn.js                       4.59 kB │ gzip:   1.75 kB
 dist/assets/summary-lyCb2CST.js                              4.65 kB │ gzip:   2.14 kB
 dist/assets/tag-Dh7bPn-S.js                                  4.81 kB │ gzip:   1.94 kB
-dist/assets/reward-exchange-DjrISrdN.js                      5.08 kB │ gzip:   2.42 kB
-dist/assets/history-fee-B_VPrB2P.js                          5.35 kB │ gzip:   2.42 kB
+dist/assets/history-fee-kXebMgA1.js                          5.35 kB │ gzip:   2.42 kB
+dist/assets/reward-exchange-NbmU9Q8b.js                      5.38 kB │ gzip:   2.55 kB
 dist/assets/reward-manage-BYXg90FH.js                        5.74 kB │ gzip:   2.18 kB
 dist/assets/login-TAdQmTst.js                                5.87 kB │ gzip:   2.54 kB
 dist/assets/pinia-DOf1fvGY.js                                6.15 kB │ gzip:   2.88 kB
-dist/assets/history-fee-antd-7y0AeXn_.js                     6.96 kB │ gzip:   3.06 kB
+dist/assets/history-fee-antd-tKn9e9pC.js                     6.77 kB │ gzip:   2.99 kB
 dist/assets/low-carbon-rule-config-v91MCGrh.js               7.76 kB │ gzip:   2.53 kB
-dist/assets/water-electricity-B59Hsx0-.js                    7.76 kB │ gzip:   3.14 kB
+dist/assets/water-electricity-DfM4qEU0.js                    7.76 kB │ gzip:   3.14 kB
 dist/assets/manager-dorm-shell-DyNl1pV1.js                   7.80 kB │ gzip:   2.84 kB
-dist/assets/pay-up-k162lrNl.js                               8.45 kB │ gzip:   3.50 kB
-dist/assets/pay-up-antd-CtYgqd1v.js                          9.45 kB │ gzip:   3.78 kB
-dist/assets/water-electricity-antd-WJdrlmCB.js               9.74 kB │ gzip:   3.97 kB
+dist/assets/pay-up-DadXeqKa.js                               8.45 kB │ gzip:   3.50 kB
+dist/assets/pay-up-antd-D7fGjvng.js                          9.30 kB │ gzip:   3.73 kB
+dist/assets/water-electricity-antd-Rh135eJ2.js               9.64 kB │ gzip:   3.95 kB
 dist/assets/low-carbon-dashboard-overview-Hk6RvZ5o.js       10.19 kB │ gzip:   3.92 kB
 dist/assets/student-bujLqz3Z.js                             13.01 kB │ gzip:   3.32 kB
 dist/assets/low-carbon-dashboard-CFxGGpgR.js                13.03 kB │ gzip:   4.36 kB
-dist/assets/reward-exchange-antd-Dj3xan4B.js                13.92 kB │ gzip:   5.28 kB
-dist/assets/index-D2XjxnRn.js                               21.12 kB │ gzip:   6.93 kB
+dist/assets/reward-exchange-antd-BoLNWKQn.js                15.01 kB │ gzip:   5.73 kB
+dist/assets/index-DK5U8F8g.js                               21.11 kB │ gzip:   6.92 kB
 dist/assets/vue-router-BWnJnE4S.js                          24.75 kB │ gzip:   9.54 kB
 dist/assets/axios-DMo-6c5r.js                               36.49 kB │ gzip:  14.47 kB
 dist/assets/config-provider-C3rNkFX9.js                     36.80 kB │ gzip:  12.38 kB
@@ -113,9 +113,9 @@ dist/assets/reset-uhtsgFRo.js                              110.07 kB │ gzip:  
 dist/assets/element-plus-BSGtrlHV.js                       533.66 kB │ gzip: 175.72 kB
 dist/assets/echarts-BTCq56Xs.js                          1,111.82 kB │ gzip: 364.58 kB
 
-[32m✓ built in 7.30s[39m
 [33m[plugin builtin:vite-reporter] 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 1.78s[39m

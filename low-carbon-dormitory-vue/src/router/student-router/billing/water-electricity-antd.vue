@@ -8,10 +8,6 @@
             <div class="utility-hero__glow utility-hero__glow--right"></div>
 
             <div class="utility-hero__top">
-              <button type="button" class="hero-back" @click="goPrevious">
-                <LeftOutlined />
-              </button>
-
               <div class="utility-hero__copy">
                 <h1>宿舍水电费</h1>
                 <p>{{ currentDormLabel }}</p>
@@ -132,7 +128,6 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Alert as AAlert, Empty as AEmpty, Spin as ASpin, message } from 'ant-design-vue'
-import { LeftOutlined } from '@ant-design/icons-vue'
 import { storeToRefs } from 'pinia'
 import * as echarts from 'echarts'
 import 'ant-design-vue/dist/reset.css'
@@ -257,10 +252,6 @@ const recentRecords = computed<RecentRecordItem[]>(() =>
     }
   }),
 )
-
-function goPrevious() {
-  router.back()
-}
 
 function goPay() {
   router.push({
@@ -624,28 +615,16 @@ onBeforeUnmount(() => {
 .utility-hero__top {
   position: relative;
   display: grid;
-  grid-template-columns: 40px 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   margin-bottom: 14px;
 }
 
-.hero-back,
 .hero-switch,
 .section-link {
   border: 0;
   cursor: pointer;
-}
-
-.hero-back {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.72);
-  color: #2d8a53;
-  box-shadow: inset 0 0 0 1px rgba(164, 218, 180, 0.7);
 }
 
 .hero-switch {

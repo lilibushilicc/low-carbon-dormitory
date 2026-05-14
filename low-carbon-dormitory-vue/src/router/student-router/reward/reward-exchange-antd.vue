@@ -10,6 +10,7 @@
               <div class="mall-hero__copy">
                 <h1>积分兑换商城</h1>
               </div>
+
               <div class="mall-hero__search">
                 <AInput v-model:value="keyword" size="large" allow-clear placeholder="搜索奖励名称">
                   <template #prefix>
@@ -47,10 +48,6 @@
                 <span class="skeleton-line skeleton-line--short"></span>
                 <strong class="skeleton-line skeleton-line--value"></strong>
               </article>
-              <article class="summary-pill summary-pill--skeleton">
-                <span class="skeleton-line skeleton-line--short"></span>
-                <strong class="skeleton-line skeleton-line--value"></strong>
-              </article>
             </section>
 
             <section class="card-list">
@@ -58,8 +55,14 @@
                 <div class="reward-card__media reward-card__media--skeleton">
                   <span class="mall-loading-state__spinner mall-loading-state__spinner--small" aria-hidden="true"></span>
                 </div>
+
                 <div class="reward-card__content">
                   <span class="skeleton-line skeleton-line--title"></span>
+                  <span class="skeleton-line skeleton-line--desc"></span>
+                  <div class="reward-card__meta">
+                    <span class="skeleton-line skeleton-line--chip"></span>
+                    <span class="skeleton-line skeleton-line--chip skeleton-line--chip-wide"></span>
+                  </div>
                   <div class="reward-card__bottom">
                     <span class="skeleton-line skeleton-line--points"></span>
                     <span class="skeleton-line skeleton-line--button"></span>
@@ -70,28 +73,25 @@
           </section>
 
           <template v-else-if="rewardCenter">
-            <section class="view-strip">
-              <button
-                v-for="view in viewOptions"
-                :key="view.value"
-                type="button"
-                class="view-chip"
-                :class="{ 'view-chip--active': activeView === view.value }"
-                @click="activeView = view.value"
-              >
-                {{ view.label }}
-              </button>
-            </section>
-
-            <section class="summary-row">
-              <article class="summary-pill">
+            <section class="mall-toolbar">
+              <article class="summary-pill summary-pill--balance">
                 <span>当前积分</span>
                 <strong>{{ currentPoints }}</strong>
+                <small>最近可兑换：{{ nearestRewardName }}</small>
               </article>
-              <article class="summary-pill">
-                <span>推荐奖励</span>
-                <strong>{{ nearestRewardName }}</strong>
-              </article>
+
+              <section class="view-strip">
+                <button
+                  v-for="view in viewOptions"
+                  :key="view.value"
+                  type="button"
+                  class="view-chip"
+                  :class="{ 'view-chip--active': activeView === view.value }"
+                  @click="activeView = view.value"
+                >
+                  {{ view.label }}
+                </button>
+              </section>
             </section>
 
             <section v-if="activeView === 'rewards'" class="card-list">
@@ -118,11 +118,20 @@
 
                 <div class="reward-card__content">
                   <h3 class="reward-card__title">{{ item.rewardName }}</h3>
+                  <p class="reward-card__desc">{{ item.rewardDesc || '暂无奖励说明' }}</p>
+
+                  <div class="reward-card__meta">
+                    <span class="reward-card__meta-chip">库存 {{ Math.max(item.stock, 0) }}</span>
+                    <span
+                      class="reward-card__meta-chip"
+                      :class="{ 'reward-card__meta-chip--warn': !item.canExchange }"
+                    >
+                      {{ item.exchangeTip }}
+                    </span>
+                  </div>
 
                   <div class="reward-card__bottom">
-                    <span class="reward-card__points">
-                      {{ item.pointsCost }} 积分
-                    </span>
+                    <span class="reward-card__points">{{ item.pointsCost }} 积分</span>
 
                     <AButton
                       type="primary"
@@ -145,8 +154,8 @@
 
               <div v-else class="list-pagination">
                 <div class="pagination-text">
-                  <strong>第 {{ rewardPage }} / {{ rewardTotalPages }} 页</strong>
-                  <span>共 {{ displayRewards.length }} 项，当前显示 {{ rewardPageRangeText }}</span>
+                  <strong>{{ rewardPage }} / {{ rewardTotalPages }}</strong>
+                  <span>当前 {{ rewardPageRangeText }} / 共 {{ displayRewards.length }} 项</span>
                 </div>
 
                 <button
@@ -191,8 +200,8 @@
 
               <div v-else class="list-pagination">
                 <div class="pagination-text">
-                  <strong>第 {{ recordPage }} / {{ recordTotalPages }} 页</strong>
-                  <span>共 {{ displayRecords.length }} 项，当前显示 {{ recordPageRangeText }}</span>
+                  <strong>{{ recordPage }} / {{ recordTotalPages }}</strong>
+                  <span>当前 {{ recordPageRangeText }} / 共 {{ displayRecords.length }} 项</span>
                 </div>
 
                 <button
@@ -234,28 +243,24 @@
                 <button type="button" class="exchange-sheet__close" @click="closeExchangeModal">关闭</button>
               </div>
 
-              <p class="exchange-sheet__desc">{{ selectedReward.rewardDesc }}</p>
+              <p class="exchange-sheet__desc">{{ selectedReward.rewardDesc || '请再次确认当前奖励信息。' }}</p>
 
-              <div class="exchange-sheet__stats">
-                <div class="exchange-sheet__stat">
-                  <span>消耗积分</span>
-                  <strong>{{ selectedReward.pointsCost }}</strong>
+              <div class="exchange-sheet__brief">
+                <div class="exchange-sheet__brief-item">
+                  <span>本次扣除</span>
+                  <strong>{{ selectedReward.pointsCost }} 积分</strong>
                 </div>
-                <div class="exchange-sheet__stat">
-                  <span>当前积分</span>
-                  <strong>{{ currentPoints }}</strong>
+                <div class="exchange-sheet__brief-item">
+                  <span>兑换后剩余</span>
+                  <strong>{{ exchangeRemainingPoints }}</strong>
                 </div>
-                <div class="exchange-sheet__stat">
-                  <span>剩余数量</span>
+                <div class="exchange-sheet__brief-item">
+                  <span>剩余库存</span>
                   <strong>{{ Math.max(selectedReward.stock, 0) }} 件</strong>
-                </div>
-                <div class="exchange-sheet__stat">
-                  <span>兑换说明</span>
-                  <strong>单次兑换 1 件</strong>
                 </div>
               </div>
 
-              <p class="exchange-sheet__summary">确认后将立即提交兑换申请，请核对奖励内容。</p>
+              <p class="exchange-sheet__summary">确认后会直接提交兑换申请，默认单次兑换 1 件。</p>
 
               <div class="exchange-sheet__actions">
                 <button type="button" class="sheet-button sheet-button--ghost" @click="closeExchangeModal">取消</button>
@@ -278,6 +283,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch, type ComputedRef } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   Alert as AAlert,
   Button as AButton,
@@ -293,10 +299,11 @@ import {
   ShoppingCartOutlined,
 } from '@ant-design/icons-vue'
 import 'ant-design-vue/dist/reset.css'
-import type { RewardItem } from '@/api/modules/reward'
-import { resolveErrorMessage } from '@/utils/api-response'
+import { storeToRefs } from 'pinia'
+import { exchangeReward, fetchRewardCenter, type RewardCenter, type RewardItem } from '@/api/modules/reward'
+import { requireApiData, resolveErrorMessage } from '@/utils/api-response'
 import { formatDateTime } from '@/utils/formatters'
-import { useRewardCenter } from './use-reward-center'
+import { useStudentTokenStore } from '@/stores/student-token'
 
 type RewardView = 'rewards' | 'records'
 
@@ -307,6 +314,11 @@ interface DisplayReward extends RewardItem {
 
 const FALLBACK_IMAGE =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="240" height="240" rx="48" fill="%23eef7f1"/><circle cx="120" cy="92" r="34" fill="%23dcefe2"/><rect x="68" y="136" width="104" height="20" rx="10" fill="%2322c55e" opacity="0.18"/><rect x="84" y="88" width="72" height="72" rx="18" fill="%23ffffff"/><path d="M102 136h36" stroke="%2322c55e" stroke-width="12" stroke-linecap="round"/><path d="M120 100v28" stroke="%2322c55e" stroke-width="12" stroke-linecap="round"/></svg>'
+const MISSING_STUDENT_MESSAGE = '未检测到学生学号，请重新登录或在地址中传入 stuNum'
+
+const route = useRoute()
+const studentTokenStore = useStudentTokenStore()
+const { stuNum } = storeToRefs(studentTokenStore)
 
 const viewOptions = [
   { label: '奖励列表', value: 'rewards' as const },
@@ -317,30 +329,33 @@ const keyword = ref('')
 const activeView = ref<RewardView>('rewards')
 const viewportWidth = ref(typeof window === 'undefined' ? 393 : window.innerWidth)
 const viewportHeight = ref(typeof window === 'undefined' ? 852 : window.innerHeight)
-const {
-  stuNum,
-  publicAccessMode,
-  loading,
-  errorMessage,
-  rewardCenter,
-  submittingRewardId,
-  currentPoints,
-  loadRewardCenter,
-  exchangeRewardById,
-} = useRewardCenter()
+const loading = ref(false)
+const errorMessage = ref('')
+const rewardCenter = ref<RewardCenter | null>(null)
+const submittingRewardId = ref<number | null>(null)
 const selectedReward = ref<DisplayReward | null>(null)
 const exchangeModalOpen = ref(false)
 const exchangeConfirmLoading = ref(false)
 const readyRewardImageIds = ref(new Set<number>())
 
+const routeStuNum = computed(() => {
+  const value = route.query.stuNum
+  return typeof value === 'string' ? value.trim() : ''
+})
+const resolvedStuNum = computed(() => routeStuNum.value || stuNum.value || '')
+const publicAccessMode = computed(() => Boolean(routeStuNum.value) && routeStuNum.value !== stuNum.value)
 const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase())
 const rewardItems = computed(() => rewardCenter.value?.rewardItems || [])
 const exchangeRecords = computed(() => rewardCenter.value?.exchangeRecords || [])
 const nearestRewardName = computed(() => rewardCenter.value?.dormScoreSummary.nearestRewardName || '暂无')
+const currentPoints = computed(() => rewardCenter.value?.currentPoints ?? 0)
+const exchangeRemainingPoints = computed(() =>
+  Math.max(currentPoints.value - (selectedReward.value?.pointsCost ?? 0), 0),
+)
 const isCompactViewport = computed(() => viewportWidth.value <= 640 || viewportHeight.value <= 820)
 const isUltraCompactViewport = computed(() => viewportWidth.value <= 390 || viewportHeight.value <= 740)
-const rewardPageSize = computed(() => (isUltraCompactViewport.value ? 3 : isCompactViewport.value ? 3 : 4))
-const recordPageSize = computed(() => (isUltraCompactViewport.value ? 3 : isCompactViewport.value ? 4 : 5))
+const rewardPageSize = computed(() => (isUltraCompactViewport.value ? 3 : isCompactViewport.value ? 4 : 5))
+const recordPageSize = computed(() => (isUltraCompactViewport.value ? 4 : isCompactViewport.value ? 5 : 6))
 
 const displayRewards = computed<DisplayReward[]>(() =>
   rewardItems.value.filter((item) => matchesKeyword(item.rewardName, item.rewardDesc)).map(toDisplayReward),
@@ -358,6 +373,7 @@ const {
   resetPage: resetRewardPage,
   changePage: changeRewardPage,
 } = createPager(displayRewards, rewardPageSize)
+
 const {
   page: recordPage,
   totalPages: recordTotalPages,
@@ -445,6 +461,47 @@ function updateViewportSize() {
   viewportHeight.value = window.innerHeight
 }
 
+async function loadRewardCenter() {
+  if (!resolvedStuNum.value) {
+    errorMessage.value = MISSING_STUDENT_MESSAGE
+    return null
+  }
+
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const { data } = await fetchRewardCenter(resolvedStuNum.value)
+    const result = requireApiData(data, '获取奖励中心失败')
+    rewardCenter.value = result
+
+    if (!publicAccessMode.value) {
+      studentTokenStore.updateCarbonScore(result.currentPoints)
+    }
+
+    return result
+  } catch (error) {
+    errorMessage.value = resolveErrorMessage(error, '获取奖励中心失败，请稍后重试')
+    return null
+  } finally {
+    loading.value = false
+  }
+}
+
+async function exchangeRewardById(rewardId: number) {
+  if (!resolvedStuNum.value) {
+    throw new Error(MISSING_STUDENT_MESSAGE)
+  }
+
+  submittingRewardId.value = rewardId
+
+  try {
+    const { data } = await exchangeReward(resolvedStuNum.value, rewardId)
+    return requireApiData(data, '兑换失败')
+  } finally {
+    submittingRewardId.value = null
+  }
+}
 
 function safeImageUrl(imageUrl?: string) {
   return imageUrl && imageUrl.trim() ? imageUrl : FALLBACK_IMAGE
@@ -464,6 +521,7 @@ function markRewardImageReady(rewardId: number) {
 
 function handleImageError(event: Event, rewardId: number) {
   const target = event.target as HTMLImageElement | null
+
   if (target && target.src !== FALLBACK_IMAGE) {
     target.src = FALLBACK_IMAGE
     return
@@ -477,7 +535,7 @@ function openExchangeModal(reward: DisplayReward) {
     return
   }
 
-  if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+  if (typeof window !== 'undefined' && window.navigator?.vibrate) {
     window.navigator.vibrate(10)
   }
 
@@ -491,7 +549,7 @@ function closeExchangeModal() {
 }
 
 async function confirmExchange() {
-  if (!selectedReward.value || !stuNum.value) {
+  if (!selectedReward.value || !resolvedStuNum.value) {
     return
   }
 
@@ -542,25 +600,16 @@ onMounted(() => {
 <style scoped>
 .reward-mall-page {
   --mall-phone-max: 860px;
-  --mall-content-max: 515px;
-  --mall-content-inset: 28px;
-  --mall-hero-height: 156px;
-  --mall-section-gap: 10px;
-  --mall-search-to-tabs-gap: 22px;
-  --mall-search-height: 42px;
-  --mall-tab-height: 64px;
+  --mall-content-max: 560px;
+  --mall-content-inset: 20px;
   --mall-font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
   --mall-ink-strong: #18372a;
   --mall-ink: #2f5140;
-  --mall-ink-soft: #5f806f;
+  --mall-ink-soft: #62806f;
   --mall-accent: #22b357;
   --mall-accent-strong: #158f46;
-  --mall-accent-soft: #e2f8e8;
-  --mall-accent-wash: #f3fff6;
-  height: 100dvh;
   min-height: 100dvh;
   padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
-  overflow: hidden;
   font-family: var(--mall-font-family);
   background:
     linear-gradient(180deg, rgba(248, 255, 249, 0.12) 0%, rgba(241, 252, 244, 0.28) 100%),
@@ -571,62 +620,32 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   width: 100%;
-  height: 100%;
+  min-height: calc(100dvh - 24px);
 }
 
 .reward-mall-phone {
   width: min(100%, var(--mall-phone-max));
-  height: 100%;
-  min-height: 0;
-  position: relative;
-  overflow: hidden;
+  min-height: calc(100dvh - 24px);
   border-radius: 32px;
-  isolation: isolate;
-  background: rgba(250, 255, 250, 0.08);
+  overflow: hidden;
+  background: rgba(250, 255, 250, 0.14);
   box-shadow: 0 22px 48px rgba(53, 109, 73, 0.14);
-}
-
-.reward-mall-phone::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(245, 255, 247, 0.1) 18%, rgba(245, 255, 247, 0.22) 38%, rgba(247, 253, 248, 0.4) 100%),
-    radial-gradient(circle at top right, rgba(111, 179, 132, 0.08), transparent 26%);
-}
-
-.reward-mall-phone > * {
-  position: relative;
-  z-index: 1;
 }
 
 .mall-hero {
   position: relative;
-  overflow: hidden;
-  display: block;
-  height: auto;
-  min-height: 0;
-  padding: 10px 0 0;
-  border-radius: 28px 28px 18px 18px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  backdrop-filter: none;
-  box-sizing: border-box;
+  padding: 18px var(--mall-content-inset) 12px;
+  background: linear-gradient(180deg, rgba(16, 66, 43, 0.34), rgba(16, 66, 43, 0.08));
 }
 
 .mall-hero__glow {
   position: absolute;
-  right: -42px;
-  top: -54px;
-  width: 280px;
-  height: 280px;
+  top: -40px;
+  right: -10px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle, rgba(119, 214, 149, 0.18), transparent 56%),
-    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.18), transparent 38%);
+  background: radial-gradient(circle, rgba(104, 255, 161, 0.32), transparent 68%);
   pointer-events: none;
 }
 
@@ -634,124 +653,80 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
-  margin: 0 auto;
-  min-height: var(--mall-search-height);
-  gap: 16px;
+  gap: 14px;
 }
 
-.mall-hero__copy {
-  min-width: 0;
-  width: auto;
-  max-width: none;
-  display: flex;
-  justify-content: flex-start;
-  text-align: left;
-  box-sizing: border-box;
-}
-
-.mall-hero h1 {
+.mall-hero__copy h1 {
   margin: 0;
-  width: auto;
-  color: var(--mall-ink-strong);
-  font-size: 24px;
-  line-height: 1;
+  color: #ffffff;
+  font-size: 26px;
+  line-height: 1.1;
   font-weight: 900;
-  letter-spacing: -0.03em;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.24);
-  white-space: nowrap;
+}
+
+.mall-hero__copy p {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .mall-hero__search {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: stretch;
-  width: 240px;
-  max-width: 100%;
-  height: var(--mall-search-height);
-  min-height: var(--mall-search-height);
-  margin: 0;
+  width: 100%;
 }
 
-.public-entry-chip {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: fit-content;
-  max-width: min(100%, var(--mall-content-max));
-  margin: 8px auto 0;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(230, 249, 236, 0.92);
-  border: 1px solid rgba(173, 223, 188, 0.9);
-  color: var(--mall-ink-soft);
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  letter-spacing: 0.01em;
-  backdrop-filter: blur(10px);
+.mall-toolbar,
+.summary-row,
+.card-list,
+.record-list,
+.list-pagination,
+.mall-loading-state,
+.mall-error,
+.empty-block {
+  width: min(calc(100% - var(--mall-content-inset) * 2), var(--mall-content-max));
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.public-entry-chip--inline {
-  margin: 0;
-  justify-self: start;
-  max-width: 108px;
-}
-
-.public-entry-chip::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--mall-accent);
-  box-shadow: 0 0 0 3px rgba(39, 184, 93, 0.12);
-  flex-shrink: 0;
-}
-
-.public-entry-chip__label {
-  white-space: nowrap;
-}
-
-.public-entry-chip__value {
-  margin: 0;
-  color: var(--mall-ink-strong);
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  white-space: nowrap;
+.mall-toolbar {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .view-strip {
-  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin: var(--mall-search-to-tabs-gap) auto 0;
   padding: 8px;
   border: 1px solid rgba(70, 123, 92, 0.12);
-  border-radius: 26px;
-  background: linear-gradient(180deg, rgba(252, 254, 252, 0.94), rgba(241, 247, 243, 0.9));
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(252, 254, 252, 0.96), rgba(241, 247, 243, 0.92));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.82),
     0 8px 18px rgba(31, 74, 52, 0.08);
-  backdrop-filter: blur(18px);
-  scrollbar-width: none;
 }
 
-.view-strip::-webkit-scrollbar {
-  display: none;
+.view-chip {
+  min-height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: #edf7ef;
+  color: var(--mall-ink-soft);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.view-chip--active {
+  background: linear-gradient(135deg, #20b457 0%, #3acb72 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(45, 189, 97, 0.18);
 }
 
 .mall-loading-state {
-  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
-  margin: var(--mall-section-gap) auto 0;
+  margin-top: 16px;
 }
 
 .mall-loading-state__header {
@@ -798,7 +773,46 @@ onMounted(() => {
 }
 
 .view-strip--skeleton {
+  margin-top: 10px;
   box-shadow: none;
+}
+
+.summary-row {
+  margin-top: 10px;
+}
+
+.summary-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  min-height: 82px;
+  padding: 14px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 24px rgba(36, 69, 54, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.summary-pill span {
+  color: #31a34e;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.summary-pill strong {
+  color: #31a34e;
+  font-size: clamp(18px, 5vw, 24px);
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+.summary-pill small {
+  color: var(--mall-ink-soft);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .summary-pill--skeleton,
@@ -825,8 +839,8 @@ onMounted(() => {
 }
 
 .skeleton-line--value {
-  width: 42px;
-  height: 18px;
+  width: 48px;
+  height: 20px;
 }
 
 .skeleton-line--title {
@@ -834,8 +848,23 @@ onMounted(() => {
   height: 18px;
 }
 
+.skeleton-line--desc {
+  width: 92%;
+  height: 14px;
+  margin-top: 10px;
+}
+
+.skeleton-line--chip {
+  width: 68px;
+  height: 28px;
+}
+
+.skeleton-line--chip-wide {
+  width: 112px;
+}
+
 .skeleton-line--points {
-  width: 58px;
+  width: 68px;
   height: 18px;
 }
 
@@ -844,101 +873,29 @@ onMounted(() => {
   height: 42px;
 }
 
-.view-chip {
-  min-height: calc(var(--mall-tab-height) - 18px);
-  padding: 0 18px;
-  border: none;
-  border-radius: 999px;
-  background: #edf7ef;
-  color: var(--mall-ink-soft);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    background-color 0.18s ease,
-    color 0.18s ease,
-    transform 0.18s ease;
-}
-
-.view-chip--active {
-  background: linear-gradient(135deg, #20b457 0%, #3acb72 100%);
-  color: #ffffff;
-  box-shadow: 0 10px 18px rgba(45, 189, 97, 0.18);
-}
-
-.summary-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
-  gap: 10px;
-  margin-top: var(--mall-section-gap);
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.summary-pill {
-  min-width: 0;
-  min-height: 76px;
-  padding: 14px 12px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 10px 24px rgba(36, 69, 54, 0.06);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  text-align: left;
-}
-
-.summary-pill span {
-  display: inline-block;
-  color: #31A34E;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.summary-pill strong {
-  display: inline-block;
-  color: #31A34E;
-  font-size: clamp(15px, 4.8vw, 17px);
-  line-height: 1.3;
-  font-weight: 900;
-  word-break: break-word;
-  text-align: right;
-}
-
 .card-list,
 .record-list {
   display: flex;
   flex-direction: column;
-  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   gap: 12px;
-  margin-top: var(--mall-section-gap);
-  margin-left: auto;
-  margin-right: auto;
-  min-height: 0;
+  margin-top: 12px;
 }
 
 .reward-card,
 .record-card {
-  min-height: 168px;
   padding: 16px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 16px 34px rgba(33, 83, 52, 0.06);
   border: 1px solid rgba(248, 255, 249, 0.78);
   backdrop-filter: blur(12px);
-  box-sizing: border-box;
 }
 
 .reward-card {
   display: grid;
   grid-template-columns: 76px minmax(0, 1fr);
   gap: 14px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .reward-card__media {
@@ -952,12 +909,7 @@ onMounted(() => {
   background: #eef7f1;
 }
 
-.reward-card__media--loading {
-  background:
-    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.92), transparent 34%),
-    linear-gradient(135deg, #edf8f1, #dff2e7);
-}
-
+.reward-card__media--loading,
 .reward-card__media--skeleton {
   background:
     radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.92), transparent 34%),
@@ -990,54 +942,70 @@ onMounted(() => {
 .reward-card__title {
   margin: 0;
   color: var(--mall-ink-strong);
-  font-size: 19px;
-  line-height: 1.3;
+  font-size: 18px;
+  line-height: 1.28;
   font-weight: 900;
-  letter-spacing: -0.02em;
+}
+
+.reward-card__desc {
+  margin: 8px 0 0;
+  color: var(--mall-ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.reward-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.reward-card__meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #f1fbf4;
+  color: var(--mall-accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reward-card__meta-chip--warn {
+  background: #fff2ee;
+  color: #d76b4d;
 }
 
 .reward-card__bottom {
-  margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-top: 12px;
 }
 
 .reward-card__points {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  color: #31A34E;
-  font-size: 18px;
+  color: #31a34e;
+  font-size: 17px;
+  line-height: 1.3;
   font-weight: 900;
   white-space: nowrap;
 }
 
 .exchange-button {
-  min-width: 112px;
+  min-width: 108px;
   height: 42px;
   border: none;
   border-radius: 999px;
   background: linear-gradient(135deg, #26c15f 0%, #19a84e 100%);
   box-shadow: 0 10px 18px rgba(32, 182, 87, 0.16);
   font-weight: 800;
-}
-
-@keyframes mallSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes mallSkeleton {
-  0% {
-    background-position: 120% 0;
-  }
-
-  100% {
-    background-position: -120% 0;
-  }
 }
 
 .record-card__head {
@@ -1077,17 +1045,17 @@ onMounted(() => {
 .list-pagination {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   gap: 10px;
   margin-top: 4px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .pagination-text {
   grid-column: 1 / -1;
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
   text-align: center;
 }
 
@@ -1109,12 +1077,11 @@ onMounted(() => {
   padding: 0 14px;
   border: none;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.84);
   color: var(--mall-accent-strong);
   font-size: 13px;
   font-weight: 800;
   box-shadow: 0 8px 16px rgba(72, 120, 90, 0.08);
-  backdrop-filter: blur(8px);
 }
 
 .pagination-button:disabled {
@@ -1124,19 +1091,13 @@ onMounted(() => {
 }
 
 .mall-error {
-  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   margin-top: 18px;
-  margin-left: auto;
-  margin-right: auto;
   border-radius: 18px;
   overflow: hidden;
 }
 
 .empty-block {
-  width: min(calc(100% - var(--mall-content-inset) - var(--mall-content-inset)), var(--mall-content-max));
   padding: 36px 0 10px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .sheet-mask {
@@ -1154,7 +1115,7 @@ onMounted(() => {
 .exchange-sheet {
   width: min(100%, 440px);
   border-radius: 28px 28px 20px 20px;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
   backdrop-filter: blur(14px);
   padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
@@ -1209,32 +1170,33 @@ onMounted(() => {
   line-height: 1.7;
 }
 
-.exchange-sheet__stats {
+.exchange-sheet__brief {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: 16px;
 }
 
-.exchange-sheet__stat {
+.exchange-sheet__brief-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 14px 12px;
   border-radius: 18px;
   background: #f4fcf6;
 }
 
-.exchange-sheet__stat span {
-  display: block;
+.exchange-sheet__brief-item span {
   color: var(--mall-ink-soft);
   font-size: 12px;
   font-weight: 700;
 }
 
-.exchange-sheet__stat strong {
-  display: block;
-  margin-top: 8px;
+.exchange-sheet__brief-item strong {
   color: var(--mall-ink-strong);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
+  text-align: right;
 }
 
 .exchange-sheet__summary {
@@ -1301,8 +1263,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: var(--mall-search-height);
-  height: var(--mall-search-height);
+  min-height: 42px;
+  height: 42px;
   padding: 0 12px;
   border: 1px solid rgba(213, 238, 219, 0.98);
   border-radius: 999px;
@@ -1345,97 +1307,49 @@ onMounted(() => {
 :deep(.ant-spin-container) {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-:deep(.ant-spin-nested-loading) {
-  height: 100%;
+  min-height: calc(100dvh - 24px);
 }
 
 :deep(.ant-spin-container) {
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-  padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
-:deep(.ant-spin-container::-webkit-scrollbar) {
-  display: none;
+@keyframes mallSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-:deep(.ant-spin-blur) {
-  overflow: hidden;
+@keyframes mallSkeleton {
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
 }
 
 @media (max-width: 640px) {
   .reward-mall-page {
-    --mall-phone-max: 100%;
-    --mall-content-max: min(515px, calc(100% - 28px));
-    --mall-content-inset: 0px;
-    --mall-hero-height: 148px;
-    --mall-section-gap: 10px;
-    --mall-search-to-tabs-gap: 18px;
-    --mall-search-height: 42px;
-    --mall-tab-height: 64px;
-    padding: 0 0 calc(12px + env(safe-area-inset-bottom, 0px));
+    --mall-content-inset: 14px;
   }
 
   .reward-mall-phone {
-    width: 100%;
     border-radius: 0;
-    box-shadow: none;
+    min-height: 100dvh;
   }
 
   .mall-hero {
-    padding: 10px 0 0;
-    border-radius: 0 0 18px 18px;
+    padding-top: 14px;
   }
 
-  .mall-hero h1 {
+  .mall-hero__copy h1 {
     font-size: 22px;
-  }
-
-  .mall-hero__top {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .public-entry-chip {
-    gap: 7px;
-    min-height: 22px;
-    margin-top: 7px;
-    padding: 0 9px;
-    font-size: 9px;
-  }
-
-  .public-entry-chip__value {
-    font-size: 10px;
-  }
-
-  .view-chip {
-    min-height: 46px;
-    padding: 0 12px;
-    border-radius: 18px;
-    font-size: 13px;
-  }
-
-  .summary-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .summary-pill {
-    padding: 12px 10px;
-  }
-
-  .card-list,
-  .record-list {
-    gap: 10px;
-    margin-top: 10px;
   }
 
   .reward-card,
   .record-card {
-    min-height: 152px;
     padding: 14px;
     border-radius: 20px;
   }
@@ -1451,228 +1365,40 @@ onMounted(() => {
     border-radius: 16px;
   }
 
-  .reward-card__title {
-    font-size: 16px;
-  }
-
   .reward-card__bottom {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
-  }
-
-  .reward-card__points {
-    font-size: 16px;
   }
 
   .exchange-button {
     width: 100%;
     min-width: 0;
-    height: 40px;
-    font-size: 13px;
   }
 
   .record-card__head {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-  }
-
-  .list-pagination {
-    gap: 8px;
-  }
-
-  .pagination-text strong {
-    font-size: 13px;
-  }
-
-  .pagination-text span {
-    font-size: 11px;
   }
 
   .exchange-sheet {
     width: 100%;
     border-radius: 24px 24px 16px 16px;
   }
-
-  .exchange-sheet__header h3 {
-    font-size: 20px;
-  }
-
-  .exchange-sheet__desc,
-  .exchange-sheet__summary {
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  .exchange-sheet__stat strong {
-    font-size: 20px;
-  }
-}
-
-@media (max-width: 520px) {
-  .reward-mall-page {
-    --mall-content-max: calc(100% - 28px);
-    --mall-content-inset: 0px;
-    --mall-hero-height: 138px;
-    --mall-section-gap: 10px;
-    --mall-search-to-tabs-gap: 16px;
-    --mall-search-height: 40px;
-    --mall-tab-height: 60px;
-    padding: 0 0 calc(10px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .reward-mall-phone {
-    width: 100%;
-  }
-
-  .mall-hero {
-    padding: 8px 0 0;
-    border-radius: 22px 22px 15px 15px;
-  }
-
-  .mall-hero__top {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-  }
-
-  .public-entry-chip--inline {
-    max-width: 90px;
-  }
-
-  .mall-hero h1 {
-    font-size: 20px;
-  }
-
-  .mall-hero__copy {
-    width: auto;
-    max-width: none;
-  }
-
-  .mall-hero__search {
-    width: 188px;
-  }
-
-  .view-strip {
-    border-radius: 24px;
-  }
-
-  .view-chip {
-    min-height: 44px;
-    font-size: 12px;
-    padding: 0 10px;
-  }
-
-  .summary-pill strong {
-    font-size: 15px;
-  }
-
-  .reward-card {
-    grid-template-columns: 58px minmax(0, 1fr);
-  }
-
-  .reward-card__media {
-    width: 58px;
-    height: 58px;
-  }
-
-  .reward-card__title {
-    font-size: 15px;
-  }
-
-  .reward-card__points {
-    font-size: 15px;
-  }
-
-  .summary-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .list-pagination {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .pagination-button {
-    min-height: 38px;
-    font-size: 12px;
-  }
-
-  :deep(.ant-input-affix-wrapper) {
-    min-height: 42px;
-    padding: 0 12px;
-  }
-
-  :deep(.ant-input) {
-    font-size: 14px;
-  }
 }
 
 @media (max-width: 390px) {
-  .reward-mall-page {
-    --mall-content-max: calc(100% - 24px);
-    --mall-content-inset: 0px;
-    --mall-hero-height: 128px;
-    --mall-section-gap: 8px;
-    --mall-search-to-tabs-gap: 14px;
-    --mall-search-height: 38px;
-    --mall-tab-height: 56px;
-  }
-
-  .mall-hero {
-    padding: 8px 0 0;
-  }
-
-  .mall-hero__top {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
-  }
-
-  .public-entry-chip--inline {
-    max-width: 82px;
-  }
-
-  .mall-hero h1 {
+  .mall-hero__copy h1 {
     font-size: 20px;
   }
 
-  .mall-hero__copy {
-    width: auto;
-    max-width: none;
-  }
-
-  .mall-hero__search {
-    width: 160px;
-  }
-
-  .view-strip {
-    gap: 6px;
-    padding: 6px;
-  }
-
-  .summary-row {
-    gap: 8px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .summary-pill {
-    padding: 12px 8px;
-  }
-
-  .summary-pill span {
-    font-size: 11px;
-  }
-
-  .reward-card,
-  .record-card {
-    min-height: 140px;
-    padding: 10px;
+  .view-chip {
+    min-height: 42px;
+    font-size: 13px;
   }
 
   .reward-card {
     grid-template-columns: 56px minmax(0, 1fr);
     gap: 10px;
-    align-items: center;
   }
 
   .reward-card__media {
@@ -1682,28 +1408,13 @@ onMounted(() => {
   }
 
   .reward-card__title {
-    font-size: 14px;
-    line-height: 1.2;
-  }
-
-  .reward-card__bottom {
-    margin-top: 8px;
-    gap: 8px;
-    flex-direction: row;
-    align-items: center;
+    font-size: 16px;
   }
 
   .reward-card__points {
-    font-size: 14px;
+    font-size: 15px;
   }
 
-  .exchange-button {
-    min-width: 84px;
-    height: 36px;
-    font-size: 12px;
-  }
-
-  .exchange-sheet__stats,
   .exchange-sheet__actions {
     grid-template-columns: 1fr;
   }

@@ -1,0 +1,1 @@
+import{t as e}from"./http-DI25S-P3.js";function t(t){return e.get(`/api/student/rewards`,{params:{stuNum:t}})}function n(t,n){return e.post(`/api/student/rewards/exchange`,{stuNum:t,rewardId:n})}export{t as n,n as t};

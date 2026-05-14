@@ -8,10 +8,6 @@
             <div class="pay-hero__glow pay-hero__glow--right"></div>
 
             <div class="pay-hero__top">
-              <button type="button" class="hero-icon-button" @click="goPrevious">
-                <LeftOutlined />
-              </button>
-
               <div class="pay-hero__copy">
                 <p class="pay-hero__eyebrow">宿舍水电费</p>
                 <h1>移动缴费</h1>
@@ -207,7 +203,6 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Alert as AAlert, Button as AButton, Empty as AEmpty, Input as AInput, Spin as ASpin, message } from 'ant-design-vue'
-import { LeftOutlined } from '@ant-design/icons-vue'
 import { storeToRefs } from 'pinia'
 import 'ant-design-vue/dist/reset.css'
 import { formatCurrency, formatDormLabel, formatNumber, formatUnitPrice } from '@/utils/formatters'
@@ -333,14 +328,6 @@ function handleAmountChange(value: string) {
 
 function applyPresetAmount(value: number) {
   amount.value = String(value)
-}
-
-function goPrevious() {
-  if (window.history.length > 1) {
-    router.back()
-    return
-  }
-  void router.push(buildUtilityTarget())
 }
 
 function goUtilityHome() {
@@ -545,13 +532,12 @@ onBeforeUnmount(() => {
 .pay-hero__top {
   position: relative;
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   margin-bottom: 12px;
 }
 
-.hero-icon-button,
 .hero-text-button,
 .section-link,
 .fee-chip,
@@ -560,18 +546,6 @@ onBeforeUnmount(() => {
 .sheet-close {
   border: 0;
   cursor: pointer;
-}
-
-.hero-icon-button {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.8);
-  color: #2a7a53;
-  box-shadow: inset 0 0 0 1px rgba(167, 222, 184, 0.8);
-  justify-self: start;
 }
 
 .hero-text-button {

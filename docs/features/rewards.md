@@ -1,50 +1,32 @@
-# 奖励兑换实现文档
+# 奖励兑换功能说明
 
-> 2026-05-12 补充：`reward-exchange-antd.vue` 头部已调整为标题与搜索框同一行的紧凑布局，搜索框固定在右上角，头部高度仅包裹这一行内容。
-> 2026-05-12 补充：`reward-exchange-antd.vue` 头部已补充少量顶部留白，避免标题与搜索框紧贴页面顶部。
-> 2026-05-12 补充：`reward-exchange-antd.vue` 手机端积分商城已新增首次加载提示与骨架屏；奖励图片采用独立加载状态，未加载完成前在图片位展示转圈占位，加载完成后淡入显示，避免外部图片响应慢时出现近似白屏。
-
-> 2026-05-11 补充：奖励兑换手机端页面（`reward-exchange-antd.vue`）背景图资源使用 `low-carbon-dormitory-vue/public/images/reward-exchange-mobile-bg.jpg`；页面已调整为手机端全屏响应布局，背景图直接参与页面主视觉，仅保留轻度遮罩保证可读性；奖励列表与兑换记录两种视图统一使用同一套内容盒尺寸与间距规则。
+> 2026-05-14 更新：手机端 `reward-exchange-antd.vue` 已改为低层级兑换流，顶部只保留积分摘要与视图切换，奖励卡片直接展示库存与兑换提示，确认弹层压缩为扣分、剩余积分、库存三个关键信息。
+> 2026-05-13 更新：学生端奖励页数据逻辑已回收到页面内部，当前不再依赖 `use-reward-center.ts`。
+> 2026-05-13 更新：学生端 `reward-exchange.vue` 已移除对 `reward-exchange-son.vue` 的依赖，奖励列表展示逻辑已并回主页面。
 
 ## 功能目标
 
-奖励功能用于把学生的个人低碳积分转化为可兑换奖励，主要包含：
+奖励兑换用于把学生个人低碳积分转换为可兑换奖励，核心能力包括：
 
-- 奖励中心查询
-- 奖励列表展示
-- 奖励兑换
-- 个人兑换记录展示
+- 查询奖励中心
+- 浏览奖励列表
+- 发起奖励兑换
+- 查看个人兑换记录
 
 ## 前端入口
 
 ### 路由与页面
 
-- 路由：`/reward-exchange`
-- 页面：`low-carbon-dormitory-vue/src/router/student-router/reward/reward-exchange.vue`
-
-相关文件：
-
-- `reward-exchange-son.vue`
-- `reward-exchange-antd.vue`
-- `use-reward-center.ts`
+- 桌面端路由：`/reward-exchange`
+- 桌面端页面：`low-carbon-dormitory-vue/src/router/student-router/reward/reward-exchange.vue`
+- 手机端路由：`/reward-exchange-antd`
+- 手机端页面：`low-carbon-dormitory-vue/src/router/student-router/reward/reward-exchange-antd.vue`
 
 补充说明：
 
-- 桌面版奖励中心不再提供跳转到 `reward-exchange-antd` 的页面入口
-- 手机端奖励页当前仅支持通过 URL 直接访问
-
-### 前端组合逻辑
-
-`useRewardCenter()` 位于：
-
-- `low-carbon-dormitory-vue/src/router/student-router/reward/use-reward-center.ts`
-
-职责：
-
-- 读取当前学号
-- 加载奖励中心数据
-- 发起奖励兑换
-- 管理加载状态和提交状态
+- 桌面端奖励页不再提供跳转到手机端页面的可视化入口。
+- 手机端奖励页当前支持通过 URL 直接访问。
+- 手机端支持通过 `?stuNum=学号` 方式读取对应学生的奖励中心数据。
 
 ### 前端 API
 
@@ -53,26 +35,36 @@
   - `fetchRewardCenter(stuNum)`
   - `exchangeReward(stuNum, rewardId)`
 
+## 手机端交互说明
+
+当前手机端页面围绕“少一层进入、少一次来回”做了调整：
+
+- 头部只保留标题、说明和搜索框，不再堆叠多层说明区。
+- 顶部摘要区合并为单张积分卡，直接展示当前积分和最近可兑换奖励。
+- 奖励卡片内直接展示奖励描述、库存和兑换提示，减少进入确认层之前的信息缺失。
+- 兑换确认弹层只保留三项核心信息：本次扣除、兑换后剩余、剩余库存。
+- 分页信息压缩为简短页码提示，避免在移动端占据过多垂直空间。
+
 ## 页面流程
 
-1. `reward-exchange.vue` 页面挂载时调用 `loadRewardCenter()`
-2. `useRewardCenter()` 调用 `fetchRewardCenter(stuNum)`
-3. 返回的数据包括：
+1. 页面挂载后调用 `loadRewardCenter()`。
+2. 页面根据当前登录态或路由中的 `stuNum` 调用 `fetchRewardCenter(stuNum)`。
+3. 返回的数据包含：
    - 当前积分
-   - 最近可兑换奖励差距
+   - 最近可兑换奖励
    - 奖励列表
    - 个人兑换记录
-4. 用户点击某个奖励的兑换按钮
-5. 页面弹确认框
-6. 调用 `exchangeRewardById(rewardId)`
-7. 兑换成功后重新加载奖励中心
+4. 用户在奖励卡片中直接查看库存和兑换提示。
+5. 用户点击兑换按钮后打开简化确认弹层。
+6. 页面调用 `exchangeRewardById(rewardId)` 发起兑换。
+7. 兑换成功后刷新奖励中心数据并更新剩余积分。
 
 ## 后端入口
 
 - Controller：`low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/student/StudentRewardController.java`
-- Service：`.../service/student/RewardService.java`
+- Service：`low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/student/RewardService.java`
 
-接口：
+接口包括：
 
 - `GET /student/rewards`
 - `POST /student/rewards/supplement-points`
@@ -80,19 +72,15 @@
 
 ## 奖励中心查询实现
 
-`RewardService.getRewardCenter(stuNum)` 实际直接调用：
+`RewardService.getRewardCenter(stuNum)` 负责：
 
-- `supplementPersonalPoints(stuNum)`
+1. 解析学生与宿舍上下文。
+2. 读取学生当前积分。
+3. 读取启用中的奖励列表。
+4. 读取该学生最近的兑换记录。
+5. 组装 `RewardCenterResponse` 返回前端。
 
-该方法会：
-
-1. 解析学生和宿舍上下文
-2. 读取学生当前积分
-3. 读取启用中的奖励列表
-4. 读取该学生最近兑换记录
-5. 组装 `RewardCenterResponse`
-
-返回中包括：
+返回结构主要包含：
 
 - `currentPoints`
 - `exchangeCount`
@@ -102,7 +90,7 @@
 
 ### 奖励可兑换状态
 
-每个奖励项在后端就会被转换成：
+每个奖励项在后端会补充：
 
 - `canExchange`
 - `exchangeTip`
@@ -114,49 +102,31 @@
 
 ## 兑换实现
 
-`RewardService.exchange(stuNum, rewardId)` 的核心流程：
+`RewardService.exchange(stuNum, rewardId)` 的主要流程：
 
 1. 校验 `rewardId`
-2. 解析学生和宿舍
-3. 读取奖励项并校验状态
+2. 解析学生和宿舍信息
+3. 校验奖励项状态
 4. 校验库存与积分是否足够
-5. 通过 `studentBaseMapper.update(...)` 扣减学生积分
-6. 通过 `rewardItemMapper.update(...)` 扣减奖励库存
-7. 重新查询学生与奖励项，得到剩余积分和库存
-8. 写入 `student_reward_exchange`
-9. 返回 `RewardExchangeResult`
+5. 扣减学生积分
+6. 扣减奖励库存
+7. 写入 `student_reward_exchange`
+8. 返回兑换结果
 
 ### 数据一致性
 
-兑换逻辑使用了事务，并且更新条件里带有积分与库存约束，因此可以避免一部分并发下的超兑问题。
-
-## 关键数据对象
-
-前端：
-
-- `RewardCenter`
-- `RewardItem`
-- `RewardRecord`
-- `RewardExchangeResult`
-
-后端：
-
-- `RewardCenterResponse`
-- `RewardExchangeRequest`
-- `RewardExchangeResult`
-- `RewardItem`
-- `RewardExchangeRecord`
+兑换逻辑运行在事务中，并且更新条件包含积分和库存约束，可降低并发场景下超兑风险。
 
 ## 相关文件
 
 - `low-carbon-dormitory-vue/src/router/student-router/reward/reward-exchange.vue`
-- `low-carbon-dormitory-vue/src/router/student-router/reward/use-reward-center.ts`
+- `low-carbon-dormitory-vue/src/router/student-router/reward/reward-exchange-antd.vue`
 - `low-carbon-dormitory-vue/src/api/modules/reward.ts`
 - `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/controller/student/StudentRewardController.java`
 - `low-carbon-dormitory-spring/src/main/java/com/example/lowcarbondormitory/service/student/RewardService.java`
 
 ## 维护注意点
 
-- 兑换中心显示的“最近可兑换奖励差距”是运行时根据最低积分门槛奖励计算的，不是单独存表字段。
-- `GET /student/rewards` 当前是按 `stuNum` 查的，如果后续要彻底改为 token 鉴权，需要同步调整前端调用方式。
-- 删除奖励时要留意历史兑换记录是否仍需要展示，当前代码没有做软删除。
+- 奖励中心里的“最近可兑换奖励”属于运行时计算结果，不是独立存储字段。
+- 前端奖励中心查询目前仍以 `stuNum` 为主要参数来源；如果后续完全改为 token 鉴权，需要同步调整前端调用方式。
+- 删除奖励项时，需要确认历史兑换记录是否仍要继续展示。

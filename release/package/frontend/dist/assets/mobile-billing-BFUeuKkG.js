@@ -1,0 +1,1 @@
+var e=`utility-mobile`;function t(e){return typeof e==`string`?e.trim():``}function n(e){if(typeof e!=`string`&&typeof e!=`number`)return null;let t=Number(e);return!Number.isFinite(t)||t<=0?null:t}function r(t,n,r=!1){if(!(!t&&!r))return{...t?{stuNum:t}:{},source:e,...n?{dormId:String(n)}:{}}}export{t as i,r as n,n as r,e as t};
