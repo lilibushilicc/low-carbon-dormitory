@@ -4,16 +4,19 @@ import com.example.lowcarbondormitory.common.Result;
 import com.example.lowcarbondormitory.dto.request.AdminCreateRewardRequest;
 import com.example.lowcarbondormitory.dto.request.AdminCreateStudentRequest;
 import com.example.lowcarbondormitory.dto.request.AdminDeductDormFeeRequest;
+import com.example.lowcarbondormitory.dto.request.AdminR2StorageConfigRequest;
 import com.example.lowcarbondormitory.dto.request.AdminUpdateRewardStockRequest;
 import com.example.lowcarbondormitory.dto.request.AdminUpdateUtilityRateRequest;
 import com.example.lowcarbondormitory.dto.response.AdminCreateStudentResponse;
 import com.example.lowcarbondormitory.dto.response.AdminRewardImageUploadResponse;
+import com.example.lowcarbondormitory.dto.response.AdminR2StorageConfigResponse;
 import com.example.lowcarbondormitory.dto.response.AdminStudentDeleteCheckResponse;
 import com.example.lowcarbondormitory.dto.response.AdminStudentListItemResponse;
 import com.example.lowcarbondormitory.entity.RewardItem;
 import com.example.lowcarbondormitory.entity.UtilityRateConfig;
 import com.example.lowcarbondormitory.entity.DormFee;
 import com.example.lowcarbondormitory.service.admin.AdminRewardImageStorageService;
+import com.example.lowcarbondormitory.service.admin.AdminR2StorageConfigService;
 import com.example.lowcarbondormitory.service.admin.AdminManagementService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +42,9 @@ public class AdminManagementController {
 
     @Autowired
     private AdminRewardImageStorageService adminRewardImageStorageService;
+
+    @Autowired
+    private AdminR2StorageConfigService adminR2StorageConfigService;
 
     @GetMapping("/utility-rates")
     public Result<List<UtilityRateConfig>> listUtilityRates() {
@@ -85,6 +91,23 @@ public class AdminManagementController {
     @GetMapping("/rewards")
     public Result<List<RewardItem>> listRewards() {
         return Result.success(adminManagementService.listRewards());
+    }
+
+    @GetMapping("/storage/r2")
+    public Result<AdminR2StorageConfigResponse> getR2StorageConfig() {
+        return Result.success(adminR2StorageConfigService.getCurrentConfig());
+    }
+
+    @PutMapping("/storage/r2")
+    public Result<AdminR2StorageConfigResponse> updateR2StorageConfig(
+            @Valid @RequestBody AdminR2StorageConfigRequest request
+    ) {
+        return Result.success(adminR2StorageConfigService.saveConfig(request));
+    }
+
+    @PostMapping("/storage/r2/test")
+    public Result<Boolean> testR2StorageConfig(@Valid @RequestBody AdminR2StorageConfigRequest request) {
+        return Result.success(adminR2StorageConfigService.testConfig(request));
     }
 
     @PostMapping("/rewards")

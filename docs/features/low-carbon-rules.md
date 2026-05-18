@@ -24,6 +24,7 @@
 页面能力：
 
 - 加载当前规则配置
+- 维护水电费率配置
 - 编辑评分参数
 - 编辑荣誉规则列表
 - 用示例电费和水费做公式预览
@@ -37,6 +38,11 @@
   - `updateLowCarbonRuleConfig(payload)`
   - `previewLowCarbonRule(payload)`
   - `fetchStudentLowCarbonRules()`
+
+水电费率使用 `low-carbon-dormitory-vue/src/api/modules/admin.ts` 中的：
+
+- `fetchUtilityRates()`
+- `updateUtilityRate(...)`
 
 ## 后端入口
 
@@ -52,6 +58,18 @@
   - `GET /admin/low-carbon-rules`
   - `PUT /admin/low-carbon-rules`
   - `POST /admin/low-carbon-rules/preview`
+  - `GET /admin/utility-rates`
+  - `PUT /admin/utility-rates/{feeType}`
+
+## 水电费率配置
+
+水电费率现在放在管理端“低碳规则配置”页维护，而不是放在奖励管理页。原因是水电单价并不是奖励业务配置，它直接参与以下计算：
+
+- 规则预览：费用除以单价得到用量，再乘以水/电碳排系数。
+- 宿舍看板：看板按当前费率和当前低碳规则实时换算碳排与积分。
+- 扣费限制：当某项费率关闭计费时，对应费用项不参与计费和低碳指标计算。
+
+保存费率后，页面会重新执行规则预览，避免预览结果仍使用旧单价。
 
 ## 核心服务
 

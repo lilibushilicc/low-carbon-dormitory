@@ -17,6 +17,33 @@
     <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon />
 
     <template v-if="form">
+      <section class="content-card">
+        <div class="table-header">
+          <div>
+            <div class="tag">水电费率配置</div>
+            <h2>配置低碳规则换算使用的水电单价</h2>
+          </div>
+          <el-button plain @click="loadRates">刷新费率</el-button>
+        </div>
+        <div class="rate-grid">
+          <div v-for="rate in rates" :key="rate.feeType" class="rate-item">
+            <h3>{{ formatFeeType(rate.feeType) }}</h3>
+            <el-form label-position="top">
+              <el-form-item label="单价">
+                <el-input-number v-model="rate.unitPrice" :min="0.0001" :precision="4" :step="0.0001" />
+              </el-form-item>
+              <el-form-item label="单位名称">
+                <el-input v-model="rate.unitName" />
+              </el-form-item>
+              <el-form-item label="计费开关">
+                <el-switch v-model="rate.enabled" active-text="参与计费" inactive-text="不计费" />
+              </el-form-item>
+              <el-button type="primary" @click="saveRate(rate)">保存费率</el-button>
+            </el-form>
+          </div>
+        </div>
+      </section>
+
       <section class="grid">
         <article class="content-card">
           <div class="tag">评分标准配置</div>
@@ -151,16 +178,26 @@ import {
   type LowCarbonRuleConfig,
   type LowCarbonRulePreview,
 } from '@/api/modules/low-carbon-rule'
+import {
+  fetchUtilityRates,
+  updateUtilityRate,
+  type UtilityRateItem,
+} from '@/api/modules/admin'
 
 const loading = ref(false)
 const errorMessage = ref('')
 const preview = ref<LowCarbonRulePreview | null>(null)
+const rates = ref<UtilityRateItem[]>([])
 const previewForm = reactive({
   electricFee: 30,
   waterFee: 12,
 })
 
 const form = ref<LowCarbonRuleConfig | null>(null)
+
+function formatFeeType(feeType: string) {
+  return feeType === 'WATER' ? '水费 (WATER)' : '电费 (ELECTRIC)'
+}
 
 function createEmptyRule(): HonorRuleConfig {
   return {
@@ -179,7 +216,11 @@ async function loadConfig() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const { data } = await fetchLowCarbonRuleConfig()
+    const [configRes, ratesRes] = await Promise.all([
+      fetchLowCarbonRuleConfig(),
+      fetchUtilityRates(),
+    ])
+    const { data } = configRes
     if (data.code !== 200 || !data.data) {
       errorMessage.value = data.msg || '获取配置失败'
       return
@@ -187,6 +228,9 @@ async function loadConfig() {
     form.value = {
       scoreRule: { ...data.data.scoreRule },
       honorRules: data.data.honorRules.map((item) => ({ ...item })),
+    }
+    if (ratesRes.data.code === 200 && ratesRes.data.data) {
+      rates.value = ratesRes.data.data.map((item) => ({ ...item, enabled: item.enabled !== false }))
     }
     await runPreview()
   } catch (error) {
@@ -206,6 +250,44 @@ async function runPreview() {
   })
   if (data.code === 200 && data.data) {
     preview.value = data.data
+  }
+}
+
+async function loadRates() {
+  try {
+    const { data } = await fetchUtilityRates()
+    if (data.code !== 200 || !data.data) {
+      ElMessage.error(data.msg || '获取水电费率失败')
+      return
+    }
+    rates.value = data.data.map((item) => ({ ...item, enabled: item.enabled !== false }))
+    await runPreview()
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('获取水电费率失败')
+  }
+}
+
+async function saveRate(item: UtilityRateItem) {
+  try {
+    const { data } = await updateUtilityRate(item.feeType, {
+      unitPrice: Number(item.unitPrice),
+      unitName: item.unitName,
+      enabled: item.enabled !== false,
+    })
+    if (data.code !== 200 || !data.data) {
+      ElMessage.error(data.msg || `保存 ${item.feeType} 费率失败`)
+      return
+    }
+    const index = rates.value.findIndex((rate) => rate.feeType === data.data?.feeType)
+    if (index >= 0) {
+      rates.value[index] = { ...data.data, enabled: data.data.enabled !== false }
+    }
+    await runPreview()
+    ElMessage.success(`${formatFeeType(item.feeType)} 已保存`)
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('保存水电费率失败')
   }
 }
 
@@ -292,6 +374,27 @@ loadConfig()
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.rate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.rate-item {
+  border: 1px solid #e4ece8;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.rate-item h3 {
+  margin: 0 0 12px;
+  color: #244536;
+}
+
+.rate-item :deep(.el-switch) {
+  --el-switch-on-color: #4b9b6e;
+}
+
 .tag {
   margin-bottom: 12px;
 }
@@ -341,6 +444,7 @@ loadConfig()
 @media (max-width: 1100px) {
   .hero-card__head,
   .grid,
+  .rate-grid,
   .form-grid,
   .preview-stats {
     grid-template-columns: 1fr;

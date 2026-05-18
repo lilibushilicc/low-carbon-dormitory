@@ -127,6 +127,11 @@ import { loginStudent } from '@/api/modules/student'
 import { adminLogin } from '@/api/modules/admin'
 import { useAdminTokenStore } from '@/stores/admin-token'
 import { getDefaultHomePath } from '@/utils/app-navigation'
+import {
+  buildLegacyAdminLoginUser,
+  clearLegacyLoginUser,
+  persistLegacyLoginUser,
+} from '@/utils/auth-session'
 
 interface LoginForm {
   username: string
@@ -200,7 +205,7 @@ async function handleLogin() {
       }
 
       adminTokenStore.clearAdminToken()
-      localStorage.removeItem('loginUser')
+      clearLegacyLoginUser()
       studentTokenStore.setStudentToken(data.data.studentInfo, data.data.stuNum, data.data.token)
       ElMessage.success(data.msg || '学生登录成功')
       await router.replace(getDefaultHomePath('student'))
@@ -219,16 +224,7 @@ async function handleLogin() {
 
     studentTokenStore.clearStudentToken()
     adminTokenStore.setAdminToken(data.data)
-    localStorage.setItem(
-      'loginUser',
-      JSON.stringify({
-        token: data.data.token,
-        username: data.data.username,
-        displayName: data.data.displayName || data.data.username,
-        adminId: data.data.adminId || 0,
-        role: 'ADMIN',
-      }),
-    )
+    persistLegacyLoginUser(buildLegacyAdminLoginUser(data.data))
     ElMessage.success(data.msg || '管理员登录成功')
     await router.replace(getDefaultHomePath('admin'))
   } catch (error) {

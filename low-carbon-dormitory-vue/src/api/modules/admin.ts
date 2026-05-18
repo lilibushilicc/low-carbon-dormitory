@@ -95,6 +95,16 @@ export interface AdminRewardImageUploadResponse {
   size: number
 }
 
+export interface AdminR2StorageConfig {
+  endpoint: string
+  accessKeyId: string
+  secretAccessKey: string
+  bucket: string
+  publicBaseUrl: string
+  region: string
+  configured: boolean
+}
+
 export interface AdminDeductDormFeeRequest {
   amount: number
   feeType: 'ELECTRIC' | 'WATER'
@@ -141,6 +151,18 @@ export function deleteStudentByAdmin(studentId: number) {
 
 export function fetchRewardsByAdmin() {
   return http.get<ApiResponse<AdminRewardItem[]>>('/api/admin/rewards')
+}
+
+export function fetchR2StorageConfigByAdmin() {
+  return http.get<ApiResponse<AdminR2StorageConfig>>('/api/admin/storage/r2')
+}
+
+export function updateR2StorageConfigByAdmin(payload: Omit<AdminR2StorageConfig, 'configured'>) {
+  return http.put<ApiResponse<AdminR2StorageConfig>>('/api/admin/storage/r2', payload)
+}
+
+export function testR2StorageConfigByAdmin(payload: Omit<AdminR2StorageConfig, 'configured'>) {
+  return http.post<ApiResponse<boolean>>('/api/admin/storage/r2/test', payload)
 }
 
 export function createRewardByAdmin(payload: AdminCreateRewardRequest) {

@@ -2,10 +2,7 @@ package com.example.lowcarbondormitory.service.admin;
 
 import com.example.lowcarbondormitory.dto.response.AdminRewardImageUploadResponse;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -14,6 +11,14 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 @Service
 public class AdminRewardImageStorageService {
@@ -23,11 +28,31 @@ public class AdminRewardImageStorageService {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
     private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyyMM");
 
-    @Value("${app.upload.reward-dir}")
-    private String rewardUploadDir;
+    private final String endpoint;
+    private final String accessKeyId;
+    private final String secretAccessKey;
+    private final String region;
+    private final String bucketName;
+    private final String publicBaseUrl;
+    private final AdminR2StorageConfigService r2StorageConfigService;
 
-    @Value("${app.upload.reward-url-prefix}")
-    private String rewardUrlPrefix;
+    public AdminRewardImageStorageService(
+            AdminR2StorageConfigService r2StorageConfigService,
+            @Value("${app.upload.r2.endpoint:}") String endpoint,
+            @Value("${app.upload.r2.access-key-id:}") String accessKeyId,
+            @Value("${app.upload.r2.secret-access-key:}") String secretAccessKey,
+            @Value("${app.upload.r2.region:auto}") String region,
+            @Value("${app.upload.r2.bucket:}") String bucketName,
+            @Value("${app.upload.r2.public-base-url:}") String publicBaseUrl
+    ) {
+        this.r2StorageConfigService = r2StorageConfigService;
+        this.endpoint = endpoint;
+        this.accessKeyId = accessKeyId;
+        this.secretAccessKey = secretAccessKey;
+        this.region = region;
+        this.bucketName = bucketName;
+        this.publicBaseUrl = publicBaseUrl;
+    }
 
     public AdminRewardImageUploadResponse store(MultipartFile file) {
         validateFile(file);
@@ -35,35 +60,25 @@ public class AdminRewardImageStorageService {
         String extension = resolveExtension(file);
         String folder = LocalDate.now().format(MONTH_FORMATTER);
         String fileName = UUID.randomUUID().toString().replace("-", "") + "." + extension;
-        Path targetDirectory = Path.of(rewardUploadDir).toAbsolutePath().normalize().resolve(folder);
-        Path targetFile = targetDirectory.resolve(fileName).normalize();
+        String objectKey = folder + "/" + fileName;
+        R2UploadConfig uploadConfig = resolveUploadConfig();
 
-        try {
-            Files.createDirectories(targetDirectory);
-            try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException ex) {
-            throw new IllegalStateException("图片上传失败");
+        try (S3Client s3Client = createS3Client(uploadConfig)) {
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(uploadConfig.bucket())
+                    .key(objectKey)
+                    .contentType(file.getContentType())
+                    .build();
+            s3Client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+        } catch (IOException | S3Exception ex) {
+            throw new IllegalStateException("图片上传失败", ex);
         }
 
         AdminRewardImageUploadResponse response = new AdminRewardImageUploadResponse();
-        response.setImageUrl(buildImageUrl(folder, fileName));
+        response.setImageUrl(buildImageUrl(uploadConfig.publicBaseUrl(), objectKey));
         response.setOriginalName(file.getOriginalFilename());
         response.setSize(file.getSize());
         return response;
-    }
-
-    public Path getRootDirectory() {
-        return Path.of(rewardUploadDir).toAbsolutePath().normalize();
-    }
-
-    public String getResourcePattern() {
-        return normalizeUrlPrefix() + "/**";
-    }
-
-    public String getResourceLocation() {
-        return getRootDirectory().toUri().toString();
     }
 
     private void validateFile(MultipartFile file) {
@@ -102,16 +117,61 @@ public class AdminRewardImageStorageService {
         return fileName.substring(index + 1).toLowerCase(Locale.ROOT);
     }
 
-    private String buildImageUrl(String folder, String fileName) {
-        return normalizeUrlPrefix() + "/" + folder + "/" + fileName;
+    private String buildImageUrl(String publicBaseUrl, String objectKey) {
+        return normalizePublicBaseUrl(publicBaseUrl) + "/" + objectKey;
     }
 
-    private String normalizeUrlPrefix() {
-        String trimmed = rewardUrlPrefix == null ? "" : rewardUrlPrefix.trim();
-        if (trimmed.isEmpty()) {
-            return "/uploads/rewards";
+    private S3Client createS3Client(R2UploadConfig config) {
+        if (isBlank(config.endpoint()) || isBlank(config.accessKeyId()) || isBlank(config.secretAccessKey()) || isBlank(config.bucket())) {
+            throw new IllegalStateException("未配置完整的 R2 连接信息");
         }
-        String normalized = trimmed.startsWith("/") ? trimmed : "/" + trimmed;
-        return normalized.replaceAll("/+$", "");
+
+        return S3Client.builder()
+                .endpointOverride(URI.create(config.endpoint()))
+                .region(Region.of(config.region()))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(config.accessKeyId(), config.secretAccessKey())
+                ))
+                .serviceConfiguration(S3Configuration.builder()
+                        .pathStyleAccessEnabled(true)
+                        .build())
+                .build();
+    }
+
+    private R2UploadConfig resolveUploadConfig() {
+        var response = r2StorageConfigService.getCurrentConfig();
+        if (response.isConfigured()) {
+            return new R2UploadConfig(
+                    response.getEndpoint(),
+                    response.getAccessKeyId(),
+                    response.getSecretAccessKey(),
+                    response.getBucket(),
+                    response.getPublicBaseUrl(),
+                    response.getRegion()
+            );
+        }
+        return new R2UploadConfig(endpoint, accessKeyId, secretAccessKey, bucketName, publicBaseUrl, region);
+    }
+
+    private String normalizePublicBaseUrl(String publicBaseUrl) {
+        String trimmed = publicBaseUrl == null ? "" : publicBaseUrl.trim();
+        if (trimmed.isEmpty()) {
+            throw new IllegalStateException("未配置 R2 公网访问地址");
+        }
+        return trimmed.replaceAll("/+$", "");
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private record R2UploadConfig(
+            String endpoint,
+            String accessKeyId,
+            String secretAccessKey,
+            String bucket,
+            String publicBaseUrl,
+            String region
+    ) {
     }
 }

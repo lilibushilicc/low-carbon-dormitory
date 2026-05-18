@@ -4,8 +4,8 @@
       <div class="hero-card__head">
         <div>
           <div class="hero-card__eyebrow">宿舍管理 / 运营管理</div>
-          <h1>奖励与库存管理</h1>
-          <p>统一维护水电费单价、奖励商品、库存与兑换配置。</p>
+          <h1>奖励与 R2 存储配置</h1>
+          <p>统一维护奖励商品、库存，以及奖励图片上传使用的 Cloudflare R2 连接参数。</p>
         </div>
         <div class="actions">
           <el-button @click="goHome">返回管理首页</el-button>
@@ -15,24 +15,38 @@
     </section>
 
     <section class="content-card">
-      <h2>水电费单价配置</h2>
-      <div class="rate-grid">
-        <div v-for="rate in rates" :key="rate.feeType" class="rate-item">
-          <h3>{{ rate.feeType }}</h3>
-          <el-form label-position="top">
-            <el-form-item label="单价">
-              <el-input-number v-model="rate.unitPrice" :min="0.0001" :precision="4" :step="0.0001" />
-            </el-form-item>
-            <el-form-item label="单位名称">
-              <el-input v-model="rate.unitName" />
-            </el-form-item>
-            <el-form-item label="计费开关">
-              <el-switch v-model="rate.enabled" active-text="参与计费" inactive-text="不计费" />
-            </el-form-item>
-            <el-button type="primary" @click="saveRate(rate)">保存单价</el-button>
-          </el-form>
+      <h2>R2 对象存储配置</h2>
+      <el-form label-position="top">
+        <div class="reward-grid">
+          <el-form-item label="Endpoint">
+            <el-input
+              v-model="r2ConfigForm.endpoint"
+              placeholder="https://<account-id>.r2.cloudflarestorage.com"
+            />
+          </el-form-item>
+          <el-form-item label="Access Key ID">
+            <el-input v-model="r2ConfigForm.accessKeyId" />
+          </el-form-item>
+          <el-form-item label="Secret Access Key">
+            <el-input v-model="r2ConfigForm.secretAccessKey" show-password />
+          </el-form-item>
+          <el-form-item label="Bucket">
+            <el-input v-model="r2ConfigForm.bucket" />
+          </el-form-item>
+          <el-form-item label="Public Base URL">
+            <el-input v-model="r2ConfigForm.publicBaseUrl" placeholder="https://pub-xxxx.r2.dev" />
+          </el-form-item>
+          <el-form-item label="Region">
+            <el-input v-model="r2ConfigForm.region" placeholder="auto" />
+          </el-form-item>
         </div>
-      </div>
+        <div class="storage-actions">
+          <el-button :loading="testingR2Config" @click="testR2Config">测试连接</el-button>
+          <el-button :disabled="!r2ConfigDirty || savingR2Config" @click="resetR2ConfigForm">恢复已保存配置</el-button>
+          <el-button type="primary" :loading="savingR2Config" @click="saveR2Config">保存配置</el-button>
+          <span class="storage-status">当前状态：{{ r2ConfigForm.configured ? '已配置' : '未配置' }}</span>
+        </div>
+      </el-form>
     </section>
 
     <section class="content-card">
@@ -110,29 +124,49 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { resolveErrorMessage } from '@/utils/api-response'
 import {
   createRewardByAdmin,
   deleteRewardByAdmin,
+  fetchR2StorageConfigByAdmin,
   fetchRewardsByAdmin,
-  fetchUtilityRates,
-  uploadRewardImageByAdmin,
+  testR2StorageConfigByAdmin,
+  updateR2StorageConfigByAdmin,
   updateRewardStockByAdmin,
-  updateUtilityRate,
+  uploadRewardImageByAdmin,
+  type AdminR2StorageConfig,
   type AdminRewardItem,
-  type UtilityRateItem,
 } from '@/api/modules/admin'
 
 const router = useRouter()
 const loading = ref(false)
 const uploadingImage = ref(false)
-const rates = ref<UtilityRateItem[]>([])
+const savingR2Config = ref(false)
+const testingR2Config = ref(false)
 const rewards = ref<AdminRewardItem[]>([])
 const rewardImageInputRef = ref<HTMLInputElement | null>(null)
 const rewardPreviewUrl = ref('')
+const r2ConfigForm = reactive<AdminR2StorageConfig>({
+  endpoint: '',
+  accessKeyId: '',
+  secretAccessKey: '',
+  bucket: '',
+  publicBaseUrl: '',
+  region: 'auto',
+  configured: false,
+})
+const savedR2Config = ref<AdminR2StorageConfig>({
+  endpoint: '',
+  accessKeyId: '',
+  secretAccessKey: '',
+  bucket: '',
+  publicBaseUrl: '',
+  region: 'auto',
+  configured: false,
+})
 const rewardForm = reactive({
   rewardName: '',
   rewardDesc: '',
@@ -141,6 +175,57 @@ const rewardForm = reactive({
   sortOrder: 100,
   imageUrl: '',
 })
+
+function normalizeR2Config(config: AdminR2StorageConfig) {
+  return {
+    endpoint: config.endpoint.trim(),
+    accessKeyId: config.accessKeyId.trim(),
+    secretAccessKey: config.secretAccessKey.trim(),
+    bucket: config.bucket.trim(),
+    publicBaseUrl: config.publicBaseUrl.trim(),
+    region: config.region.trim() || 'auto',
+    configured: config.configured,
+  }
+}
+
+function cacheSavedR2Config(config: AdminR2StorageConfig) {
+  savedR2Config.value = { ...normalizeR2Config(config) }
+}
+
+function getR2SavePayload() {
+  const normalized = normalizeR2Config(r2ConfigForm)
+  return {
+    endpoint: normalized.endpoint,
+    accessKeyId: normalized.accessKeyId,
+    secretAccessKey: normalized.secretAccessKey,
+    bucket: normalized.bucket,
+    publicBaseUrl: normalized.publicBaseUrl,
+    region: normalized.region,
+  }
+}
+
+const r2ConfigDirty = computed(() => {
+  const current = normalizeR2Config(r2ConfigForm)
+  const saved = normalizeR2Config(savedR2Config.value)
+  return current.endpoint !== saved.endpoint
+    || current.accessKeyId !== saved.accessKeyId
+    || current.secretAccessKey !== saved.secretAccessKey
+    || current.bucket !== saved.bucket
+    || current.publicBaseUrl !== saved.publicBaseUrl
+    || current.region !== saved.region
+})
+
+function buildR2ConfirmMessage(payload: ReturnType<typeof getR2SavePayload>) {
+  return [
+    '将保存以下 R2 配置：',
+    `Endpoint：${payload.endpoint}`,
+    `Access Key ID：${payload.accessKeyId}`,
+    `Bucket：${payload.bucket}`,
+    `Public Base URL：${payload.publicBaseUrl}`,
+    `Region：${payload.region}`,
+    '保存后奖励图片上传会优先使用这套配置。',
+  ].join('\n')
+}
 
 function goHome() {
   router.push('/manager/home')
@@ -156,6 +241,11 @@ function clearRewardImage() {
   if (rewardImageInputRef.value) {
     rewardImageInputRef.value.value = ''
   }
+}
+
+function resetR2ConfigForm() {
+  Object.assign(r2ConfigForm, savedR2Config.value)
+  ElMessage.success('已恢复到最近一次加载或保存的配置')
 }
 
 async function handleRewardImageChange(event: Event) {
@@ -186,39 +276,77 @@ async function handleRewardImageChange(event: Event) {
   }
 }
 
+async function saveR2Config() {
+  const payload = getR2SavePayload()
+  if (!r2ConfigDirty.value) {
+    ElMessage.info('R2 配置未变更')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(buildR2ConfirmMessage(payload), '确认保存 R2 配置', {
+      type: 'warning',
+      confirmButtonText: '确认保存',
+      cancelButtonText: '取消',
+    })
+  } catch {
+    return
+  }
+
+  savingR2Config.value = true
+  try {
+    const { data } = await updateR2StorageConfigByAdmin(payload)
+    if (data.code !== 200 || !data.data) {
+      ElMessage.error(data.msg || 'R2 配置保存失败')
+      return
+    }
+    Object.assign(r2ConfigForm, data.data)
+    cacheSavedR2Config(data.data)
+    ElMessage.success('R2 配置已保存')
+  } catch (error) {
+    console.error(error)
+    ElMessage.error(resolveErrorMessage(error, 'R2 配置保存失败'))
+  } finally {
+    savingR2Config.value = false
+  }
+}
+
+async function testR2Config() {
+  testingR2Config.value = true
+  try {
+    const { data } = await testR2StorageConfigByAdmin(getR2SavePayload())
+    if (data.code !== 200 || data.data !== true) {
+      ElMessage.error(data.msg || 'R2 连接测试失败')
+      return
+    }
+    ElMessage.success('R2 连接测试成功')
+  } catch (error) {
+    console.error(error)
+    ElMessage.error(resolveErrorMessage(error, 'R2 连接测试失败'))
+  } finally {
+    testingR2Config.value = false
+  }
+}
+
 async function loadAll() {
   loading.value = true
   try {
-    const [ratesRes, rewardsRes] = await Promise.all([fetchUtilityRates(), fetchRewardsByAdmin()])
-    if (ratesRes.data.code === 200 && ratesRes.data.data) {
-      rates.value = ratesRes.data.data.map((item) => ({ ...item, enabled: item.enabled !== false }))
-    }
+    const [rewardsRes, r2Res] = await Promise.all([
+      fetchRewardsByAdmin(),
+      fetchR2StorageConfigByAdmin(),
+    ])
     if (rewardsRes.data.code === 200 && rewardsRes.data.data) {
       rewards.value = rewardsRes.data.data.map((item) => ({ ...item }))
+    }
+    if (r2Res.data.code === 200 && r2Res.data.data) {
+      Object.assign(r2ConfigForm, r2Res.data.data)
+      cacheSavedR2Config(r2Res.data.data)
     }
   } catch (error) {
     console.error(error)
     ElMessage.error('加载管理数据失败')
   } finally {
     loading.value = false
-  }
-}
-
-async function saveRate(item: UtilityRateItem) {
-  try {
-    const { data } = await updateUtilityRate(item.feeType, {
-      unitPrice: Number(item.unitPrice),
-      unitName: item.unitName,
-      enabled: item.enabled !== false,
-    })
-    if (data.code !== 200) {
-      ElMessage.error(data.msg || `保存${item.feeType}单价失败`)
-      return
-    }
-    ElMessage.success(`${item.feeType}单价已保存`)
-  } catch (error) {
-    console.error(error)
-    ElMessage.error('保存单价失败')
   }
 }
 
@@ -271,7 +399,7 @@ async function saveStock(item: AdminRewardItem) {
 
 async function removeReward(item: AdminRewardItem) {
   try {
-    await ElMessageBox.confirm(`确认删除奖品“${item.rewardName}”吗？删除后将不能恢复。`, '删除奖品', {
+    await ElMessageBox.confirm(`确认删除奖品“${item.rewardName}”吗？删除后将不可恢复。`, '删除奖品', {
       type: 'warning',
       confirmButtonText: '确认删除',
       cancelButtonText: '取消',
@@ -334,22 +462,10 @@ h2 {
   margin: 0 0 12px;
 }
 
-.rate-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
 .reward-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-}
-
-.rate-item {
-  border: 1px solid #e4ece8;
-  border-radius: 12px;
-  padding: 12px;
 }
 
 .reward-upload-field {
@@ -361,13 +477,16 @@ h2 {
   display: none;
 }
 
-.reward-upload-actions {
+.reward-upload-actions,
+.storage-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
 }
 
-.reward-upload-tip {
+.reward-upload-tip,
+.storage-status {
   font-size: 12px;
   color: #5f776b;
 }
@@ -387,12 +506,7 @@ h2 {
   object-fit: cover;
 }
 
-.rate-item :deep(.el-switch) {
-  --el-switch-on-color: #4b9b6e;
-}
-
 @media (max-width: 1000px) {
-  .rate-grid,
   .reward-grid {
     grid-template-columns: 1fr;
   }

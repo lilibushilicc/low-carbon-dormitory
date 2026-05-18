@@ -95,12 +95,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import AdminGlobalNav from '@/components/admin-global-nav.vue'
+import { useAppNavigation } from '@/composables/use-app-navigation'
 import { useAdminTokenStore } from '@/stores/admin-token'
 
-const route = useRoute()
-const router = useRouter()
+const { goTo } = useAppNavigation()
 const adminStore = useAdminTokenStore()
 
 const adminName = computed(
@@ -110,11 +109,6 @@ const welcomeText = computed(
   () => `${adminName.value}，这里整合了宿舍管理和餐厅管理两个后台模块，你可以在同一套导航和视觉体系下直接切换业务，不再需要整页外跳。`,
 )
 
-function goTo(path: string) {
-  if (route.path !== path) {
-    router.push(path)
-  }
-}
 </script>
 
 <style scoped>

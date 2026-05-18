@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useAdminTokenStore } from '@/stores/admin-token'
 import { useStudentTokenStore } from '@/stores/student-token'
-import { useRouteTransitionState } from '@/router/route-transition-state'
+import { useAppNavigation } from '@/composables/use-app-navigation'
 
 type NavItem = {
   title: string
@@ -13,12 +11,9 @@ type NavItem = {
   code: string
 }
 
-const router = useRouter()
-const route = useRoute()
-const adminTokenStore = useAdminTokenStore()
+const { route, router, isActive, isPending, logout } = useAppNavigation()
 const studentTokenStore = useStudentTokenStore()
 const { studentInfo, dormLabel } = storeToRefs(studentTokenStore)
-const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
 
 const expandedGroups = ref({
   lowCarbon:
@@ -89,14 +84,6 @@ function goTo(path: string) {
   router.push(path)
 }
 
-function isActive(path: string) {
-  return route.path === path || route.path.startsWith(`${path}/`)
-}
-
-function isPending(path: string) {
-  return isRouteNavigating.value && pendingRoutePath.value === path
-}
-
 function isGroupActive(paths: readonly string[]) {
   return paths.some((path) => route.path.startsWith(path))
 }
@@ -108,13 +95,6 @@ function toggleGroup(group: 'lowCarbon') {
 function openLowCarbonHome() {
   expandedGroups.value.lowCarbon = true
   goTo('/low-carbon-dashboard')
-}
-
-async function logout() {
-  adminTokenStore.clearAdminToken()
-  studentTokenStore.clearStudentToken()
-  localStorage.removeItem('loginUser')
-  await router.replace('/login')
 }
 </script>
 

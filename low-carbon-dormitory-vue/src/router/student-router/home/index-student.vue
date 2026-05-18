@@ -71,12 +71,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { useAppNavigation } from '@/composables/use-app-navigation'
 import { useStudentTokenStore } from '@/stores/student-token'
 
-const route = useRoute()
-const router = useRouter()
+const { goTo } = useAppNavigation()
 const studentTokenStore = useStudentTokenStore()
 const { studentInfo, dormLabel } = storeToRefs(studentTokenStore)
 
@@ -158,11 +157,6 @@ const featureCards = [
   },
 ] as const
 
-function goTo(path: string) {
-  if (route.path !== path) {
-    router.push(path)
-  }
-}
 </script>
 
 <style scoped>

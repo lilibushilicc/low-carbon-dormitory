@@ -1,58 +1,30 @@
 # low-carbon-dormitory
 
-> 2026-05-14 更新：管理员“新增奖励”现已支持本地图片上传。后端默认将图片保存到项目根目录 `storage/reward-images/`，并通过 `/uploads/rewards/**` 对外提供访问；数据库继续只保存 `image_url` 字符串，不保存图片二进制内容。
-> 2026-05-14 更新：新增“水费是否参与计费”开关，管理员可在费率配置页单独关闭水费计费。关闭后，水费不再允许充值、不再允许管理员扣费，低碳看板与个人低碳统计也不再把水费计入费用和碳排计算。首次升级现有数据库时，需要先为 `system_utility_rate_config` 补充 `enabled` 字段，示例 SQL 见 `docs/database-deployment.md`。
+> 2026-05-16 更新：奖励图片上传已从服务器本地磁盘切换为 Cloudflare R2。后端不再写入 `storage/reward-images/`，也不再提供 `/uploads/rewards/**` 本地静态访问，数据库继续仅保存 `image_url`。  
+> 2026-05-16 更新：前端已抽取共享导航与会话持久化工具，统一复用路由跳转、登出清理和 `localStorage` 读写逻辑，减少重复代码。  
+> 2026-05-17 更新：管理员后台已支持直接读取、测试并保存奖励图片上传使用的 R2 配置；上传服务优先使用后台保存的配置，未配置时回退到环境变量。
+> 2026-05-18 更新：R2 配置页新增“恢复已保存配置”和保存前确认，降低误填、误保存导致上传异常的风险。
+> 2026-05-18 更新：水电费率维护已归入“低碳规则配置”页，保存费率后会同步影响规则预览、看板碳排换算和水电扣费逻辑；奖励管理页只保留奖励与 R2 存储配置。
 
-> 2026-05-14 更新：手机端 `/reward-exchange-antd` 奖励兑换页已压缩交互层级，顶部摘要改为单张积分卡，奖励卡片前置库存与兑换提示，确认弹层收敛为扣分、剩余积分、库存三项核心信息。
-
-> 2026-05-13 更新：学生端 `reward-exchange.vue` 已去除对 `reward-exchange-son.vue` 的依赖，奖励列表展示逻辑已合并回父页面，项目内不再保留该 `-son` 文件。
-> 2026-05-13 更新：奖励兑换桌面页与移动页已改为各自独立维护数据逻辑，不再共用 `use-reward-center.ts`。
-> 2026-05-13 更新：已移除 `/water-electricity-antd`、`/pay-up-antd`、`/history-fee-antd` 三个手机端页面头部左侧返回按钮，仅保留右侧主操作入口。
-
-> 2026-05-12 更新：手机端 `/reward-exchange-antd` 积分商城头部已收紧为标题与搜索框同一行的紧凑布局，搜索框固定在右上角，头部容器高度仅包裹这一行内容。
-> 2026-05-12 更新：手机端 `/reward-exchange-antd` 头部在保留同行布局的同时，已补充少量顶部留白，避免标题和搜索框贴边。
-> 2026-05-12 更新：手机端 `/reward-exchange-antd` 积分商城新增明确的首次加载提示和骨架屏；奖励图片未加载完成前会显示独立转圈占位，避免外部图片较慢时页面看起来像白屏。
-
-> 2026-05-13 更新：餐厅模块在开发环境下改为默认通过 Vite 代理访问 `/api/restaurant/**`，由本地开发服务器转发到默认餐厅接口 `http://39.98.69.153:8081/api/**`，避免浏览器直接跨域请求被 CORS 拦截；如需覆盖可配置 `VITE_RESTAURANT_API_BASE_URL`。
-> 2026-05-13 更新：前端新增 `low-carbon-dormitory-vue/.env.production`，生产构建默认把餐厅模块请求基址固定为同域 `/api/restaurant`；部署到服务器后需配合 Nginx 将 `/api/restaurant/**` 反向代理到 `http://39.98.69.153:8081/api/**`。
-> 2026-05-12 更新：管理员后台已整合餐厅管理模块；宿舍路由显示宿舍导航，餐厅路由显示餐厅导航，两个系统在同一后台内按模块切换，餐厅模块请求默认指向 `http://39.98.69.153:8081/api`。
-> 2026-05-12 更新：原管理员左侧导航栏中的“餐厅系统”外部跳转入口已升级为站内模块切换入口，进入餐厅后会切换成餐厅系统自己的导航。
-
-> 2026-05-12 更新：学生端全局左侧导航现在仅在“学生路由 + 已登录 + 非移动端”条件下显示，未登录访问时不会再渲染左侧导航栏。
-
-> 2026-05-12 更新：已抽取手机端水电链路的查询参数与宿舍 ID 解析工具，`/water-electricity-antd`、`/pay-up-antd`、`/history-fee-antd` 复用同一套 `stuNum`、`dormId`、`source=utility-mobile` 拼装规则，减少重复代码并保持移动端跳转闭环。
-
-> 2026-05-12 更新：手机端 `/pay-up-antd` 缴费成功后会固定返回手机端 `/water-electricity-antd` 水电页面，避免登录态移动访问因缺少查询参数跳回桌面水电页。
-
-> 2026-05-12 更新：`pay-up` 与 `history-fee` 已恢复为桌面版页面，并新增 `pay-up-antd` 与 `history-fee-antd` 两个手机端 `Ant Design Vue` 页面，专门用于嵌入式移动访问；从 `/water-electricity-antd?stuNum=学号` 进入时，会继续透传 `stuNum` 到这两个手机页。
-> 2026-05-12 更新：桌面版 `/pay-up` 页面样式已调整为居中大白卡布局，参考现网缴费页的标题、宿舍条、单价卡、费用切换、金额输入与支付方式排布。
-> 2026-05-12 更新：移动端 `pay-up` 与 `history-fee` 页面进一步压缩了头部和卡片尺寸；历史订单默认只展示金额增减与费用类型，其余字段改为按条展开查看详情。
-> 2026-05-12 更新：已移除桌面学生页中进入手机端页面的可视化入口；手机端页面现在仅支持通过 URL 直接访问。
-
-> 2026-05-11 更新：新增学生端 `water-electricity-antd` 手机版水电费页面，采用 Ant Design Vue 风格展示当前余额、近七天费用构成环形图、近七天费用趋势折线图与最近缴费记录。
-> 2026-05-11 更新：`/water-electricity-antd` 现支持通过 `?stuNum=学号` 方式未登录直达访问，便于外部移动端按学号打开对应学生的水电费手机页面。
-
-> 2026-05-11 更新：奖励兑换手机端背景图静态资源已放入 `low-carbon-dormitory-vue/public/images/reward-exchange-mobile-bg.jpg`，供 `/reward-exchange-antd` 页面使用；该页面现按手机端全屏响应布局展示，背景图直接参与页面视觉，奖励列表与兑换记录两种视图统一使用同一套内容盒尺寸与间距规则。
-
-低碳宿舍管理系统工作区，包含前端、后端、项目文档、规划文件、运行日志与发布产物目录。
+低碳宿舍管理系统工作区，包含前端、后端、项目文档、规划资料、运行日志与发布产物目录。
 
 ## 项目结构
 
 - `low-carbon-dormitory-vue/`：Vue 3 前端项目源码
 - `low-carbon-dormitory-spring/`：Spring Boot 后端项目源码
 - `docs/`：项目说明、功能文档、部署文档
-- `WillPlan/`：将来实施的计划、预研材料、待落地方案
 - `log/`：运行日志、构建日志、排查记录
 - `release/package/`：打包产物
-- `release/docker/`：Docker 相关文件和镜像构建产物
-- `storage/reward-images/`：奖励图片上传后的运行时存储目录，由后端在首次上传时自动创建
+- `release/docker/`：Docker 相关文件与产物
+- `willplan/`：后续规划、预研资料
+- `storage/`：运行期存储目录；当前不再用于奖励图片本地上传
 
 说明：
 
 - `low-carbon-dormitory-vue/` 和 `low-carbon-dormitory-spring/` 仅保留源码及运行所需文件
-- 日志文件统一放在 `log/`
-- 说明文档统一放在 `docs/`
-- 将来实施的计划和规划文件统一放在 `WillPlan/`
+- 日志统一存放到 `log/`
+- 项目说明统一存放到 `docs/`
+- 未来规划统一存放到 `willplan/`
 
 ## 本地运行
 
@@ -64,9 +36,18 @@
 ./mvnw spring-boot:run
 ```
 
-默认服务地址：
+默认地址：
 
 - `http://localhost:3000`
+
+后端需要配置以下环境变量后，奖励图片上传功能才能正常写入 R2：
+
+- `APP_UPLOAD_R2_ENDPOINT`
+- `APP_UPLOAD_R2_ACCESS_KEY_ID`
+- `APP_UPLOAD_R2_SECRET_ACCESS_KEY`
+- `APP_UPLOAD_R2_BUCKET`
+- `APP_UPLOAD_R2_PUBLIC_BASE_URL`
+- `APP_UPLOAD_R2_REGION`，默认可用 `auto`
 
 ### 前端
 
@@ -81,30 +62,42 @@ npm run dev
 
 - `/api/dorm/**` -> `http://localhost:3000/**`
 - `/api/**` -> `http://localhost:3000/**`
-- `/uploads/**` -> `http://localhost:3000/uploads/**`
 - `/api/restaurant/**` -> `http://39.98.69.153:8081/api/**`
 
-### 奖励图片上传
+## 奖励图片上传
 
 - 管理端页面：`/manager/reward-manage`
-- 上传方式：选择本地 JPG、PNG、WEBP 图片后，由前端以 `multipart/form-data` 上传到后端
-- 默认大小限制：单张 `2MB`
-- 默认存储目录：`storage/reward-images/YYYYMM/`
-- 默认访问前缀：`/uploads/rewards/YYYYMM/<uuid>.<ext>`
-- 可通过环境变量覆盖：
-  - `APP_UPLOAD_REWARD_DIR`
-  - `APP_UPLOAD_REWARD_URL_PREFIX`
+- 上传方式：前端以 `multipart/form-data` 调用 `POST /admin/rewards/upload-image`
+- 支持格式：`JPG`、`PNG`、`WEBP`
+- 大小限制：单张不超过 `2MB`
+- 默认对象 Key：`YYYYMM/<uuid>.<ext>`
+- 默认访问地址：`<APP_UPLOAD_R2_PUBLIC_BASE_URL>/YYYYMM/<uuid>.<ext>`
+
+管理员后台现可直接维护以下 R2 参数：
+
+- `endpoint`
+- `accessKeyId`
+- `secretAccessKey`
+- `bucket`
+- `publicBaseUrl`
+- `region`
+
+R2 配置页当前支持：
+
+- 测试连接
+- 保存前确认
+- 恢复最近一次加载或保存的配置
+
+数据库仅保存图片 URL，不保存图片二进制内容。
 
 ## 登录与注册
 
-### 现有登录接口
+现有登录接口：
 
 - 学生登录：`POST /student/login`
 - 管理员登录：`POST /admin/login`
 
-### 学生注册入口
-
-当前项目保留两种学生建档方式：
+学生建档入口保留两种方式：
 
 1. 管理员建档：`POST /admin/students`
 2. 外部公开注册：`POST /student/register`
@@ -112,81 +105,24 @@ npm run dev
 说明：
 
 - 登录页 `low-carbon-dormitory-vue/src/login.vue` 没有新增“注册学生”入口
-- 管理端保留“新增学生”，并新增“学生管理”页面用于查看学生列表和删除学生
-- `POST /student/register` 主要供外部系统或第三方页面传参调用
-
-### 管理员学生管理
-
-当前管理员端学生相关能力包括：
-
-- `GET /admin/students`：获取学生列表
-- `GET /admin/students/{studentId}/delete-check`：删除前校验是否存在历史关联
-- `DELETE /admin/students/{studentId}`：删除学生
-
-删除规则：
-
-- 仅当学生不存在奖励兑换记录、费用流水记录、支付订单记录时允许删除
-- 删除时会同步清理 `student_profile` 扩展档案
-- 删除后会重算宿舍空床数
-- 不会自动删除宿舍信息与宿舍水电账户
-
-### `POST /student/register` 请求体
-
-```json
-{
-  "stuNum": "20260001",
-  "name": "张三",
-  "password": "123456",
-  "dormBuilding": "1号楼",
-  "dormRoom": "101",
-  "bedTotal": 4,
-  "gender": 1,
-  "idCard": "110101200001010011",
-  "phone": "13800000000",
-  "college": "计算机学院",
-  "major": "软件工程",
-  "className": "软工1班",
-  "grade": "2026级"
-}
-```
-
-返回示例：
-
-```json
-{
-  "code": 200,
-  "msg": "success",
-  "data": {
-    "studentId": 123,
-    "stuNum": "20260001",
-    "dormId": 45
-  }
-}
-```
-
-注册成功后可直接调用 `POST /student/login` 登录。
+- 管理端保留“新增学生”和“学生管理”
+- `POST /student/register` 主要用于外部系统或第三方页面接入
 
 ## 打包与清理约定
 
-- 打包前先清理 `log/` 下与本次打包相关的旧日志
+- 打包前先清理 `log/` 下与本次构建相关的旧日志
 - 前端构建产物最终整理到 `release/package/frontend/dist/`
 - 后端构建产物最终整理到 `release/package/backend/`
 - 不在 `low-carbon-dormitory-vue/` 长期保留 `dist/`
-- 不在 `low-carbon-dormitory-spring/target/` 长期保留最终 `.jar`
-- `low-carbon-dormitory-vue/` 和 `low-carbon-dormitory-spring/` 不存放长期日志、文档或规划文件
+- 不在 `low-carbon-dormitory-spring/target/` 长期保留 `.jar`
 
 ## 相关文档
 
-- `docs/features/README.md`
+- [部署说明](./docs/deployment.md)
+- [数据库部署说明](./docs/database-deployment.md)
+- [管理员奖励与 R2 存储管理说明](./docs/features/admin-reward-and-rate-management.md)
+- [低碳规则查看与配置](./docs/features/low-carbon-rules.md)
 - `docs/features/auth-and-login.md`
 - `docs/features/admin-student-create.md`
 - `docs/features/admin-student-management.md`
 - `docs/features/student-register.md`
-- `docs/low-carbon-dormitory-summary-outline.docx`
-- `docs/low-carbon-dormitory-summary-presentation.pptx`
-- `docs/low-carbon-dormitory-defense.md`
-- `docs/project-difficulties-implementation.md`
-- `docs/springboot-annotations-reference.md`
-- `docs/deployment.md`
-  说明：服务器发布时请重点参考该文档中的图片上传目录配置 `APP_UPLOAD_REWARD_DIR` 与 `/uploads/**` 代理要求。
-- `docs/database-deployment.md`

@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
-import { useStudentTokenStore } from '@/stores/student-token'
-import { useAdminTokenStore } from '@/stores/admin-token'
-import { useRouteTransitionState } from '@/router/route-transition-state'
+import { useAppNavigation } from '@/composables/use-app-navigation'
 
 type NavItem = {
   title: string
@@ -10,11 +7,7 @@ type NavItem = {
   path: string
 }
 
-const router = useRouter()
-const route = useRoute()
-const studentTokenStore = useStudentTokenStore()
-const adminStore = useAdminTokenStore()
-const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
+const { goTo, isActive, isPending, logout } = useAppNavigation()
 
 const overviewItems: readonly NavItem[] = [
   { title: '首页', desc: '查看餐厅碳排放总览与学院汇总', path: '/manager/restaurant/summary' },
@@ -35,26 +28,6 @@ const trendItems: readonly NavItem[] = [
   { title: '每月碳排放信息', desc: '查看每月碳排放折线趋势', path: '/manager/restaurant/student/period/month' },
 ]
 
-function goTo(path: string) {
-  if (route.path !== path) {
-    router.push(path)
-  }
-}
-
-function isActive(path: string) {
-  return route.path === path || route.path.startsWith(`${path}/`)
-}
-
-function isPending(path: string) {
-  return isRouteNavigating.value && pendingRoutePath.value === path
-}
-
-async function logout() {
-  studentTokenStore.clearStudentToken()
-  adminStore.clearAdminToken()
-  localStorage.removeItem('loginUser')
-  await router.replace('/login')
-}
 </script>
 
 <template>

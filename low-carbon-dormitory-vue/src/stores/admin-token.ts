@@ -1,6 +1,11 @@
-﻿import { computed, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { parseJsonSafely } from '@/utils/json'
+import {
+  persistJsonStorage,
+  persistStorageValue,
+  readJsonStorage,
+  readStorageString,
+} from '@/utils/storage'
 
 const ADMIN_PROFILE_KEY = 'adminProfile'
 const ADMIN_TOKEN_KEY = 'adminToken'
@@ -13,29 +18,27 @@ interface AdminTokenProfile {
 }
 
 function loadStoredAdminProfile() {
-  return parseJsonSafely<AdminTokenProfile>(localStorage.getItem(ADMIN_PROFILE_KEY), () => {
-    localStorage.removeItem(ADMIN_PROFILE_KEY)
-  })
+  return readJsonStorage<AdminTokenProfile>(ADMIN_PROFILE_KEY)
 }
 
 export const useAdminTokenStore = defineStore('adminToken', () => {
   const profile = ref<AdminTokenProfile | null>(loadStoredAdminProfile())
-  const token = ref(localStorage.getItem(ADMIN_TOKEN_KEY) || profile.value?.token || '')
+  const token = ref(readStorageString(ADMIN_TOKEN_KEY) || profile.value?.token || '')
 
   const isAdminLoggedIn = computed(() => Boolean(profile.value?.adminId && token.value))
 
   function setAdminToken(payload: AdminTokenProfile) {
     profile.value = payload
     token.value = payload.token
-    localStorage.setItem(ADMIN_PROFILE_KEY, JSON.stringify(payload))
-    localStorage.setItem(ADMIN_TOKEN_KEY, payload.token)
+    persistJsonStorage(ADMIN_PROFILE_KEY, payload)
+    persistStorageValue(ADMIN_TOKEN_KEY, payload.token)
   }
 
   function clearAdminToken() {
     profile.value = null
     token.value = ''
-    localStorage.removeItem(ADMIN_PROFILE_KEY)
-    localStorage.removeItem(ADMIN_TOKEN_KEY)
+    persistJsonStorage(ADMIN_PROFILE_KEY, null)
+    persistStorageValue(ADMIN_TOKEN_KEY, '')
   }
 
   return {

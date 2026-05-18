@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useRouteTransitionState } from '@/router/route-transition-state'
+import { useAppNavigation } from '@/composables/use-app-navigation'
 
 type CurrentSystemBannerProps = {
   managerMode?: boolean
@@ -11,9 +10,7 @@ const props = withDefaults(defineProps<CurrentSystemBannerProps>(), {
   managerMode: false,
 })
 
-const route = useRoute()
-const router = useRouter()
-const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
+const { route, goTo, isPending } = useAppNavigation()
 
 const isPortalRoute = computed(() => (props.managerMode ? route.path === '/manager/home' : route.path === '/index-student'))
 const isRestaurantRoute = computed(() => props.managerMode && route.path.startsWith('/manager/restaurant'))
@@ -60,16 +57,6 @@ const banner = computed(() => {
   }
 })
 
-function goTo(path: string) {
-  if (route.path === path) {
-    return
-  }
-  router.push(path)
-}
-
-function isPending(path: string) {
-  return isRouteNavigating.value && pendingRoutePath.value === path
-}
 </script>
 
 <template>

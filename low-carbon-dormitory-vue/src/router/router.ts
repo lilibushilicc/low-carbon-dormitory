@@ -4,6 +4,7 @@ import { useAdminTokenStore } from '@/stores/admin-token'
 import { useStudentTokenStore } from '@/stores/student-token'
 import type { StudentProfile } from '@/types/student'
 import { getDefaultHomePath } from '@/utils/app-navigation'
+import { persistLegacyLoginUser } from '@/utils/auth-session'
 import { parseJsonSafely } from '@/utils/json'
 import {
   beginRouteTransition,
@@ -289,7 +290,7 @@ router.beforeEach((to, from) => {
   }
 
   if (ssoLoginUser) {
-    localStorage.setItem('loginUser', JSON.stringify(ssoLoginUser))
+    persistLegacyLoginUser(ssoLoginUser)
   }
 
   const ssoKeys = [

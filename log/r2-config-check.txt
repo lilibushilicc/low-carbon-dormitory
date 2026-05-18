@@ -1,0 +1,4 @@
+connected=true
+table_exists=false
+query_error=错误: 关系 "system_storage_r2_config" 不存在
+  位置：95

@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useStudentTokenStore } from '@/stores/student-token'
-import { useAdminTokenStore } from '@/stores/admin-token'
-import { useRouteTransitionState } from '@/router/route-transition-state'
+import { useAppNavigation } from '@/composables/use-app-navigation'
 
 type NavItem = {
   title: string
@@ -11,11 +8,7 @@ type NavItem = {
   path: string
 }
 
-const router = useRouter()
-const route = useRoute()
-const studentTokenStore = useStudentTokenStore()
-const adminStore = useAdminTokenStore()
-const { isRouteNavigating, pendingRoutePath } = useRouteTransitionState()
+const { route, goTo, isActive, isPending, logout } = useAppNavigation()
 
 const isHomeRoute = computed(() => route.path === '/manager/home')
 const currentSection = computed(() => (isHomeRoute.value ? '管理员首页' : '宿舍管理'))
@@ -36,26 +29,6 @@ const operationItems: readonly NavItem[] = [
   { title: '宿舍水电扣费', desc: '处理宿舍费用扣减', path: '/manager/dorm-fee-deduct' },
 ]
 
-function goTo(path: string) {
-  if (route.path !== path) {
-    router.push(path)
-  }
-}
-
-function isActive(path: string) {
-  return route.path === path || route.path.startsWith(`${path}/`)
-}
-
-function isPending(path: string) {
-  return isRouteNavigating.value && pendingRoutePath.value === path
-}
-
-async function logout() {
-  studentTokenStore.clearStudentToken()
-  adminStore.clearAdminToken()
-  localStorage.removeItem('loginUser')
-  await router.replace('/login')
-}
 </script>
 
 <template>

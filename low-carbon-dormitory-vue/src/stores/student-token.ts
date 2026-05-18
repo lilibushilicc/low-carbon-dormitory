@@ -1,8 +1,13 @@
-﻿import { computed, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { StudentProfile } from '@/types/student'
 import { formatDormLabel } from '@/utils/formatters'
-import { parseJsonSafely } from '@/utils/json'
+import {
+  persistJsonStorage,
+  persistStorageValue,
+  readJsonStorage,
+  readStorageString,
+} from '@/utils/storage'
 
 const STUDENT_TOKEN_KEY = 'studentToken'
 const STUDENT_STU_NUM_KEY = 'studentStuNum'
@@ -10,15 +15,13 @@ const DORM_ID_KEY = 'dormId'
 const STUDENT_INFO_KEY = 'studentInfo'
 
 function loadStoredStudentInfo() {
-  return parseJsonSafely<StudentProfile>(localStorage.getItem(STUDENT_INFO_KEY), () => {
-    localStorage.removeItem(STUDENT_INFO_KEY)
-  })
+  return readJsonStorage<StudentProfile>(STUDENT_INFO_KEY)
 }
 
 export const useStudentTokenStore = defineStore('studentToken', () => {
-  const token = ref(localStorage.getItem(STUDENT_TOKEN_KEY) || '')
-  const stuNum = ref(localStorage.getItem(STUDENT_STU_NUM_KEY) || '')
-  const dormId = ref(localStorage.getItem(DORM_ID_KEY) || '')
+  const token = ref(readStorageString(STUDENT_TOKEN_KEY))
+  const stuNum = ref(readStorageString(STUDENT_STU_NUM_KEY))
+  const dormId = ref(readStorageString(DORM_ID_KEY))
   const studentInfo = ref<StudentProfile | null>(loadStoredStudentInfo())
 
   const isLoggedIn = computed(() => Boolean(token.value))
@@ -27,29 +30,10 @@ export const useStudentTokenStore = defineStore('studentToken', () => {
   )
 
   function persistState() {
-    if (token.value) {
-      localStorage.setItem(STUDENT_TOKEN_KEY, token.value)
-    } else {
-      localStorage.removeItem(STUDENT_TOKEN_KEY)
-    }
-
-    if (stuNum.value) {
-      localStorage.setItem(STUDENT_STU_NUM_KEY, stuNum.value)
-    } else {
-      localStorage.removeItem(STUDENT_STU_NUM_KEY)
-    }
-
-    if (dormId.value) {
-      localStorage.setItem(DORM_ID_KEY, dormId.value)
-    } else {
-      localStorage.removeItem(DORM_ID_KEY)
-    }
-
-    if (studentInfo.value) {
-      localStorage.setItem(STUDENT_INFO_KEY, JSON.stringify(studentInfo.value))
-    } else {
-      localStorage.removeItem(STUDENT_INFO_KEY)
-    }
+    persistStorageValue(STUDENT_TOKEN_KEY, token.value)
+    persistStorageValue(STUDENT_STU_NUM_KEY, stuNum.value)
+    persistStorageValue(DORM_ID_KEY, dormId.value)
+    persistJsonStorage(STUDENT_INFO_KEY, studentInfo.value)
   }
 
   function setStudentToken(profile: StudentProfile, currentStuNum?: string, authToken?: string) {
